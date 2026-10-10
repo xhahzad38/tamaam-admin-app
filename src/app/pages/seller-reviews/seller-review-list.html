@@ -1,0 +1,63 @@
+<div class="card">
+    <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div>
+            <h1 class="m-0 text-2xl font-semibold">Seller reviews</h1>
+            <p class="m-0 mt-1 text-sm text-muted-color">Applications waiting for a decision on each section.</p>
+        </div>
+        <p-iconfield>
+            <p-inputicon class="pi pi-search" />
+            <input pInputText type="search" placeholder="Search name, email or store" [ngModel]="search()" (ngModelChange)="search.set($event)" (keyup.enter)="load()" />
+        </p-iconfield>
+    </div>
+
+    <div class="mb-4 flex flex-wrap gap-2">
+        @for (option of queues; track option.id) {
+            <p-button [label]="option.label" [outlined]="queue() !== option.id" size="small" (onClick)="selectQueue(option.id)" />
+        }
+    </div>
+
+    @if (error()) {
+        <p class="text-red-600" role="alert">{{ error() }}</p>
+    }
+
+    <p-table [value]="items()" [loading]="loading()" [paginator]="items().length > 10" [rows]="10" responsiveLayout="scroll">
+        <ng-template #header>
+            <tr>
+                <th>Seller</th>
+                <th>Store</th>
+                <th>Type</th>
+                <th>Country</th>
+                <th>Submitted</th>
+                <th>Sections</th>
+                <th>Status</th>
+                <th></th>
+            </tr>
+        </ng-template>
+        <ng-template #body let-item>
+            <tr>
+                <td>
+                    <div class="font-medium">{{ item.displayName || item.legalName }}</div>
+                    <div class="text-sm text-muted-color">{{ item.email }}</div>
+                </td>
+                <td>{{ item.storeName || '—' }}</td>
+                <td>{{ accountLabel(item) }}</td>
+                <td>{{ item.countryCode }}</td>
+                <td>{{ item.submittedAt ? (item.submittedAt | date: 'mediumDate') : '—' }}</td>
+                <td class="text-sm">
+                    {{ item.pendingSections }} pending · {{ item.approvedSections }} approved · {{ item.rejectedSections }} rejected
+                </td>
+                <td>
+                    <p-tag [value]="statusLabel(item.status)" [severity]="statusSeverity(item.status)" />
+                </td>
+                <td>
+                    <a [routerLink]="['/seller-reviews', item.organizationId]" class="font-medium text-primary no-underline hover:underline">Open</a>
+                </td>
+            </tr>
+        </ng-template>
+        <ng-template #emptymessage>
+            <tr>
+                <td colspan="8" class="text-center text-muted-color">No applications in this queue.</td>
+            </tr>
+        </ng-template>
+    </p-table>
+</div>

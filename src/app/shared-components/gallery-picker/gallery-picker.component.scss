@@ -1,0 +1,116 @@
+:host {
+    display: contents;
+}
+
+.gallery-picker-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 20000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.25rem;
+    background: color-mix(in srgb, #000 45%, transparent);
+}
+
+.gallery-picker-panel {
+    width: min(56rem, 96vw);
+    max-height: min(90vh, 52rem);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border-radius: 14px;
+    background: var(--p-content-background, var(--surface-card));
+    color: var(--p-text-color);
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.28);
+}
+
+.gallery-picker-panel__head,
+.gallery-picker-panel__foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.9rem 1.1rem;
+    border-bottom: 1px solid var(--p-content-border-color, var(--surface-border));
+}
+
+.gallery-picker-panel__foot {
+    border-bottom: 0;
+    border-top: 1px solid var(--p-content-border-color, var(--surface-border));
+}
+
+.gallery-picker-panel__head h3 {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 700;
+}
+
+.gallery-picker-panel__close {
+    width: 2rem;
+    height: 2rem;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+}
+
+.gallery-picker {
+    padding: 1rem 1.1rem;
+    overflow: auto;
+}
+
+.gallery-picker__toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.gallery-picker__upload {
+    margin-bottom: 1rem;
+    padding: 0.75rem;
+    border: 1px dashed var(--p-content-border-color, var(--surface-border));
+    border-radius: var(--content-border-radius);
+}
+
+.gallery-picker__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr));
+    gap: 0.75rem;
+}
+
+.gallery-picker__item {
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    border: 1px solid var(--p-content-border-color, var(--surface-border));
+    border-radius: var(--content-border-radius);
+    overflow: hidden;
+    background: var(--p-content-background, var(--surface-card));
+    cursor: pointer;
+    text-align: left;
+}
+
+.gallery-picker__item--selected {
+    box-shadow: 0 0 0 2px var(--p-primary-color);
+}
+
+.gallery-picker__item img {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    background: var(--p-surface-100, #f3f4f6);
+}
+
+.gallery-picker__name {
+    padding: 0.4rem 0.5rem;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+

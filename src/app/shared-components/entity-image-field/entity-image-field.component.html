@@ -1,0 +1,54 @@
+<div class="entity-image-field">
+  <div class="entity-image-field__header">
+    <div>
+      <label class="block font-medium mb-1">{{ label }}</label>
+      @if (hint) {
+        <p class="text-sm text-muted-color m-0">{{ hint }}</p>
+      }
+    </div>
+    <p-button
+      [label]="multiple ? (images.length ? 'Change images' : 'Select images') : (images.length ? 'Change image' : 'Select image')"
+      icon="pi pi-images"
+      severity="secondary"
+      [outlined]="true"
+      type="button"
+      (click)="openPicker($event)"
+    />
+  </div>
+
+  @if (images.length === 0) {
+    <button type="button" class="entity-image-field__empty" (click)="openPicker($event)">
+      Choose from the gallery, or upload a new image if it is not there yet.
+    </button>
+  } @else {
+    <div class="entity-image-field__thumbs">
+      @for (image of images; track image.id; let i = $index) {
+        <div class="entity-image-field__thumb">
+          <img [src]="imageUrl(image)" [alt]="image.altText || image.fileName" />
+          @if (i === 0) {
+            <span class="entity-image-field__badge">Primary</span>
+          }
+          <div class="entity-image-field__actions">
+            @if (multiple && i > 0) {
+              <button type="button" (click)="move(image, -1)" title="Move left">‹</button>
+            }
+            @if (multiple && i < images.length - 1) {
+              <button type="button" (click)="move(image, 1)" title="Move right">›</button>
+            }
+            <button type="button" (click)="remove(image)" title="Remove">×</button>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>
+
+<app-gallery-picker
+  [visible]="pickerVisible()"
+  (visibleChange)="pickerVisible.set($event)"
+  [multiple]="multiple"
+  [moduleType]="moduleType"
+  [selectedIds]="selectedIds"
+  [selectedImages]="images"
+  (confirmed)="onConfirmed($event)"
+/>

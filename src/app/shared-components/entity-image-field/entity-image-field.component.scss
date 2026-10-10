@@ -1,0 +1,68 @@
+.entity-image-field__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.entity-image-field__empty {
+    width: 100%;
+    min-height: 6rem;
+    border: 1px dashed var(--surface-border);
+    border-radius: var(--content-border-radius);
+    background: transparent;
+    color: var(--text-color-secondary);
+    cursor: pointer;
+    padding: 1rem;
+}
+
+.entity-image-field__thumbs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.entity-image-field__thumb {
+    position: relative;
+    width: 6.5rem;
+    border: 1px solid var(--surface-border);
+    border-radius: var(--content-border-radius);
+    overflow: hidden;
+}
+
+.entity-image-field__thumb img {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    display: block;
+}
+
+.entity-image-field__badge {
+    position: absolute;
+    left: 0.35rem;
+    bottom: 0.35rem;
+    font-size: 0.65rem;
+    background: var(--primary-color);
+    color: var(--primary-color-text);
+    border-radius: 999px;
+    padding: 0.1rem 0.4rem;
+}
+
+.entity-image-field__actions {
+    position: absolute;
+    top: 0.25rem;
+    right: 0.25rem;
+    display: flex;
+    gap: 0.15rem;
+}
+
+.entity-image-field__actions button {
+    width: 1.35rem;
+    height: 1.35rem;
+    border: 0;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--surface-ground) 85%, transparent);
+    cursor: pointer;
+    line-height: 1;
+}

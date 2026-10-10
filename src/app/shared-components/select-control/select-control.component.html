@@ -1,0 +1,38 @@
+@if (multiple) {
+<p-multiselect fluid [inputId]="inputId || undefined" [appendTo]="appendTo" [formControl]="asFormControl" [options]="options" [optionLabel]="optionLabel" [optionValue]="optionValue"
+  [placeholder]="placeholder" [filter]="filter" [showClear]="showClear" [display]="display"
+  [maxSelectedLabels]="maxSelectedLabels" [invalid]="showError">
+  @if (selectedItemsTemplate) {
+  <ng-template #selecteditems let-value>
+    <ng-container *ngTemplateOutlet="selectedItemsTemplate; context: { $implicit: value }"></ng-container>
+  </ng-template>
+  }
+
+  @if (itemTemplate) {
+  <ng-template #item let-option>
+    <ng-container *ngTemplateOutlet="itemTemplate; context: { $implicit: option }"></ng-container>
+  </ng-template>
+  } @else {
+  <ng-template #item let-option>
+    <div>{{ getOptionLabel(option) }}</div>
+  </ng-template>
+  }
+</p-multiselect>
+} @else {
+<p-select fluid [inputId]="inputId || undefined" [appendTo]="appendTo" [formControl]="asFormControl" [options]="options" [optionLabel]="optionLabel" [optionValue]="optionValue"
+  [placeholder]="placeholder" [filter]="filter" [showClear]="showClear" [invalid]="showError">
+  @if (itemTemplate) {
+  <ng-template #item let-option>
+    <ng-container *ngTemplateOutlet="itemTemplate; context: { $implicit: option }"></ng-container>
+  </ng-template>
+  } @else {
+  <ng-template #item let-option>
+    <div>{{ getOptionLabel(option) }}</div>
+  </ng-template>
+  }
+</p-select>
+}
+
+<small class="text-danger" [class.text-danger--flow]="flowError" *ngIf="showError">
+  {{ errorMessage }}
+</small>

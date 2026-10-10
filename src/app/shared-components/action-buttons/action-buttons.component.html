@@ -1,0 +1,12 @@
+
+<div class="flex gap-2">
+  @if (!hideCreate) {
+    <p-button label="New" icon="pi pi-plus" severity="secondary" (click)="onCreate()" />
+  }
+  @if (!hideDelete) {
+    <p-button label="Delete" icon="pi pi-trash" severity="danger" outlined (click)="onDelete()" />
+  }
+  @if (!hideExport) {
+    <p-button label="Export" icon="pi pi-external-link" (click)="onExport()" />
+  }
+</div>

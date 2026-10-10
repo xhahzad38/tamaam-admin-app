@@ -1,0 +1,8 @@
+<p-drawer
+  [visible]="showDrawer"
+  [header]="title"
+  position="right"
+  [styleClass]="panelClass"
+  (visibleChange)="onVisibleChange($event)">
+  <ng-content></ng-content>
+</p-drawer>

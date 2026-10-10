@@ -1,0 +1,90 @@
+@if (visible) {
+  <div class="gallery-picker-overlay" (click)="close()">
+    <div class="gallery-picker-panel" (click)="$event.stopPropagation()" role="dialog" aria-modal="true">
+      <p-toast />
+
+      <header class="gallery-picker-panel__head">
+        <h3>{{ multiple ? 'Select images' : 'Select image' }}</h3>
+        <button type="button" class="gallery-picker-panel__close" (click)="close()" aria-label="Close">
+          <i class="pi pi-times"></i>
+        </button>
+      </header>
+
+      <div class="gallery-picker">
+        <div class="gallery-picker__toolbar">
+          <app-search-control (searchChange)="onSearchChange($event)"></app-search-control>
+          <p-button
+            [label]="showUpload() ? 'Hide upload' : 'Upload new image'"
+            icon="pi pi-upload"
+            severity="secondary"
+            [outlined]="true"
+            type="button"
+            (click)="showUpload.set(!showUpload())"
+          />
+        </div>
+
+        @if (showUpload()) {
+          <div class="gallery-picker__upload">
+            <p class="text-sm text-muted-color mb-3">
+              The image is not in the gallery? Upload it here, then select it.
+            </p>
+            <p-fileupload
+              #fileUpload
+              name="Files"
+              mode="advanced"
+              [customUpload]="true"
+              (uploadHandler)="onUpload($event)"
+              [multiple]="multiple"
+              accept="image/*"
+              [maxFileSize]="5242880"
+              [disabled]="uploading()"
+            >
+              <ng-template #empty>
+                <div class="text-center py-3 text-muted-color">Drag and drop an image, or choose a file.</div>
+              </ng-template>
+            </p-fileupload>
+          </div>
+        }
+
+        @if (loading()) {
+          <p class="text-center text-muted-color py-8">Loading gallery…</p>
+        } @else if (images().length === 0) {
+          <p class="text-center text-muted-color py-8">
+            No images found. Use <strong>Upload new image</strong> to add one.
+          </p>
+        } @else {
+          <div class="gallery-picker__grid">
+            @for (image of images(); track image.id) {
+              <button
+                type="button"
+                class="gallery-picker__item"
+                [class.gallery-picker__item--selected]="isSelected(image.id)"
+                (click)="toggle(image)"
+              >
+                <img [src]="imageUrl(image)" [alt]="image.altText || image.fileName" />
+                <span class="gallery-picker__name" [title]="image.fileName">{{ image.fileName }}</span>
+              </button>
+            }
+          </div>
+        }
+
+        <p-paginator
+          class="mt-3"
+          (onPageChange)="onPageChange($event)"
+          [first]="first()"
+          [rows]="pageSize()"
+          [totalRecords]="totalCount()"
+          [rowsPerPageOptions]="[12, 24, 48]"
+        />
+      </div>
+
+      <footer class="gallery-picker-panel__foot">
+        <span class="text-sm text-muted-color">{{ selectedCount }} selected</span>
+        <div class="flex gap-2">
+          <p-button label="Cancel" severity="secondary" [outlined]="true" type="button" (click)="close()" />
+          <p-button label="Use selected" type="button" (click)="confirm()" />
+        </div>
+      </footer>
+    </div>
+  </div>
+}

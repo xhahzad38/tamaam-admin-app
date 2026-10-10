@@ -1,0 +1,112 @@
+<div class="tree-data-grid__viewport">
+<p-treetable
+  [value]="displayValue"
+  [columns]="columns"
+  [dataKey]="dataKey"
+  [scrollable]="false"
+  [tableStyle]="{ 'min-width': '50rem', width: '100%' }"
+>
+ <ng-template #caption>
+  </ng-template>
+  
+  <ng-template #colgroup let-columns>
+    <colgroup>
+      <col style="width: 3rem" />
+      @for (col of columns; track col.field; let i = $index) {
+        <col [style.width]="columnWidth(i)" />
+      }
+      @if (!hideActions) {
+        <col style="width: 8rem" />
+      }
+    </colgroup>
+  </ng-template>
+
+  <ng-template #header let-columns>
+    <tr>
+      <th style="width: 3rem">
+        <p-checkbox
+          [binary]="true"
+          [ngModel]="allRowsSelected"
+          [indeterminate]="someRowsSelected"
+          (onChange)="onHeaderCheckboxChange($event.checked)"
+        />
+      </th>
+      @for (col of columns; track col.field; let i = $index) {
+        <th [style.width]="columnWidth(i)">{{ col.header }}</th>
+      }
+      @if (!hideActions) {
+        <th style="width: 8rem">Actions</th>
+      }
+    </tr>
+  </ng-template>
+
+  <ng-template #body let-rowNode let-rowData="rowData" let-columns="columns">
+    @if (loading) {
+      <tr>
+        <td>
+          <p-skeleton width="1.25rem" height="1.25rem" />
+        </td>
+        @for (col of columns; track col.field; let i = $index) {
+          <td>
+            <span class="flex items-center gap-2">
+              @if (i === 0) {
+                <p-skeleton width="1rem" height="1rem" />
+              }
+              <p-skeleton width="100%" height="1rem" />
+            </span>
+          </td>
+        }
+        @if (!hideActions) {
+          <td>
+            <p-skeleton width="2rem" height="2rem" borderRadius="50%" />
+          </td>
+        }
+      </tr>
+    } @else {
+      <tr [ttRow]="rowNode">
+        <td>
+          <p-checkbox
+            [binary]="true"
+            [ngModel]="isRowSelected(rowNode)"
+            (onChange)="onRowCheckboxChange(rowNode, $event.checked)"
+          />
+        </td>
+        @for (col of columns; track col.field; let i = $index) {
+          <td>
+            <span class="flex items-center gap-2">
+              @if (i === 0) {
+                <p-treeTableToggler [rowNode]="rowNode" />
+              }
+              {{ formatCell(rowData, col.field) }}
+            </span>
+          </td>
+        }
+        @if (!hideActions) {
+          <td>
+            <p-button
+              type="button"
+              icon="pi pi-ellipsis-v"
+              severity="secondary"
+              [text]="true"
+              rounded
+              ariaLabel="Row actions"
+              (click)="openRowMenu($event, rowData)"
+            />
+          </td>
+        }
+      </tr>
+    }
+  </ng-template>
+  @if (!loading) {
+    <ng-template #emptymessage let-columns>
+      <tr>
+        <td [attr.colspan]="emptyColSpan" class="tree-data-grid-empty">
+          No record found
+        </td>
+      </tr>
+    </ng-template>
+  }
+</p-treetable>
+</div>
+
+<p-menu #rowActionMenu [popup]="true" [model]="rowMenuModel" appendTo="body" />

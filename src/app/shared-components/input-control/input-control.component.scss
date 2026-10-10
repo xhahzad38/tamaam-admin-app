@@ -1,0 +1,41 @@
+:host {
+    display: block;
+    position: relative;
+    width: 100%;
+    min-width: 0;
+}
+
+input,
+textarea {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+p-password {
+    display: flex;
+    width: 100%;
+}
+
+:host ::ng-deep .p-password-toggle-mask-icon {
+    cursor: pointer;
+}
+
+.count,
+.text-danger {
+    display: block;
+    margin-top: 0.2rem;
+    font-size: 0.78rem;
+    line-height: 1.2;
+}
+
+.text-danger {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+}
+
+.text-danger.text-danger--flow {
+    position: static;
+}

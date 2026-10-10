@@ -1,0 +1,22 @@
+@if (type === 'toggle') {
+<p-togglebutton [formControl]="asFormControl" onLabel="Active" offLabel="Inactive"
+  [disabled]="readonly" [style]="{ width: '10em' }" />
+} @else if (type === 'textarea') {
+<textarea pTextarea fluid rows="3" [id]="inputId || null" [formControl]="asFormControl" [placeholder]="placeholder" [readonly]="readonly"
+  [attr.maxlength]="maxLength" [invalid]="showError"></textarea>
+} @else if (type === 'password') {
+<p-password fluid [feedback]="false" [toggleMask]="true" [inputId]="inputId || ''" [formControl]="asFormControl"
+  [placeholder]="placeholder" [autocomplete]="autocomplete || undefined" [maxlength]="maxLength"
+  [invalid]="showError" [disabled]="readonly" />
+} @else {
+<input pInputText fluid [id]="inputId || null" [type]="type" [formControl]="asFormControl" [placeholder]="placeholder"
+  [readonly]="readonly" [attr.maxlength]="maxLength" [attr.autocomplete]="autocomplete || null" [invalid]="showError" />
+}
+
+<small class="count" *ngIf="showCount && maxLength && currentLength > 0 && type !== 'toggle'">
+  {{ currentLength }} / {{ maxLength }}
+</small>
+
+<small class="text-danger" [class.text-danger--flow]="flowError" *ngIf="showError">
+  {{ errorMessage }}
+</small>

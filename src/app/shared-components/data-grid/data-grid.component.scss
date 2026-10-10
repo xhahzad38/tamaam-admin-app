@@ -1,0 +1,28 @@
+::ng-deep .p-paginator {
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+}
+
+::ng-deep .p-paginator-current {
+    margin-right: auto; /* pushes it to left */
+}
+
+.data-grid-empty {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: var(--p-text-muted-color);
+}
+
+.data-grid-link {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--p-primary-color);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.data-grid-link:hover {
+  text-decoration: underline;
+}
