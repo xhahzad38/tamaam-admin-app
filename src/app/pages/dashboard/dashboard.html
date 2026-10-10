@@ -1,0 +1,27 @@
+<div class="card">
+    <h1 class="m-0 text-2xl font-semibold">Admin dashboard</h1>
+    <p class="m-0 mt-1 text-sm text-muted-color">Seller onboarding and account status.</p>
+</div>
+
+@if (error()) {
+    <p class="text-red-600" role="alert">{{ error() }}</p>
+}
+
+<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+    <a routerLink="/seller-reviews" [queryParams]="{ queue: 'pending' }" class="card no-underline">
+        <div class="text-sm text-muted-color">Pending review</div>
+        <div class="mt-1 text-3xl font-semibold">{{ stats()?.pendingReview ?? '—' }}</div>
+    </a>
+    <a routerLink="/seller-reviews" [queryParams]="{ queue: 'actionRequired' }" class="card no-underline">
+        <div class="text-sm text-muted-color">Action required</div>
+        <div class="mt-1 text-3xl font-semibold">{{ stats()?.actionRequired ?? '—' }}</div>
+    </a>
+    <a routerLink="/sellers" [queryParams]="{ status: 'Approved' }" class="card no-underline">
+        <div class="text-sm text-muted-color">Approved</div>
+        <div class="mt-1 text-3xl font-semibold">{{ stats()?.approved ?? '—' }}</div>
+    </a>
+    <a routerLink="/sellers" [queryParams]="{ status: 'Suspended' }" class="card no-underline">
+        <div class="text-sm text-muted-color">Suspended</div>
+        <div class="mt-1 text-3xl font-semibold">{{ stats()?.suspended ?? '—' }}</div>
+    </a>
+</div>

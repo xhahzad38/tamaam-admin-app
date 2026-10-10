@@ -134,4 +134,6 @@ export interface SellerReview {
     } | null;
     documents: ReviewDocument[];
     documentRequirements: ReviewRequirement[];
+    suspensionReason: string | null;
+    suspendedAt: string | null;
 }

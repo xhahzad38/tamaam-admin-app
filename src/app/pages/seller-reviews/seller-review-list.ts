@@ -1,7 +1,8 @@
 import { DatePipe } from '@angular/common';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
@@ -24,6 +25,9 @@ interface QueueOption {
 })
 export class SellerReviewList implements OnInit {
     private readonly reviews = inject(SellerReviewService);
+    private readonly route = inject(ActivatedRoute);
+    private readonly router = inject(Router);
+    private readonly destroyRef = inject(DestroyRef);
 
     readonly queues: QueueOption[] = [
         { id: 'pending', label: 'Pending' },
@@ -38,12 +42,17 @@ export class SellerReviewList implements OnInit {
     readonly error = signal<string | null>(null);
 
     ngOnInit(): void {
-        this.load();
+        this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
+            const queue = params.get('queue');
+            if (queue && this.queues.some((option) => option.id === queue)) {
+                this.queue.set(queue);
+            }
+            this.load();
+        });
     }
 
     selectQueue(id: string): void {
-        this.queue.set(id);
-        this.load();
+        void this.router.navigate([], { relativeTo: this.route, queryParams: { queue: id } });
     }
 
     load(): void {

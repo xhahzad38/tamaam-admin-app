@@ -1,8 +1,11 @@
 import { Routes } from '@angular/router';
 import { AppLayout } from './app/layout/component/app.layout';
+import { Dashboard } from './app/pages/dashboard/dashboard';
 import { Documentation } from './app/pages/documentation/documentation';
 import { Notfound } from './app/pages/notfound/notfound';
 import { AuthGuard } from './app/_helpers';
+
+const reviewerRoles = ['SuperAdmin', 'AdminReviewer'];
 
 export const appRoutes: Routes = [
     {
@@ -10,11 +13,17 @@ export const appRoutes: Routes = [
         component: AppLayout,
         canActivate: [AuthGuard],
         children: [
-            { path: '', pathMatch: 'full', redirectTo: '/seller-reviews' },
+            { path: '', component: Dashboard, canActivate: [AuthGuard], data: { roles: reviewerRoles } },
+            {
+                path: 'sellers',
+                canActivate: [AuthGuard],
+                data: { roles: reviewerRoles },
+                loadComponent: () => import('./app/pages/seller-reviews/seller-directory').then((m) => m.SellerDirectoryPage)
+            },
             {
                 path: 'seller-reviews',
                 canActivate: [AuthGuard],
-                data: { roles: ['SuperAdmin', 'AdminReviewer'] },
+                data: { roles: reviewerRoles },
                 loadChildren: () => import('./app/pages/seller-reviews/seller-review.routes')
             },
             { path: 'uikit', loadChildren: () => import('./app/pages/uikit/uikit.routes') },

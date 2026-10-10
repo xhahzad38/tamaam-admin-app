@@ -40,6 +40,10 @@ export class SellerReviewDetail implements OnInit {
     readonly busySection = signal<OnboardingSection | null>(null);
     readonly rejectSection = signal<OnboardingSection | null>(null);
     readonly rejectNote = signal('');
+    readonly suspendOpen = signal(false);
+    readonly suspendNote = signal('');
+    readonly accountBusy = signal(false);
+    readonly ApprovalStatus = ApprovalStatus;
     private organizationId = '';
 
     ngOnInit(): void {
@@ -256,6 +260,53 @@ export class SellerReviewDetail implements OnInit {
 
     requirements(section: OnboardingSection): ReviewRequirement[] {
         return (this.state()?.documentRequirements ?? []).filter((requirement) => requirement.section === section);
+    }
+
+    startSuspend(): void {
+        this.suspendOpen.set(true);
+        this.suspendNote.set('');
+        this.error.set(null);
+    }
+
+    cancelSuspend(): void {
+        this.suspendOpen.set(false);
+        this.suspendNote.set('');
+    }
+
+    confirmSuspend(): void {
+        const note = this.suspendNote().trim();
+        if (!note) {
+            this.error.set('Enter the reason for the suspension.');
+            return;
+        }
+        this.accountBusy.set(true);
+        this.error.set(null);
+        this.reviews.suspend(this.organizationId, note).subscribe({
+            next: (state) => {
+                this.state.set(state);
+                this.accountBusy.set(false);
+                this.cancelSuspend();
+            },
+            error: (error) => {
+                this.accountBusy.set(false);
+                this.error.set(error?.messages?.[0] ?? 'Could not suspend this seller.');
+            }
+        });
+    }
+
+    reinstate(): void {
+        this.accountBusy.set(true);
+        this.error.set(null);
+        this.reviews.reinstate(this.organizationId).subscribe({
+            next: (state) => {
+                this.state.set(state);
+                this.accountBusy.set(false);
+            },
+            error: (error) => {
+                this.accountBusy.set(false);
+                this.error.set(error?.messages?.[0] ?? 'Could not reinstate this seller.');
+            }
+        });
     }
 
     private decide(section: OnboardingSection, decision: SectionDecision, note: string | null): void {
