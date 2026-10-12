@@ -70,6 +70,11 @@ export class AuthenticationService {
     }
 
     homeUrl(): string {
+        const roles: string[] = this.userValue?.roles ?? [];
+        const reviewer = roles.includes('SuperAdmin') || roles.includes('AdminReviewer');
+        if (!reviewer && roles.includes('CatalogAdmin')) {
+            return '/catalog/categories';
+        }
         return '/seller-reviews';
     }
 

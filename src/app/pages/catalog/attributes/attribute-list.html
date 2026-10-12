@@ -1,0 +1,175 @@
+<div class="card">
+    <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div>
+            <h1 class="m-0 text-2xl font-semibold">Attributes</h1>
+            <p class="m-0 mt-1 text-sm text-muted-color">Create attributes such as size or storage, then add their values. Link them to a category from that category’s rules page.</p>
+        </div>
+        <p-button label="Add attribute" icon="pi pi-plus" (onClick)="openCreate()" />
+    </div>
+
+    <div class="mb-4">
+        <p-iconfield>
+            <p-inputicon class="pi pi-search" />
+            <input pInputText type="search" placeholder="Search name or slug" [ngModel]="search()" (ngModelChange)="search.set($event)" (keyup.enter)="searchNow()" />
+        </p-iconfield>
+    </div>
+
+    @if (error() && !attributeDialog() && !valueDialog()) {
+        <p class="text-red-600" role="alert">{{ error() }}</p>
+    }
+
+    <p-table [value]="items()" [loading]="loading()" responsiveLayout="scroll">
+        <ng-template #header>
+            <tr>
+                <th>Name</th>
+                <th>Display name</th>
+                <th>Slug</th>
+                <th>Type</th>
+                <th>Sort</th>
+                <th></th>
+            </tr>
+        </ng-template>
+        <ng-template #body let-attribute>
+            <tr>
+                <td class="font-medium">{{ attribute.name }}</td>
+                <td>{{ attribute.displayName }}</td>
+                <td>{{ attribute.slug }}</td>
+                <td>{{ displayTypeLabel(attribute.displayType) }}</td>
+                <td>{{ attribute.sortOrder }}</td>
+                <td class="whitespace-nowrap">
+                    <button type="button" class="mr-3 cursor-pointer border-0 bg-transparent p-0 font-medium text-primary" (click)="select(attribute)">Values</button>
+                    <button type="button" class="mr-3 cursor-pointer border-0 bg-transparent p-0 font-medium text-primary" (click)="openEdit(attribute)">Edit</button>
+                    <button type="button" class="cursor-pointer border-0 bg-transparent p-0 font-medium text-red-600" (click)="remove(attribute)">Delete</button>
+                </td>
+            </tr>
+        </ng-template>
+        <ng-template #emptymessage>
+            <tr>
+                <td colspan="6" class="text-center text-muted-color">No attributes yet.</td>
+            </tr>
+        </ng-template>
+    </p-table>
+
+    @if (total() > pageSize) {
+        <div class="mt-3 flex items-center gap-2">
+            <p-button label="Previous" size="small" [outlined]="true" [disabled]="page() <= 1" (onClick)="go(page() - 1)" />
+            <span class="text-sm text-muted-color">Page {{ page() }}</span>
+            <p-button label="Next" size="small" [outlined]="true" [disabled]="page() * pageSize >= total()" (onClick)="go(page() + 1)" />
+        </div>
+    }
+</div>
+
+@if (selected(); as attribute) {
+    <div class="card mt-4">
+        <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <div>
+                <h2 class="m-0 text-xl font-semibold">{{ attribute.displayName || attribute.name }} values</h2>
+                <p class="m-0 mt-1 text-sm text-muted-color">Options such as S, M, L or 128 GB.</p>
+            </div>
+            <p-button label="Add value" icon="pi pi-plus" (onClick)="openCreateValue()" />
+        </div>
+        <p-table [value]="values()" [loading]="valuesLoading()">
+            <ng-template #header>
+                <tr>
+                    <th>Name</th>
+                    <th>Display name</th>
+                    <th>Slug</th>
+                    <th>Color</th>
+                    <th>Sort</th>
+                    <th></th>
+                </tr>
+            </ng-template>
+            <ng-template #body let-value>
+                <tr>
+                    <td class="font-medium">{{ value.name }}</td>
+                    <td>{{ value.displayName }}</td>
+                    <td>{{ value.slug }}</td>
+                    <td>
+                        @if (value.colorHex) {
+                            <span class="inline-flex items-center gap-2">
+                                <span class="inline-block h-4 w-4 rounded-full border" [style.background]="value.colorHex"></span>
+                                {{ value.colorHex }}
+                            </span>
+                        } @else {
+                            —
+                        }
+                    </td>
+                    <td>{{ value.sortOrder }}</td>
+                    <td class="whitespace-nowrap">
+                        <button type="button" class="mr-3 cursor-pointer border-0 bg-transparent p-0 font-medium text-primary" (click)="openEditValue(value)">Edit</button>
+                        <button type="button" class="cursor-pointer border-0 bg-transparent p-0 font-medium text-red-600" (click)="removeValue(value)">Delete</button>
+                    </td>
+                </tr>
+            </ng-template>
+            <ng-template #emptymessage>
+                <tr>
+                    <td colspan="6" class="text-center text-muted-color">No values for this attribute.</td>
+                </tr>
+            </ng-template>
+        </p-table>
+    </div>
+}
+
+<p-dialog [header]="attributeForm().id ? 'Edit attribute' : 'Add attribute'" [visible]="attributeDialog()" (visibleChange)="attributeDialog.set($event)" [modal]="true" [style]="{ width: '32rem' }">
+    <div class="flex flex-col gap-4">
+        @if (error()) {
+            <p class="m-0 text-red-600" role="alert">{{ error() }}</p>
+        }
+        <label class="flex flex-col gap-1">
+            <span class="text-sm font-medium">Name</span>
+            <input pInputText class="w-full" maxlength="200" [ngModel]="attributeForm().name" (ngModelChange)="patchAttribute({ name: $event })" />
+        </label>
+        <label class="flex flex-col gap-1">
+            <span class="text-sm font-medium">Display name</span>
+            <input pInputText class="w-full" maxlength="200" [ngModel]="attributeForm().displayName" (ngModelChange)="patchAttribute({ displayName: $event })" />
+        </label>
+        <label class="flex flex-col gap-1">
+            <span class="text-sm font-medium">Slug</span>
+            <input pInputText class="w-full" maxlength="200" placeholder="Generated from the name if left blank" [ngModel]="attributeForm().slug" (ngModelChange)="patchAttribute({ slug: $event })" />
+        </label>
+        <label class="flex flex-col gap-1">
+            <span class="text-sm font-medium">Display type</span>
+            <p-select [options]="displayTypes" optionLabel="label" optionValue="value" appendTo="body" [ngModel]="attributeForm().displayType" (ngModelChange)="patchAttribute({ displayType: $event })" />
+        </label>
+        <label class="flex flex-col gap-1">
+            <span class="text-sm font-medium">Sort order</span>
+            <input pInputText type="number" class="w-full" [ngModel]="attributeForm().sortOrder" (ngModelChange)="patchAttribute({ sortOrder: +$event || 0 })" />
+        </label>
+    </div>
+    <ng-template #footer>
+        <p-button label="Cancel" [text]="true" (onClick)="attributeDialog.set(false)" />
+        <p-button label="Save" icon="pi pi-check" [loading]="saving()" (onClick)="saveAttribute()" />
+    </ng-template>
+</p-dialog>
+
+<p-dialog [header]="valueForm().id ? 'Edit value' : 'Add value'" [visible]="valueDialog()" (visibleChange)="valueDialog.set($event)" [modal]="true" [style]="{ width: '32rem' }">
+    <div class="flex flex-col gap-4">
+        @if (error()) {
+            <p class="m-0 text-red-600" role="alert">{{ error() }}</p>
+        }
+        <label class="flex flex-col gap-1">
+            <span class="text-sm font-medium">Name</span>
+            <input pInputText class="w-full" maxlength="200" [ngModel]="valueForm().name" (ngModelChange)="patchValue({ name: $event })" />
+        </label>
+        <label class="flex flex-col gap-1">
+            <span class="text-sm font-medium">Display name</span>
+            <input pInputText class="w-full" maxlength="200" [ngModel]="valueForm().displayName" (ngModelChange)="patchValue({ displayName: $event })" />
+        </label>
+        <label class="flex flex-col gap-1">
+            <span class="text-sm font-medium">Slug</span>
+            <input pInputText class="w-full" maxlength="200" [ngModel]="valueForm().slug" (ngModelChange)="patchValue({ slug: $event })" />
+        </label>
+        <label class="flex flex-col gap-1">
+            <span class="text-sm font-medium">Color hex</span>
+            <input pInputText class="w-full" maxlength="7" placeholder="#000000" [ngModel]="valueForm().colorHex" (ngModelChange)="patchValue({ colorHex: $event })" />
+        </label>
+        <label class="flex flex-col gap-1">
+            <span class="text-sm font-medium">Sort order</span>
+            <input pInputText type="number" class="w-full" [ngModel]="valueForm().sortOrder" (ngModelChange)="patchValue({ sortOrder: +$event || 0 })" />
+        </label>
+    </div>
+    <ng-template #footer>
+        <p-button label="Cancel" [text]="true" (onClick)="valueDialog.set(false)" />
+        <p-button label="Save" icon="pi pi-check" [loading]="saving()" (onClick)="saveValue()" />
+    </ng-template>
+</p-dialog>

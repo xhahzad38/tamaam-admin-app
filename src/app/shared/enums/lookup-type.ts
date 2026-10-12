@@ -12,7 +12,13 @@ export enum LookupType {
     Gender,
     Country,
     City,
-    StoreCategory
+    StoreCategory,
+    BrandEnforcement,
+    ReturnReason,
+    FeeType,
+    CampaignType,
+    InventoryTransactionType,
+    Courier
 }
 
 export enum SellerType {

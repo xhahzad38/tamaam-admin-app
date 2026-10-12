@@ -1,0 +1,73 @@
+<div class="card">
+    <div class="mb-4">
+        <h1 class="m-0 text-2xl font-semibold">Lookups</h1>
+        <p class="m-0 mt-1 text-sm text-muted-color">Values the rest of the marketplace uses: return reasons, fees, campaigns, inventory transactions, and couriers.</p>
+    </div>
+
+    <div class="mb-4 flex flex-wrap gap-2">
+        @for (type of types; track type.name) {
+            <p-button [label]="type.label" size="small" [outlined]="typeName() !== type.name" (onClick)="selectType(type.name)" />
+        }
+    </div>
+
+    <div class="mb-4">
+        <p-button label="Add value" icon="pi pi-plus" [disabled]="!typeId()" (onClick)="openCreate()" />
+    </div>
+
+    @if (error() && !dialogOpen()) {
+        <p class="text-red-600" role="alert">{{ error() }}</p>
+    }
+
+    <p-table [value]="items()" [loading]="loading()">
+        <ng-template #header>
+            <tr>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Code</th>
+                <th>Sort</th>
+                <th></th>
+            </tr>
+        </ng-template>
+        <ng-template #body let-value>
+            <tr>
+                <td class="font-medium">{{ value.name }}</td>
+                <td>{{ value.description || '—' }}</td>
+                <td>{{ value.code || '—' }}</td>
+                <td>{{ value.sortOrder }}</td>
+                <td class="whitespace-nowrap">
+                    <button type="button" class="mr-3 cursor-pointer border-0 bg-transparent p-0 font-medium text-primary" (click)="openEdit(value)">Edit</button>
+                    <button type="button" class="cursor-pointer border-0 bg-transparent p-0 font-medium text-red-600" (click)="remove(value)">Delete</button>
+                </td>
+            </tr>
+        </ng-template>
+        <ng-template #emptymessage>
+            <tr>
+                <td colspan="5" class="text-center text-muted-color">No values for this lookup yet.</td>
+            </tr>
+        </ng-template>
+    </p-table>
+</div>
+
+<p-dialog [header]="form().id ? 'Edit value' : 'Add value'" [visible]="dialogOpen()" (visibleChange)="dialogOpen.set($event)" [modal]="true" [style]="{ width: '32rem' }">
+    <div class="flex flex-col gap-4">
+        @if (error()) {
+            <p class="m-0 text-red-600" role="alert">{{ error() }}</p>
+        }
+        <label class="flex flex-col gap-1">
+            <span class="text-sm font-medium">Name</span>
+            <input pInputText class="w-full" maxlength="200" [ngModel]="form().name" (ngModelChange)="patch({ name: $event })" />
+        </label>
+        <label class="flex flex-col gap-1">
+            <span class="text-sm font-medium">Description</span>
+            <textarea pTextarea class="w-full" rows="3" [ngModel]="form().description" (ngModelChange)="patch({ description: $event })"></textarea>
+        </label>
+        <label class="flex flex-col gap-1">
+            <span class="text-sm font-medium">Sort order</span>
+            <input pInputText type="number" class="w-full" [ngModel]="form().sortOrder" (ngModelChange)="patch({ sortOrder: +$event || 0 })" />
+        </label>
+    </div>
+    <ng-template #footer>
+        <p-button label="Cancel" [text]="true" (onClick)="dialogOpen.set(false)" />
+        <p-button label="Save" icon="pi pi-check" [loading]="saving()" (onClick)="save()" />
+    </ng-template>
+</p-dialog>

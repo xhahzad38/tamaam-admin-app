@@ -62,7 +62,8 @@ export class Login {
                 }
                 const roles: string[] = user?.roles ?? [];
                 const canReview = roles.includes('SuperAdmin') || roles.includes('AdminReviewer');
-                if (!canReview) {
+                const canCatalog = roles.includes('CatalogAdmin');
+                if (!canReview && !canCatalog) {
                     this.auth.endSession();
                     this.busy.set(false);
                     this.errorMessage.set('This account cannot sign in to the admin app.');

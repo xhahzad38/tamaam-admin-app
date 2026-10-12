@@ -33,7 +33,17 @@ export class AppMenu {
                     { label: 'Onboarding review', icon: 'pi pi-fw pi-verified', routerLink: ['/seller-reviews'] },
                     { label: 'All sellers', icon: 'pi pi-fw pi-users', routerLink: ['/sellers'] }
                 ]
-            }
+            },
+            {
+                label: 'Catalog',
+                items: [
+                    { label: 'Categories', icon: 'pi pi-fw pi-sitemap', routerLink: ['/catalog/categories'] },
+                    { label: 'Attributes', icon: 'pi pi-fw pi-list', routerLink: ['/catalog/attributes'] },
+                    { label: 'Brands', icon: 'pi pi-fw pi-bookmark', routerLink: ['/catalog/brands'] },
+                    { label: 'Brand requests', icon: 'pi pi-fw pi-check-square', routerLink: ['/catalog/brands/requests'] },
+                    { label: 'Lookups', icon: 'pi pi-fw pi-tags', routerLink: ['/catalog/lookups'] }
+                ]
+            },
         ];
     }
 }

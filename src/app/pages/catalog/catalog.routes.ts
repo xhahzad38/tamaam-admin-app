@@ -1,0 +1,29 @@
+import { Routes } from '@angular/router';
+
+export default [
+    {
+        path: 'categories',
+        loadComponent: () => import('./categories/category-tree').then((m) => m.CategoryTreePage)
+    },
+    {
+        path: 'categories/:id',
+        loadComponent: () => import('./categories/category-detail').then((m) => m.CategoryDetailPage)
+    },
+    {
+        path: 'attributes',
+        loadComponent: () => import('./attributes/attribute-list').then((m) => m.AttributeListPage)
+    },
+    {
+        path: 'brands/requests',
+        loadComponent: () => import('./brands/brand-requests').then((m) => m.BrandRequestsPage)
+    },
+    {
+        path: 'brands',
+        loadComponent: () => import('./brands/brand-list').then((m) => m.BrandListPage)
+    },
+    {
+        path: 'lookups',
+        loadComponent: () => import('./lookups/lookup-admin').then((m) => m.LookupAdminPage)
+    },
+    { path: '', pathMatch: 'full', redirectTo: 'categories' }
+] as Routes;

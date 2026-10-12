@@ -1,0 +1,258 @@
+import { DatePipe } from '@angular/common';
+import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { FormsModule } from '@angular/forms';
+import { Observable } from 'rxjs';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ButtonModule } from 'primeng/button';
+import { CheckboxModule } from 'primeng/checkbox';
+import { IconFieldModule } from 'primeng/iconfield';
+import { InputIconModule } from 'primeng/inputicon';
+import { InputTextModule } from 'primeng/inputtext';
+import { SelectModule } from 'primeng/select';
+import { TableModule } from 'primeng/table';
+import { TextareaModule } from 'primeng/textarea';
+import { catalogErrorMessage, localDateTimeValue, toApiDateTime } from '../catalog.util';
+import { CatalogAttribute } from '../attributes/attribute.models';
+import { AttributeService } from '../attributes/attribute.service';
+import { CategoryAttributeLink, CategoryDetail, CategoryReturnPolicy, CategoryWarrantyRule, fulfillmentLabel } from './category.models';
+import { CategoryService } from './category.service';
+
+interface CommissionForm {
+    name: string;
+    fulfillmentType: string;
+    commissionPercent: number;
+    closingFee: number;
+    effectiveFrom: string;
+    effectiveTo: string;
+}
+
+function emptyCommission(): CommissionForm {
+    return {
+        name: 'Default',
+        fulfillmentType: '',
+        commissionPercent: 0,
+        closingFee: 0,
+        effectiveFrom: localDateTimeValue(),
+        effectiveTo: ''
+    };
+}
+
+@Component({
+    selector: 'app-category-detail',
+    standalone: true,
+    imports: [DatePipe, FormsModule, RouterLink, ButtonModule, CheckboxModule, IconFieldModule, InputIconModule, InputTextModule, SelectModule, TableModule, TextareaModule],
+    templateUrl: './category-detail.html'
+})
+export class CategoryDetailPage implements OnInit {
+    private readonly categories = inject(CategoryService);
+    private readonly attributes = inject(AttributeService);
+    private readonly route = inject(ActivatedRoute);
+    private readonly destroyRef = inject(DestroyRef);
+
+    readonly fulfillmentOptions = [
+        { label: 'Both', value: '' },
+        { label: 'FBM', value: '0' },
+        { label: 'FBT', value: '1' }
+    ];
+    readonly fulfillmentLabel = fulfillmentLabel;
+
+    readonly detail = signal<CategoryDetail | null>(null);
+    readonly links = signal<CategoryAttributeLink[]>([]);
+    readonly returns = signal<CategoryReturnPolicy>({ returnsAllowed: true, returnWindowDays: 14, notes: '' });
+    readonly warranty = signal<CategoryWarrantyRule>({ warrantyRequired: false, minDurationMonths: 0, serialOrImeiRequired: false });
+    readonly commission = signal<CommissionForm>(emptyCommission());
+    readonly search = signal('');
+    readonly searchResults = signal<CatalogAttribute[]>([]);
+    readonly loading = signal(false);
+    readonly searching = signal(false);
+    readonly saving = signal<string | null>(null);
+    readonly error = signal<string | null>(null);
+    readonly notice = signal<string | null>(null);
+
+    ngOnInit(): void {
+        this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
+            const id = params.get('id');
+            if (id) {
+                this.load(id);
+            }
+        });
+    }
+
+    load(id: string): void {
+        this.loading.set(true);
+        this.error.set(null);
+        this.categories.get(id).subscribe({
+            next: (detail) => {
+                this.apply(detail);
+                this.loading.set(false);
+            },
+            error: (error) => {
+                this.loading.set(false);
+                this.error.set(catalogErrorMessage(error, 'Could not load this category.'));
+            }
+        });
+    }
+
+    searchAttributes(): void {
+        this.searching.set(true);
+        this.attributes.list(this.search(), 1, 20).subscribe({
+            next: (page) => {
+                this.searchResults.set(page.items ?? []);
+                this.searching.set(false);
+            },
+            error: (error) => {
+                this.searching.set(false);
+                this.error.set(catalogErrorMessage(error, 'Could not search attributes.'));
+            }
+        });
+    }
+
+    addAttribute(attribute: CatalogAttribute): void {
+        this.links.update((rows) => {
+            if (rows.some((row) => row.attributeId === attribute.id)) {
+                return rows;
+            }
+            const displayOrder = rows.reduce((max, row) => Math.max(max, row.displayOrder), 0) + 1;
+            return [
+                ...rows,
+                {
+                    attributeId: attribute.id,
+                    attributeName: attribute.displayName || attribute.name,
+                    isRequired: true,
+                    displayOrder
+                }
+            ];
+        });
+    }
+
+    patchLink(attributeId: string, partial: Partial<CategoryAttributeLink>): void {
+        this.links.update((rows) => rows.map((row) => (row.attributeId === attributeId ? { ...row, ...partial } : row)));
+    }
+
+    removeLink(attributeId: string): void {
+        this.links.update((rows) => rows.filter((row) => row.attributeId !== attributeId));
+    }
+
+    saveAttributes(): void {
+        const id = this.detail()?.id;
+        if (!id) {
+            return;
+        }
+        this.persist('attributes', this.categories.saveAttributes(id, this.links()), 'Category attributes saved.');
+    }
+
+    saveReturns(): void {
+        const id = this.detail()?.id;
+        if (!id) {
+            return;
+        }
+        const current = this.returns();
+        this.persist(
+            'returns',
+            this.categories.saveReturnPolicy(id, {
+                returnsAllowed: current.returnsAllowed,
+                returnWindowDays: current.returnsAllowed ? Number(current.returnWindowDays) || 0 : 0,
+                notes: current.notes?.trim() || null
+            }),
+            'Return policy saved.'
+        );
+    }
+
+    saveWarranty(): void {
+        const id = this.detail()?.id;
+        if (!id) {
+            return;
+        }
+        const current = this.warranty();
+        this.persist(
+            'warranty',
+            this.categories.saveWarranty(id, {
+                warrantyRequired: current.warrantyRequired,
+                minDurationMonths: Number(current.minDurationMonths) || 0,
+                serialOrImeiRequired: current.serialOrImeiRequired
+            }),
+            'Warranty rule saved.'
+        );
+    }
+
+    saveCommission(): void {
+        const id = this.detail()?.id;
+        const current = this.commission();
+        const effectiveFrom = toApiDateTime(current.effectiveFrom);
+        if (!id || !current.name.trim() || !effectiveFrom) {
+            this.error.set('Enter a commission name and a start date.');
+            return;
+        }
+        const effectiveTo = toApiDateTime(current.effectiveTo);
+        this.saving.set('commission');
+        this.error.set(null);
+        this.notice.set(null);
+        this.categories
+            .saveCommission({
+                name: current.name.trim(),
+                categoryId: id,
+                fulfillmentType: current.fulfillmentType === '' ? null : Number(current.fulfillmentType),
+                commissionPercent: Number(current.commissionPercent) || 0,
+                closingFee: Number(current.closingFee) || 0,
+                effectiveFrom,
+                effectiveTo
+            })
+            .subscribe({
+                next: () => {
+                    this.commission.set(emptyCommission());
+                    this.notice.set('Commission rate saved.');
+                    this.load(id);
+                    this.saving.set(null);
+                },
+                error: (error) => {
+                    this.saving.set(null);
+                    this.error.set(catalogErrorMessage(error, 'Could not save the commission rate.'));
+                }
+            });
+    }
+
+    patchReturns(partial: Partial<CategoryReturnPolicy>): void {
+        this.returns.update((current) => ({ ...current, ...partial }));
+    }
+
+    patchWarranty(partial: Partial<CategoryWarrantyRule>): void {
+        this.warranty.update((current) => ({ ...current, ...partial }));
+    }
+
+    patchCommission(partial: Partial<CommissionForm>): void {
+        this.commission.update((current) => ({ ...current, ...partial }));
+    }
+
+    private persist(key: string, request: Observable<CategoryDetail>, notice: string): void {
+        this.saving.set(key);
+        this.error.set(null);
+        this.notice.set(null);
+        request.subscribe({
+            next: (detail) => {
+                this.apply(detail);
+                this.notice.set(notice);
+                this.saving.set(null);
+            },
+            error: (error) => {
+                this.saving.set(null);
+                this.error.set(catalogErrorMessage(error, 'Could not save.'));
+            }
+        });
+    }
+
+    private apply(detail: CategoryDetail): void {
+        this.detail.set(detail);
+        this.links.set([...(detail.attributes ?? [])].sort((a, b) => a.displayOrder - b.displayOrder));
+        this.returns.set({
+            returnsAllowed: detail.returnPolicy?.returnsAllowed ?? true,
+            returnWindowDays: detail.returnPolicy?.returnWindowDays ?? 14,
+            notes: detail.returnPolicy?.notes ?? ''
+        });
+        this.warranty.set({
+            warrantyRequired: detail.warrantyRule?.warrantyRequired ?? false,
+            minDurationMonths: detail.warrantyRule?.minDurationMonths ?? 0,
+            serialOrImeiRequired: detail.warrantyRule?.serialOrImeiRequired ?? false
+        });
+    }
+}
