@@ -1,33 +1,21 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MenuItem } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
-import { InputTextModule } from 'primeng/inputtext';
 import { PaginatorModule, PaginatorState } from 'primeng/paginator';
 import { TableModule } from 'primeng/table';
-import { TextareaModule } from 'primeng/textarea';
 import { LookupTypeValue } from '@/app/shared/services/lookup.service';
 import { BreadCrumbComponent } from '@/app/shared-components/bread-crumb/bread-crumb.component';
+import { InputControlComponent } from '@/app/shared-components/input-control/input-control.component';
 import { SearchControlComponent } from '@/app/shared-components/search-control/search-control.component';
 import { catalogErrorMessage } from '../catalog.util';
 import { LookupValueWrite, MARKETPLACE_LOOKUP_TYPES, LookupAdminService } from './lookup-admin.service';
 
-interface LookupForm {
-    id: string | null;
-    name: string;
-    description: string;
-    sortOrder: number;
-}
-
-function emptyForm(): LookupForm {
-    return { id: null, name: '', description: '', sortOrder: 0 };
-}
-
 @Component({
     selector: 'app-lookup-admin',
     standalone: true,
-    imports: [FormsModule, BreadCrumbComponent, SearchControlComponent, ButtonModule, DialogModule, InputTextModule, PaginatorModule, TableModule, TextareaModule],
+    imports: [ReactiveFormsModule, BreadCrumbComponent, SearchControlComponent, InputControlComponent, ButtonModule, DialogModule, PaginatorModule, TableModule],
     templateUrl: './lookup-admin.html'
 })
 export class LookupAdminPage implements OnInit {
@@ -46,7 +34,12 @@ export class LookupAdminPage implements OnInit {
     readonly saving = signal(false);
     readonly dialogOpen = signal(false);
     readonly error = signal<string | null>(null);
-    readonly form = signal<LookupForm>(emptyForm());
+    editingId: string | null = null;
+    readonly fields = new FormGroup({
+        name: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.maxLength(200)] }),
+        description: new FormControl('', { nonNullable: true, validators: [Validators.maxLength(1000)] }),
+        sortOrder: new FormControl(0, { nonNullable: true })
+    });
 
     ngOnInit(): void {
         this.selectType(this.typeName());
@@ -73,13 +66,14 @@ export class LookupAdminPage implements OnInit {
     }
 
     openCreate(): void {
-        this.form.set(emptyForm());
+        this.editingId = null;
+        this.fields.reset({ name: '', description: '', sortOrder: 0 });
         this.dialogOpen.set(true);
     }
 
     openEdit(value: LookupTypeValue): void {
-        this.form.set({
-            id: value.id,
+        this.editingId = value.id;
+        this.fields.setValue({
             name: value.name,
             description: value.description ?? '',
             sortOrder: value.sortOrder
@@ -87,14 +81,11 @@ export class LookupAdminPage implements OnInit {
         this.dialogOpen.set(true);
     }
 
-    patch(partial: Partial<LookupForm>): void {
-        this.form.update((current) => ({ ...current, ...partial }));
-    }
-
     save(): void {
         const lookupTypeId = this.typeId();
-        const current = this.form();
+        const current = this.fields.getRawValue();
         if (!lookupTypeId || !current.name.trim()) {
+            this.fields.markAllAsTouched();
             this.error.set('Name is required.');
             return;
         }
@@ -106,7 +97,7 @@ export class LookupAdminPage implements OnInit {
         };
         this.saving.set(true);
         this.error.set(null);
-        const request = current.id ? this.lookups.update(current.id, body) : this.lookups.create(body);
+        const request = this.editingId ? this.lookups.update(this.editingId, body) : this.lookups.create(body);
         request.subscribe({
             next: () => {
                 this.saving.set(false);

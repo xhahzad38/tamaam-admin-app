@@ -1,48 +1,22 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MenuItem } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
-import { InputTextModule } from 'primeng/inputtext';
 import { PaginatorModule, PaginatorState } from 'primeng/paginator';
-import { SelectModule } from 'primeng/select';
 import { TableModule } from 'primeng/table';
 import { BreadCrumbComponent } from '@/app/shared-components/bread-crumb/bread-crumb.component';
+import { InputControlComponent } from '@/app/shared-components/input-control/input-control.component';
 import { SearchControlComponent } from '@/app/shared-components/search-control/search-control.component';
+import { SelectControlComponent } from '@/app/shared-components/select-control/select-control.component';
 import { catalogErrorMessage, toSlug } from '../catalog.util';
 import { ATTRIBUTE_DISPLAY_TYPES, AttributeValueWrite, AttributeWrite, CatalogAttribute, CatalogAttributeValue, displayTypeLabel } from './attribute.models';
 import { AttributeService } from './attribute.service';
 
-interface AttributeForm {
-    id: string | null;
-    name: string;
-    displayName: string;
-    slug: string;
-    displayType: number;
-    sortOrder: number;
-}
-
-interface ValueForm {
-    id: string | null;
-    name: string;
-    displayName: string;
-    slug: string;
-    colorHex: string;
-    sortOrder: number;
-}
-
-function emptyAttribute(): AttributeForm {
-    return { id: null, name: '', displayName: '', slug: '', displayType: 0, sortOrder: 0 };
-}
-
-function emptyValue(): ValueForm {
-    return { id: null, name: '', displayName: '', slug: '', colorHex: '', sortOrder: 0 };
-}
-
 @Component({
     selector: 'app-attribute-list',
     standalone: true,
-    imports: [FormsModule, BreadCrumbComponent, SearchControlComponent, ButtonModule, DialogModule, InputTextModule, PaginatorModule, SelectModule, TableModule],
+    imports: [ReactiveFormsModule, BreadCrumbComponent, SearchControlComponent, InputControlComponent, SelectControlComponent, ButtonModule, DialogModule, PaginatorModule, TableModule],
     templateUrl: './attribute-list.html'
 })
 export class AttributeListPage implements OnInit {
@@ -71,8 +45,22 @@ export class AttributeListPage implements OnInit {
     readonly attributeDialog = signal(false);
     readonly valueDialog = signal(false);
     readonly saving = signal(false);
-    readonly attributeForm = signal<AttributeForm>(emptyAttribute());
-    readonly valueForm = signal<ValueForm>(emptyValue());
+    editingAttributeId: string | null = null;
+    editingValueId: string | null = null;
+    readonly attributeFields = new FormGroup({
+        name: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.maxLength(200)] }),
+        displayName: new FormControl('', { nonNullable: true, validators: [Validators.maxLength(200)] }),
+        slug: new FormControl('', { nonNullable: true, validators: [Validators.maxLength(200)] }),
+        displayType: new FormControl(0, { nonNullable: true }),
+        sortOrder: new FormControl(0, { nonNullable: true })
+    });
+    readonly valueFields = new FormGroup({
+        name: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.maxLength(200)] }),
+        displayName: new FormControl('', { nonNullable: true, validators: [Validators.maxLength(200)] }),
+        slug: new FormControl('', { nonNullable: true, validators: [Validators.maxLength(200)] }),
+        colorHex: new FormControl('', { nonNullable: true, validators: [Validators.maxLength(7)] }),
+        sortOrder: new FormControl(0, { nonNullable: true })
+    });
 
     ngOnInit(): void {
         this.load();
@@ -108,13 +96,14 @@ export class AttributeListPage implements OnInit {
     }
 
     openCreate(): void {
-        this.attributeForm.set(emptyAttribute());
+        this.editingAttributeId = null;
+        this.attributeFields.reset({ name: '', displayName: '', slug: '', displayType: 0, sortOrder: 0 });
         this.attributeDialog.set(true);
     }
 
     openEdit(attribute: CatalogAttribute): void {
-        this.attributeForm.set({
-            id: attribute.id,
+        this.editingAttributeId = attribute.id;
+        this.attributeFields.setValue({
             name: attribute.name,
             displayName: attribute.displayName,
             slug: attribute.slug,
@@ -124,12 +113,8 @@ export class AttributeListPage implements OnInit {
         this.attributeDialog.set(true);
     }
 
-    patchAttribute(partial: Partial<AttributeForm>): void {
-        this.attributeForm.update((current) => ({ ...current, ...partial }));
-    }
-
     saveAttribute(): void {
-        const current = this.attributeForm();
+        const current = this.attributeFields.getRawValue();
         const name = current.name.trim();
         const displayName = current.displayName.trim() || name;
         const slug = current.slug.trim() || toSlug(name);
@@ -146,14 +131,14 @@ export class AttributeListPage implements OnInit {
         };
         this.saving.set(true);
         this.error.set(null);
-        const request = current.id ? this.attributes.update(current.id, body) : this.attributes.create(body);
+        const request = this.editingAttributeId ? this.attributes.update(this.editingAttributeId, body) : this.attributes.create(body);
         request.subscribe({
             next: () => {
                 this.saving.set(false);
                 this.attributeDialog.set(false);
                 this.load();
                 const selected = this.selected();
-                if (selected && current.id === selected.id) {
+                if (selected && this.editingAttributeId === selected.id) {
                     this.select({ ...selected, ...body });
                 }
             },
@@ -222,13 +207,14 @@ export class AttributeListPage implements OnInit {
     }
 
     openCreateValue(): void {
-        this.valueForm.set(emptyValue());
+        this.editingValueId = null;
+        this.valueFields.reset({ name: '', displayName: '', slug: '', colorHex: '', sortOrder: 0 });
         this.valueDialog.set(true);
     }
 
     openEditValue(value: CatalogAttributeValue): void {
-        this.valueForm.set({
-            id: value.id,
+        this.editingValueId = value.id;
+        this.valueFields.setValue({
             name: value.name,
             displayName: value.displayName,
             slug: value.slug,
@@ -238,13 +224,9 @@ export class AttributeListPage implements OnInit {
         this.valueDialog.set(true);
     }
 
-    patchValue(partial: Partial<ValueForm>): void {
-        this.valueForm.update((current) => ({ ...current, ...partial }));
-    }
-
     saveValue(): void {
         const attribute = this.selected();
-        const current = this.valueForm();
+        const current = this.valueFields.getRawValue();
         const name = current.name.trim();
         const displayName = current.displayName.trim() || name;
         const slug = current.slug.trim() || toSlug(name);
@@ -262,7 +244,7 @@ export class AttributeListPage implements OnInit {
         };
         this.saving.set(true);
         this.error.set(null);
-        const request = current.id ? this.attributes.updateValue(current.id, body) : this.attributes.createValue(body);
+        const request = this.editingValueId ? this.attributes.updateValue(this.editingValueId, body) : this.attributes.createValue(body);
         request.subscribe({
             next: () => {
                 this.saving.set(false);

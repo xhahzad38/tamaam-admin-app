@@ -127,31 +127,31 @@
     </div>
 }
 
-<p-dialog [header]="attributeForm().id ? 'Edit attribute' : 'Add attribute'" [visible]="attributeDialog()" (visibleChange)="attributeDialog.set($event)" [modal]="true" [style]="{ width: '32rem' }">
+<p-dialog [header]="editingAttributeId ? 'Edit attribute' : 'Add attribute'" [visible]="attributeDialog()" (visibleChange)="attributeDialog.set($event)" [modal]="true" [style]="{ width: '32rem' }">
     <div class="flex flex-col gap-4">
         @if (error()) {
             <p class="m-0 text-red-600" role="alert">{{ error() }}</p>
         }
-        <label class="flex flex-col gap-1">
-            <span class="text-sm font-medium">Name</span>
-            <input pInputText class="w-full" maxlength="200" [ngModel]="attributeForm().name" (ngModelChange)="patchAttribute({ name: $event })" />
-        </label>
-        <label class="flex flex-col gap-1">
-            <span class="text-sm font-medium">Display name</span>
-            <input pInputText class="w-full" maxlength="200" [ngModel]="attributeForm().displayName" (ngModelChange)="patchAttribute({ displayName: $event })" />
-        </label>
-        <label class="flex flex-col gap-1">
-            <span class="text-sm font-medium">Slug</span>
-            <input pInputText class="w-full" maxlength="200" placeholder="Generated from the name if left blank" [ngModel]="attributeForm().slug" (ngModelChange)="patchAttribute({ slug: $event })" />
-        </label>
-        <label class="flex flex-col gap-1">
-            <span class="text-sm font-medium">Display type</span>
-            <p-select [options]="displayTypes" optionLabel="label" optionValue="value" appendTo="body" [ngModel]="attributeForm().displayType" (ngModelChange)="patchAttribute({ displayType: $event })" />
-        </label>
-        <label class="flex flex-col gap-1">
-            <span class="text-sm font-medium">Sort order</span>
-            <input pInputText type="number" class="w-full" [ngModel]="attributeForm().sortOrder" (ngModelChange)="patchAttribute({ sortOrder: +$event || 0 })" />
-        </label>
+        <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium" for="attribute-name">Name</label>
+            <app-input-control inputId="attribute-name" label="Name" [control]="attributeFields.controls.name" [maxLength]="200" [showCount]="false" [flowError]="true" />
+        </div>
+        <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium" for="attribute-display">Display name</label>
+            <app-input-control inputId="attribute-display" label="Display name" [control]="attributeFields.controls.displayName" [maxLength]="200" [showCount]="false" [flowError]="true" />
+        </div>
+        <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium" for="attribute-slug">Slug</label>
+            <app-input-control inputId="attribute-slug" label="Slug" [control]="attributeFields.controls.slug" placeholder="Generated from the name if left blank" [maxLength]="200" [showCount]="false" [flowError]="true" />
+        </div>
+        <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium" for="attribute-type">Display type</label>
+            <app-select-control inputId="attribute-type" label="Display type" [control]="attributeFields.controls.displayType" [options]="displayTypes" optionLabel="label" optionValue="value" [showClear]="false" appendTo="body" [flowError]="true" />
+        </div>
+        <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium" for="attribute-sort">Sort order</label>
+            <app-input-control inputId="attribute-sort" label="Sort order" type="number" [control]="attributeFields.controls.sortOrder" [showCount]="false" [flowError]="true" />
+        </div>
     </div>
     <ng-template #footer>
         <p-button label="Cancel" [text]="true" (onClick)="attributeDialog.set(false)" />
@@ -159,31 +159,31 @@
     </ng-template>
 </p-dialog>
 
-<p-dialog [header]="valueForm().id ? 'Edit value' : 'Add value'" [visible]="valueDialog()" (visibleChange)="valueDialog.set($event)" [modal]="true" [style]="{ width: '32rem' }">
+<p-dialog [header]="editingValueId ? 'Edit value' : 'Add value'" [visible]="valueDialog()" (visibleChange)="valueDialog.set($event)" [modal]="true" [style]="{ width: '32rem' }">
     <div class="flex flex-col gap-4">
         @if (error()) {
             <p class="m-0 text-red-600" role="alert">{{ error() }}</p>
         }
-        <label class="flex flex-col gap-1">
-            <span class="text-sm font-medium">Name</span>
-            <input pInputText class="w-full" maxlength="200" [ngModel]="valueForm().name" (ngModelChange)="patchValue({ name: $event })" />
-        </label>
-        <label class="flex flex-col gap-1">
-            <span class="text-sm font-medium">Display name</span>
-            <input pInputText class="w-full" maxlength="200" [ngModel]="valueForm().displayName" (ngModelChange)="patchValue({ displayName: $event })" />
-        </label>
-        <label class="flex flex-col gap-1">
-            <span class="text-sm font-medium">Slug</span>
-            <input pInputText class="w-full" maxlength="200" [ngModel]="valueForm().slug" (ngModelChange)="patchValue({ slug: $event })" />
-        </label>
-        <label class="flex flex-col gap-1">
-            <span class="text-sm font-medium">Color hex</span>
-            <input pInputText class="w-full" maxlength="7" placeholder="#000000" [ngModel]="valueForm().colorHex" (ngModelChange)="patchValue({ colorHex: $event })" />
-        </label>
-        <label class="flex flex-col gap-1">
-            <span class="text-sm font-medium">Sort order</span>
-            <input pInputText type="number" class="w-full" [ngModel]="valueForm().sortOrder" (ngModelChange)="patchValue({ sortOrder: +$event || 0 })" />
-        </label>
+        <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium" for="value-name">Name</label>
+            <app-input-control inputId="value-name" label="Name" [control]="valueFields.controls.name" [maxLength]="200" [showCount]="false" [flowError]="true" />
+        </div>
+        <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium" for="value-display">Display name</label>
+            <app-input-control inputId="value-display" label="Display name" [control]="valueFields.controls.displayName" [maxLength]="200" [showCount]="false" [flowError]="true" />
+        </div>
+        <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium" for="value-slug">Slug</label>
+            <app-input-control inputId="value-slug" label="Slug" [control]="valueFields.controls.slug" [maxLength]="200" [showCount]="false" [flowError]="true" />
+        </div>
+        <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium" for="value-color">Color hex</label>
+            <app-input-control inputId="value-color" label="Color hex" [control]="valueFields.controls.colorHex" placeholder="#000000" [maxLength]="7" [showCount]="false" [flowError]="true" />
+        </div>
+        <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium" for="value-sort">Sort order</label>
+            <app-input-control inputId="value-sort" label="Sort order" type="number" [control]="valueFields.controls.sortOrder" [showCount]="false" [flowError]="true" />
+        </div>
     </div>
     <ng-template #footer>
         <p-button label="Cancel" [text]="true" (onClick)="valueDialog.set(false)" />

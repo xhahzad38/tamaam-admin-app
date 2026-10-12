@@ -63,23 +63,23 @@
     </div>
 </div>
 
-<p-dialog [header]="form().id ? 'Edit value' : 'Add value'" [visible]="dialogOpen()" (visibleChange)="dialogOpen.set($event)" [modal]="true" [style]="{ width: '32rem' }">
+<p-dialog [header]="editingId ? 'Edit value' : 'Add value'" [visible]="dialogOpen()" (visibleChange)="dialogOpen.set($event)" [modal]="true" [style]="{ width: '32rem' }">
     <div class="flex flex-col gap-4">
         @if (error()) {
             <p class="m-0 text-red-600" role="alert">{{ error() }}</p>
         }
-        <label class="flex flex-col gap-1">
-            <span class="text-sm font-medium">Name</span>
-            <input pInputText class="w-full" maxlength="200" [ngModel]="form().name" (ngModelChange)="patch({ name: $event })" />
-        </label>
-        <label class="flex flex-col gap-1">
-            <span class="text-sm font-medium">Description</span>
-            <textarea pTextarea class="w-full" rows="3" [ngModel]="form().description" (ngModelChange)="patch({ description: $event })"></textarea>
-        </label>
-        <label class="flex flex-col gap-1">
-            <span class="text-sm font-medium">Sort order</span>
-            <input pInputText type="number" class="w-full" [ngModel]="form().sortOrder" (ngModelChange)="patch({ sortOrder: +$event || 0 })" />
-        </label>
+        <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium" for="lookup-name">Name</label>
+            <app-input-control inputId="lookup-name" label="Name" [control]="fields.controls.name" [maxLength]="200" [showCount]="false" [flowError]="true" />
+        </div>
+        <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium" for="lookup-description">Description</label>
+            <app-input-control inputId="lookup-description" label="Description" type="textarea" [control]="fields.controls.description" [maxLength]="1000" [showCount]="false" [flowError]="true" />
+        </div>
+        <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium" for="lookup-sort">Sort order</label>
+            <app-input-control inputId="lookup-sort" label="Sort order" type="number" [control]="fields.controls.sortOrder" [showCount]="false" [flowError]="true" />
+        </div>
     </div>
     <ng-template #footer>
         <p-button label="Cancel" [text]="true" (onClick)="dialogOpen.set(false)" />

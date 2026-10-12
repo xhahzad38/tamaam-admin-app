@@ -19,26 +19,26 @@
     <section class="card xl:col-span-2">
         <h2 class="m-0 text-lg font-semibold">Brand details</h2>
         <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
-            <label class="flex flex-col gap-1">
-                <span class="text-sm font-medium">Name</span>
-                <input pInputText class="w-full" maxlength="200" [ngModel]="form().name" (ngModelChange)="patch({ name: $event })" />
-            </label>
-            <label class="flex flex-col gap-1">
-                <span class="text-sm font-medium">Slug</span>
-                <input pInputText class="w-full" maxlength="200" placeholder="Generated from the name if blank" [ngModel]="form().slug" (ngModelChange)="patch({ slug: $event })" />
-            </label>
-            <label class="flex flex-col gap-1">
-                <span class="text-sm font-medium">Enforcement</span>
-                <p-select class="w-full" [options]="enforcements()" optionLabel="name" optionValue="id" placeholder="Choose enforcement" appendTo="body" [ngModel]="form().enforcementId" (ngModelChange)="patch({ enforcementId: $event })" />
-            </label>
-            <label class="flex flex-col gap-1">
-                <span class="text-sm font-medium">Sort order</span>
-                <input pInputText type="number" class="w-full" [ngModel]="form().sortOrder" (ngModelChange)="patch({ sortOrder: +$event || 0 })" />
-            </label>
-            <label class="flex flex-col gap-1 md:col-span-2">
-                <span class="text-sm font-medium">Description</span>
-                <textarea pTextarea class="w-full" rows="3" maxlength="500" [ngModel]="form().description" (ngModelChange)="patch({ description: $event })"></textarea>
-            </label>
+            <div class="flex flex-col gap-1">
+                <label class="text-sm font-medium" for="brand-name">Name</label>
+                <app-input-control inputId="brand-name" label="Name" [control]="details.controls.name" [maxLength]="200" [showCount]="false" [flowError]="true" />
+            </div>
+            <div class="flex flex-col gap-1">
+                <label class="text-sm font-medium" for="brand-slug">Slug</label>
+                <app-input-control inputId="brand-slug" label="Slug" [control]="details.controls.slug" placeholder="Generated from the name if blank" [maxLength]="200" [showCount]="false" [flowError]="true" />
+            </div>
+            <div class="flex flex-col gap-1">
+                <label class="text-sm font-medium" for="brand-enforcement">Enforcement</label>
+                <app-select-control inputId="brand-enforcement" label="Enforcement" [control]="details.controls.enforcementId" [options]="enforcements()" optionLabel="name" optionValue="id" placeholder="Choose enforcement" [showClear]="false" appendTo="body" [flowError]="true" />
+            </div>
+            <div class="flex flex-col gap-1">
+                <label class="text-sm font-medium" for="brand-sort">Sort order</label>
+                <app-input-control inputId="brand-sort" label="Sort order" type="number" [control]="details.controls.sortOrder" [showCount]="false" [flowError]="true" />
+            </div>
+            <div class="flex flex-col gap-1 md:col-span-2">
+                <label class="text-sm font-medium" for="brand-description">Description</label>
+                <app-input-control inputId="brand-description" label="Description" type="textarea" [control]="details.controls.description" [maxLength]="500" [showCount]="false" [flowError]="true" />
+            </div>
             <div class="flex flex-col gap-2 md:col-span-2">
                 <span class="text-sm font-medium">Brand owner</span>
                 @if (form().ownerOrganizationName) {
@@ -48,7 +48,7 @@
                     </div>
                 }
                 <div class="flex gap-2">
-                    <input pInputText class="w-full" placeholder="Search seller name or email" [ngModel]="ownerSearch()" (ngModelChange)="ownerSearch.set($event)" (keyup.enter)="searchOwners()" />
+                    <app-input-control inputId="brand-owner-search" label="Seller search" [control]="details.controls.ownerSearch" placeholder="Search seller name or email" [showCount]="false" [flowError]="true" />
                     <p-button label="Search" [outlined]="true" (onClick)="searchOwners()" />
                 </div>
                 @if (owners().length) {
@@ -96,14 +96,14 @@
             <p class="m-0 mt-1 text-sm text-muted-color">Trademark certificate, authorization letter, or distribution agreement. PDF, JPG, or PNG, up to 5 MB.</p>
         </div>
         <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
-            <label class="flex flex-col gap-1">
-                <span class="text-sm font-medium">Kind</span>
-                <p-select class="w-full" [options]="documentKinds" optionLabel="label" optionValue="value" [ngModel]="documentKind()" (ngModelChange)="documentKind.set($event)" />
-            </label>
-            <label class="flex flex-col gap-1">
-                <span class="text-sm font-medium">Expires on</span>
-                <input pInputText type="date" class="w-full" [ngModel]="documentExpires()" (ngModelChange)="documentExpires.set($event)" />
-            </label>
+            <div class="flex flex-col gap-1">
+                <label class="text-sm font-medium" for="document-kind">Kind</label>
+                <app-select-control inputId="document-kind" label="Kind" [control]="documentForm.controls.kind" [options]="documentKinds" optionLabel="label" optionValue="value" [showClear]="false" appendTo="body" [flowError]="true" />
+            </div>
+            <div class="flex flex-col gap-1">
+                <label class="text-sm font-medium" for="document-expires">Expires on</label>
+                <app-input-control inputId="document-expires" label="Expires on" type="date" [control]="documentForm.controls.expiresOn" [showCount]="false" [flowError]="true" />
+            </div>
             <label class="flex flex-col gap-1">
                 <span class="text-sm font-medium">File</span>
                 <input type="file" accept="application/pdf,image/jpeg,image/png,.pdf,.jpg,.jpeg,.png" (change)="onDocument($event)" />
@@ -227,34 +227,34 @@
                         </div>
                     }
                 </div>
-                <label class="flex flex-col gap-1">
-                    <span class="text-sm font-medium">Authorization type</span>
-                    <p-select class="w-full" [options]="authorizationTypes" optionLabel="label" optionValue="value" [ngModel]="authType()" (ngModelChange)="authType.set($event)" />
-                </label>
-                <label class="flex flex-col gap-1">
-                    <span class="text-sm font-medium">Supporting document</span>
-                    <p-select class="w-full" [options]="documents()" optionLabel="fileName" optionValue="id" placeholder="None" [showClear]="true" appendTo="body" [ngModel]="authDocumentId()" (ngModelChange)="authDocumentId.set($event)" />
-                </label>
-                <label class="flex flex-col gap-1">
-                    <span class="text-sm font-medium">Approval status</span>
-                    <p-select class="w-full" [options]="approvalOptions" optionLabel="label" optionValue="value" [ngModel]="authStatus()" (ngModelChange)="authStatus.set($event)" />
-                </label>
+                <div class="flex flex-col gap-1">
+                    <label class="text-sm font-medium" for="auth-type">Authorization type</label>
+                    <app-select-control inputId="auth-type" label="Authorization type" [control]="authForm.controls.type" [options]="authorizationTypes" optionLabel="label" optionValue="value" [showClear]="false" appendTo="body" [flowError]="true" />
+                </div>
+                <div class="flex flex-col gap-1">
+                    <label class="text-sm font-medium" for="auth-document">Supporting document</label>
+                    <app-select-control inputId="auth-document" label="Supporting document" [control]="authForm.controls.documentId" [options]="documents()" optionLabel="fileName" optionValue="id" placeholder="None" appendTo="body" [flowError]="true" />
+                </div>
+                <div class="flex flex-col gap-1">
+                    <label class="text-sm font-medium" for="auth-status">Approval status</label>
+                    <app-select-control inputId="auth-status" label="Approval status" [control]="authForm.controls.status" [options]="approvalOptions" optionLabel="label" optionValue="value" [showClear]="false" appendTo="body" [flowError]="true" />
+                </div>
                 <label class="inline-flex items-center gap-2 self-end pb-2">
                     <p-checkbox [binary]="true" [ngModel]="authActive()" (ngModelChange)="authActive.set($event)" />
                     <span>Active</span>
                 </label>
-                <label class="flex flex-col gap-1">
-                    <span class="text-sm font-medium">Valid from</span>
-                    <input pInputText type="date" class="w-full" [ngModel]="authFrom()" (ngModelChange)="authFrom.set($event)" />
-                </label>
-                <label class="flex flex-col gap-1">
-                    <span class="text-sm font-medium">Valid to</span>
-                    <input pInputText type="date" class="w-full" [ngModel]="authTo()" (ngModelChange)="authTo.set($event)" />
-                </label>
-                <label class="flex flex-col gap-1 md:col-span-2">
-                    <span class="text-sm font-medium">Review note</span>
-                    <textarea pTextarea rows="2" maxlength="1000" class="w-full" [ngModel]="authNote()" (ngModelChange)="authNote.set($event)"></textarea>
-                </label>
+                <div class="flex flex-col gap-1">
+                    <label class="text-sm font-medium" for="auth-from">Valid from</label>
+                    <app-input-control inputId="auth-from" label="Valid from" type="date" [control]="authForm.controls.validFrom" [showCount]="false" [flowError]="true" />
+                </div>
+                <div class="flex flex-col gap-1">
+                    <label class="text-sm font-medium" for="auth-to">Valid to</label>
+                    <app-input-control inputId="auth-to" label="Valid to" type="date" [control]="authForm.controls.validTo" [showCount]="false" [flowError]="true" />
+                </div>
+                <div class="flex flex-col gap-1 md:col-span-2">
+                    <label class="text-sm font-medium" for="auth-note">Review note</label>
+                    <app-input-control inputId="auth-note" label="Review note" type="textarea" [control]="authForm.controls.note" [maxLength]="1000" [showCount]="false" [flowError]="true" />
+                </div>
             </div>
             <div class="mt-4">
                 <p-button label="Save authorization" icon="pi pi-check" [loading]="saving()" (onClick)="saveAuthorization()" />

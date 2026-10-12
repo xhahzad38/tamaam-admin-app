@@ -1,7 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormsModule } from '@angular/forms';
+import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { MenuItem } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
@@ -11,6 +11,8 @@ import { SelectModule } from 'primeng/select';
 import { TableModule } from 'primeng/table';
 import { TextareaModule } from 'primeng/textarea';
 import { BreadCrumbComponent } from '@/app/shared-components/bread-crumb/bread-crumb.component';
+import { InputControlComponent } from '@/app/shared-components/input-control/input-control.component';
+import { SelectControlComponent } from '@/app/shared-components/select-control/select-control.component';
 import { APPROVAL_STATUS_LABEL, ApprovalStatus } from '@/app/pages/seller-reviews/seller-review.models';
 import { SearchControlComponent } from '@/app/shared-components/search-control/search-control.component';
 import { catalogErrorMessage, catalogMediaUrl, includesQuery, localDateTimeValue, readImageFile, toApiDateTime } from '../catalog.util';
@@ -63,7 +65,7 @@ function emptyCategory(parentCategoryId: string | null = null): CategoryFormStat
 @Component({
     selector: 'app-category-form',
     standalone: true,
-    imports: [DatePipe, FormsModule, RouterLink, BreadCrumbComponent, SearchControlComponent, ButtonModule, CheckboxModule, InputTextModule, SelectModule, TableModule, TextareaModule],
+    imports: [DatePipe, FormsModule, ReactiveFormsModule, RouterLink, BreadCrumbComponent, SearchControlComponent, InputControlComponent, SelectControlComponent, ButtonModule, CheckboxModule, TableModule],
     templateUrl: './category-form.html'
 })
 export class CategoryFormPage implements OnInit {
@@ -88,6 +90,30 @@ export class CategoryFormPage implements OnInit {
     readonly tree = signal<CategoryNode[]>([]);
     readonly categoryId = signal<string | null>(null);
     readonly form = signal<CategoryFormState>(emptyCategory());
+    readonly details = new FormGroup({
+        name: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.maxLength(200)] }),
+        slug: new FormControl('', { nonNullable: true, validators: [Validators.maxLength(200)] }),
+        parentCategoryId: new FormControl<string | null>(null),
+        sortOrder: new FormControl(0, { nonNullable: true }),
+        description: new FormControl('', { nonNullable: true, validators: [Validators.maxLength(500)] }),
+        badgeText: new FormControl('', { nonNullable: true, validators: [Validators.maxLength(100)] })
+    });
+    readonly returnsForm = new FormGroup({
+        returnWindowDays: new FormControl(14, { nonNullable: true }),
+        notes: new FormControl('', { nonNullable: true, validators: [Validators.maxLength(1000)] })
+    });
+    readonly warrantyForm = new FormGroup({
+        minDurationMonths: new FormControl(0, { nonNullable: true })
+    });
+    readonly commissionForm = new FormGroup({
+        name: new FormControl('Default', { nonNullable: true, validators: [Validators.required, Validators.maxLength(100)] }),
+        fulfillmentType: new FormControl('', { nonNullable: true }),
+        commissionPercent: new FormControl(0, { nonNullable: true }),
+        closingFee: new FormControl(0, { nonNullable: true }),
+        effectiveFrom: new FormControl(localDateTimeValue(), { nonNullable: true }),
+        effectiveTo: new FormControl('', { nonNullable: true })
+    });
+    private readonly orderControls = new Map<string, FormControl<number>>();
     readonly parentOptions = computed(() => {
         const exclude = new Set<string>();
         const id = this.categoryId();
@@ -138,6 +164,7 @@ export class CategoryFormPage implements OnInit {
             }
             const parent = this.route.snapshot.queryParamMap.get('parent');
             this.form.set(emptyCategory(parent));
+            this.details.reset({ name: '', slug: '', parentCategoryId: parent, sortOrder: 0, description: '', badgeText: '' });
             this.categoryId.set(null);
         });
     }
@@ -168,9 +195,21 @@ export class CategoryFormPage implements OnInit {
         this.imageFile = message ? null : file;
     }
 
+    orderControl(row: CategoryAttributeLink): FormControl<number> {
+        let control = this.orderControls.get(row.attributeId);
+        if (!control) {
+            control = new FormControl(row.displayOrder, { nonNullable: true });
+            control.valueChanges.subscribe((value) => this.patchLink(row.attributeId, { displayOrder: Number(value) || 0 }));
+            this.orderControls.set(row.attributeId, control);
+        }
+        return control;
+    }
+
     saveCategory(): void {
-        const current = this.form();
-        if (!current.name.trim() || this.imageError()) {
+        const current = this.details.getRawValue();
+        const flags = this.form();
+        if (this.details.controls.name.invalid || this.imageError()) {
+            this.details.controls.name.markAsTouched();
             this.error.set(this.imageError() || 'Name is required.');
             return;
         }
@@ -180,10 +219,10 @@ export class CategoryFormPage implements OnInit {
             description: current.description.trim() || null,
             parentCategoryId: current.parentCategoryId,
             sortOrder: Number(current.sortOrder) || 0,
-            badge: current.badge,
+            badge: flags.badge,
             badgeText: current.badgeText.trim() || null,
-            requiresExtraApproval: current.requiresExtraApproval,
-            isActive: current.isActive
+            requiresExtraApproval: flags.requiresExtraApproval,
+            isActive: flags.isActive
         };
         this.saving.set('category');
         this.error.set(null);
@@ -253,12 +292,13 @@ export class CategoryFormPage implements OnInit {
             return;
         }
         const current = this.returns();
+        const fields = this.returnsForm.getRawValue();
         this.saving.set('returns');
         this.categories
             .saveReturnPolicy(id, {
                 returnsAllowed: current.returnsAllowed,
-                returnWindowDays: current.returnsAllowed ? Number(current.returnWindowDays) || 0 : 0,
-                notes: current.notes?.trim() || null
+                returnWindowDays: current.returnsAllowed ? Number(fields.returnWindowDays) || 0 : 0,
+                notes: fields.notes.trim() || null
             })
             .subscribe({
                 next: (detail) => {
@@ -283,7 +323,7 @@ export class CategoryFormPage implements OnInit {
         this.categories
             .saveWarranty(id, {
                 warrantyRequired: current.warrantyRequired,
-                minDurationMonths: Number(current.minDurationMonths) || 0,
+                minDurationMonths: Number(this.warrantyForm.controls.minDurationMonths.value) || 0,
                 serialOrImeiRequired: current.serialOrImeiRequired
             })
             .subscribe({
@@ -301,7 +341,7 @@ export class CategoryFormPage implements OnInit {
 
     saveCommission(): void {
         const id = this.categoryId();
-        const current = this.commission();
+        const current = this.commissionForm.getRawValue();
         const effectiveFrom = toApiDateTime(current.effectiveFrom);
         if (!id || !current.name.trim() || !effectiveFrom) {
             this.error.set('Enter a commission name and a start date.');
@@ -379,6 +419,17 @@ export class CategoryFormPage implements OnInit {
             { label: 'Categories', routerLink: '/catalog/categories' },
             { label: detail.name || 'Edit category' }
         ]);
+        this.details.patchValue(
+            {
+                name: detail.name,
+                slug: detail.slug,
+                description: detail.description ?? '',
+                parentCategoryId: detail.parentCategoryId,
+                sortOrder: detail.sortOrder,
+                badgeText: detail.badgeText ?? ''
+            },
+            { emitEvent: false }
+        );
         this.form.set({
             name: detail.name,
             slug: detail.slug,
@@ -397,7 +448,16 @@ export class CategoryFormPage implements OnInit {
     }
 
     private applyRelated(detail: CategoryDetail): void {
+        this.orderControls.clear();
         this.links.set([...(detail.attributes ?? [])].sort((a, b) => a.displayOrder - b.displayOrder));
+        this.returnsForm.patchValue(
+            {
+                returnWindowDays: detail.returnPolicy?.returnWindowDays ?? 14,
+                notes: detail.returnPolicy?.notes ?? ''
+            },
+            { emitEvent: false }
+        );
+        this.warrantyForm.patchValue({ minDurationMonths: detail.warrantyRule?.minDurationMonths ?? 0 }, { emitEvent: false });
         this.returns.set({
             returnsAllowed: detail.returnPolicy?.returnsAllowed ?? true,
             returnWindowDays: detail.returnPolicy?.returnWindowDays ?? 14,

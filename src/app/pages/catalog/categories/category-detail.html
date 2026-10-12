@@ -61,7 +61,7 @@
                             <p-checkbox [binary]="true" [ngModel]="row.isRequired" (ngModelChange)="patchLink(row.attributeId, { isRequired: $event })" />
                         </td>
                         <td>
-                            <input pInputText type="number" class="w-24" [ngModel]="row.displayOrder" (ngModelChange)="patchLink(row.attributeId, { displayOrder: +$event || 0 })" />
+                            <app-input-control label="Display order" type="number" [control]="orderControl(row)" [showCount]="false" [flowError]="true" />
                         </td>
                         <td>
                             <button type="button" class="cursor-pointer border-0 bg-transparent p-0 font-medium text-red-600" (click)="removeLink(row.attributeId)">Remove</button>
@@ -89,11 +89,11 @@
                 </label>
                 <label class="flex flex-col gap-1">
                     <span class="text-sm font-medium">Window (days)</span>
-                    <input pInputText type="number" min="0" max="365" class="w-full" [disabled]="!returns().returnsAllowed" [ngModel]="returns().returnWindowDays" (ngModelChange)="patchReturns({ returnWindowDays: +$event || 0 })" />
+                    <app-input-control inputId="detail-return-days" label="Window" type="number" [control]="returnsForm.controls.returnWindowDays" [readonly]="!returns().returnsAllowed" [showCount]="false" [flowError]="true" />
                 </label>
                 <label class="flex flex-col gap-1">
                     <span class="text-sm font-medium">Notes</span>
-                    <textarea pTextarea rows="3" maxlength="1000" class="w-full" [ngModel]="returns().notes" (ngModelChange)="patchReturns({ notes: $event })"></textarea>
+                    <app-input-control inputId="detail-return-notes" label="Notes" type="textarea" [control]="returnsForm.controls.notes" [maxLength]="1000" [showCount]="false" [flowError]="true" />
                 </label>
                 <div>
                     <p-button label="Save return policy" [loading]="saving() === 'returns'" (onClick)="saveReturns()" />
@@ -110,7 +110,7 @@
                 </label>
                 <label class="flex flex-col gap-1">
                     <span class="text-sm font-medium">Minimum months</span>
-                    <input pInputText type="number" min="0" max="120" class="w-full" [ngModel]="warranty().minDurationMonths" (ngModelChange)="patchWarranty({ minDurationMonths: +$event || 0 })" />
+                    <app-input-control inputId="detail-warranty-months" label="Minimum months" type="number" [control]="warrantyForm.controls.minDurationMonths" [showCount]="false" [flowError]="true" />
                 </label>
                 <label class="inline-flex items-center gap-2">
                     <p-checkbox [binary]="true" [ngModel]="warranty().serialOrImeiRequired" (ngModelChange)="patchWarranty({ serialOrImeiRequired: $event })" />
@@ -160,27 +160,27 @@
             <div class="mt-4 grid max-w-xl gap-4">
                 <label class="flex flex-col gap-1">
                     <span class="text-sm font-medium">Name</span>
-                    <input pInputText class="w-full" maxlength="100" [ngModel]="commission().name" (ngModelChange)="patchCommission({ name: $event })" />
+                    <app-input-control inputId="detail-commission-name" label="Name" [control]="commissionForm.controls.name" [maxLength]="100" [showCount]="false" [flowError]="true" />
                 </label>
                 <label class="flex flex-col gap-1">
                     <span class="text-sm font-medium">Fulfillment</span>
-                    <p-select [options]="fulfillmentOptions" optionLabel="label" optionValue="value" [ngModel]="commission().fulfillmentType" (ngModelChange)="patchCommission({ fulfillmentType: $event })" />
+                    <app-select-control inputId="detail-commission-fulfillment" label="Fulfillment" [control]="commissionForm.controls.fulfillmentType" [options]="fulfillmentOptions" optionLabel="label" optionValue="value" [showClear]="false" appendTo="body" [flowError]="true" />
                 </label>
                 <label class="flex flex-col gap-1">
                     <span class="text-sm font-medium">Commission percent</span>
-                    <input pInputText type="number" min="0" max="100" step="0.01" class="w-full" [ngModel]="commission().commissionPercent" (ngModelChange)="patchCommission({ commissionPercent: +$event || 0 })" />
+                    <app-input-control inputId="detail-commission-percent" label="Commission percent" type="number" [control]="commissionForm.controls.commissionPercent" [showCount]="false" [flowError]="true" />
                 </label>
                 <label class="flex flex-col gap-1">
                     <span class="text-sm font-medium">Closing fee</span>
-                    <input pInputText type="number" min="0" step="0.01" class="w-full" [ngModel]="commission().closingFee" (ngModelChange)="patchCommission({ closingFee: +$event || 0 })" />
+                    <app-input-control inputId="detail-commission-fee" label="Closing fee" type="number" [control]="commissionForm.controls.closingFee" [showCount]="false" [flowError]="true" />
                 </label>
                 <label class="flex flex-col gap-1">
                     <span class="text-sm font-medium">Effective from</span>
-                    <input pInputText type="datetime-local" class="w-full" [ngModel]="commission().effectiveFrom" (ngModelChange)="patchCommission({ effectiveFrom: $event })" />
+                    <app-input-control inputId="detail-commission-from" label="Effective from" type="datetime-local" [control]="commissionForm.controls.effectiveFrom" [showCount]="false" [flowError]="true" />
                 </label>
                 <label class="flex flex-col gap-1">
                     <span class="text-sm font-medium">Effective to</span>
-                    <input pInputText type="datetime-local" class="w-full" [ngModel]="commission().effectiveTo" (ngModelChange)="patchCommission({ effectiveTo: $event })" />
+                    <app-input-control inputId="detail-commission-to" label="Effective to" type="datetime-local" [control]="commissionForm.controls.effectiveTo" [showCount]="false" [flowError]="true" />
                 </label>
                 <div>
                     <p-button label="Add commission rate" [loading]="saving() === 'commission'" (onClick)="saveCommission()" />

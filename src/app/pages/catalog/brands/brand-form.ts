@@ -1,6 +1,6 @@
 import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormsModule } from '@angular/forms';
+import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MenuItem } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
@@ -13,6 +13,8 @@ import { TextareaModule } from 'primeng/textarea';
 import { APPROVAL_STATUS_LABEL, ApprovalStatus } from '@/app/pages/seller-reviews/seller-review.models';
 import { SellerDirectoryItem, SellerReviewService } from '@/app/pages/seller-reviews/seller-review.service';
 import { BreadCrumbComponent } from '@/app/shared-components/bread-crumb/bread-crumb.component';
+import { InputControlComponent } from '@/app/shared-components/input-control/input-control.component';
+import { SelectControlComponent } from '@/app/shared-components/select-control/select-control.component';
 import { SearchControlComponent } from '@/app/shared-components/search-control/search-control.component';
 import { catalogErrorMessage, catalogMediaUrl, readImageFile } from '../catalog.util';
 import { BRAND_AUTHORIZATION_TYPES, BRAND_DOCUMENT_KINDS, Brand, BrandAuthorization, BrandDocument, BrandWrite, EnforcementOption } from './brand.models';
@@ -49,7 +51,7 @@ function emptyBrand(): BrandFormState {
 @Component({
     selector: 'app-brand-form',
     standalone: true,
-    imports: [FormsModule, BreadCrumbComponent, SearchControlComponent, ButtonModule, CheckboxModule, InputTextModule, PaginatorModule, SelectModule, TableModule, TextareaModule],
+    imports: [FormsModule, ReactiveFormsModule, BreadCrumbComponent, SearchControlComponent, InputControlComponent, SelectControlComponent, ButtonModule, CheckboxModule, PaginatorModule, TableModule],
     templateUrl: './brand-form.html'
 })
 export class BrandFormPage implements OnInit {
@@ -75,6 +77,26 @@ export class BrandFormPage implements OnInit {
 
     readonly brandId = signal<string | null>(null);
     readonly form = signal<BrandFormState>(emptyBrand());
+    readonly details = new FormGroup({
+        name: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.maxLength(200)] }),
+        slug: new FormControl('', { nonNullable: true, validators: [Validators.maxLength(200)] }),
+        enforcementId: new FormControl<string | null>(null, Validators.required),
+        sortOrder: new FormControl(0, { nonNullable: true }),
+        description: new FormControl('', { nonNullable: true, validators: [Validators.maxLength(500)] }),
+        ownerSearch: new FormControl('', { nonNullable: true })
+    });
+    readonly documentForm = new FormGroup({
+        kind: new FormControl('TrademarkCertificate', { nonNullable: true }),
+        expiresOn: new FormControl('', { nonNullable: true })
+    });
+    readonly authForm = new FormGroup({
+        type: new FormControl('AuthorizedReseller', { nonNullable: true }),
+        documentId: new FormControl<string | null>(null),
+        status: new FormControl(ApprovalStatus.Approved, { nonNullable: true }),
+        validFrom: new FormControl('', { nonNullable: true }),
+        validTo: new FormControl('', { nonNullable: true }),
+        note: new FormControl('', { nonNullable: true, validators: [Validators.maxLength(1000)] })
+    });
     readonly enforcements = signal<EnforcementOption[]>([]);
     readonly documents = signal<BrandDocument[]>([]);
     readonly documentQuery = signal('');
@@ -113,8 +135,8 @@ export class BrandFormPage implements OnInit {
         this.brands.enforcements().subscribe({
             next: (options) => {
                 this.enforcements.set(options);
-                if (!this.form().enforcementId && options[0]) {
-                    this.patch({ enforcementId: options[0].id });
+                if (!this.details.controls.enforcementId.value && options[0]) {
+                    this.details.controls.enforcementId.setValue(options[0].id);
                 }
             },
             error: (error) => this.error.set(catalogErrorMessage(error, 'Could not load brand enforcement options.'))
@@ -166,7 +188,7 @@ export class BrandFormPage implements OnInit {
     }
 
     searchOwners(): void {
-        this.sellers.directory(this.ownerSearch(), '', 1, 10).subscribe({
+        this.sellers.directory(this.details.controls.ownerSearch.value, '', 1, 10).subscribe({
             next: (page) => this.owners.set(page.items ?? []),
             error: (error) => this.error.set(catalogErrorMessage(error, 'Could not search sellers.'))
         });
@@ -196,8 +218,10 @@ export class BrandFormPage implements OnInit {
     }
 
     saveBrand(): void {
-        const current = this.form();
+        const current = this.details.getRawValue();
+        const flags = this.form();
         if (!current.name.trim() || !current.enforcementId || this.imageError()) {
+            this.details.markAllAsTouched();
             this.error.set('Name and enforcement are required.');
             return;
         }
@@ -207,8 +231,8 @@ export class BrandFormPage implements OnInit {
             description: current.description.trim() || null,
             sortOrder: Number(current.sortOrder) || 0,
             enforcementId: current.enforcementId,
-            ownerOrganizationId: current.ownerOrganizationId,
-            isActive: current.isActive
+            ownerOrganizationId: flags.ownerOrganizationId,
+            isActive: flags.isActive
         };
         this.saving.set(true);
         this.error.set(null);
@@ -230,10 +254,11 @@ export class BrandFormPage implements OnInit {
             return;
         }
         this.saving.set(true);
-        this.brands.uploadDocument(id, this.documentFile, this.documentKind(), this.documentExpires() || null).subscribe({
+        const documentFields = this.documentForm.getRawValue();
+        this.brands.uploadDocument(id, this.documentFile, documentFields.kind, documentFields.expiresOn || null).subscribe({
             next: () => {
                 this.documentFile = null;
-                this.documentExpires.set('');
+                this.documentForm.controls.expiresOn.setValue('');
                 this.saving.set(false);
                 this.notice.set('Document saved.');
                 this.loadDocuments(id);
@@ -267,12 +292,12 @@ export class BrandFormPage implements OnInit {
         this.brands
             .saveAuthorization(id, {
                 storeId,
-                authorizationType: this.authType(),
-                documentId: this.authDocumentId(),
-                approvalStatus: Number(this.authStatus()),
-                validFrom: this.authFrom() || null,
-                validTo: this.authTo() || null,
-                reviewNote: this.authNote().trim() || null,
+                authorizationType: this.authForm.controls.type.value,
+                documentId: this.authForm.controls.documentId.value,
+                approvalStatus: Number(this.authForm.controls.status.value),
+                validFrom: this.authForm.controls.validFrom.value || null,
+                validTo: this.authForm.controls.validTo.value || null,
+                reviewNote: this.authForm.controls.note.value.trim() || null,
                 isActive: this.authActive()
             })
             .subscribe({
@@ -349,6 +374,16 @@ export class BrandFormPage implements OnInit {
 
     private applyBrand(brand: Brand): void {
         this.brandId.set(brand.id);
+        this.details.patchValue(
+            {
+                name: brand.name,
+                slug: brand.slug,
+                description: brand.description ?? '',
+                sortOrder: brand.sortOrder,
+                enforcementId: brand.enforcementId
+            },
+            { emitEvent: false }
+        );
         this.form.set({
             name: brand.name,
             slug: brand.slug,

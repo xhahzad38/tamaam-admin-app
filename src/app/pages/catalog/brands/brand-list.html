@@ -16,7 +16,7 @@
         <app-search-control (searchChange)="onSearch($event)" />
     </div>
 
-    @if (error() && !dialogOpen()) {
+    @if (error()) {
         <p class="text-red-600" role="alert">{{ error() }}</p>
     }
 
@@ -75,81 +75,3 @@
         />
     </div>
 </div>
-
-<p-dialog [header]="form().id ? 'Edit brand' : 'Add brand'" [visible]="dialogOpen()" (visibleChange)="dialogOpen.set($event)" [modal]="true" [style]="{ width: '36rem' }">
-    <div class="flex flex-col gap-4">
-        @if (error()) {
-            <p class="m-0 text-red-600" role="alert">{{ error() }}</p>
-        }
-        <label class="flex flex-col gap-1">
-            <span class="text-sm font-medium">Name</span>
-            <input pInputText class="w-full" maxlength="200" [ngModel]="form().name" (ngModelChange)="patch({ name: $event })" />
-        </label>
-        <label class="flex flex-col gap-1">
-            <span class="text-sm font-medium">Slug</span>
-            <input pInputText class="w-full" maxlength="200" placeholder="Leave blank to generate from the name" [ngModel]="form().slug" (ngModelChange)="patch({ slug: $event })" />
-        </label>
-        <label class="flex flex-col gap-1">
-            <span class="text-sm font-medium">Description</span>
-            <textarea pTextarea class="w-full" rows="3" maxlength="500" [ngModel]="form().description" (ngModelChange)="patch({ description: $event })"></textarea>
-        </label>
-        <label class="flex flex-col gap-1">
-            <span class="text-sm font-medium">Enforcement</span>
-            <p-select
-                [options]="enforcements()"
-                optionLabel="name"
-                optionValue="id"
-                placeholder="Choose enforcement"
-                appendTo="body"
-                [ngModel]="form().enforcementId"
-                (ngModelChange)="patch({ enforcementId: $event })"
-            />
-        </label>
-        <label class="flex flex-col gap-1">
-            <span class="text-sm font-medium">Sort order</span>
-            <input pInputText type="number" class="w-full" [ngModel]="form().sortOrder" (ngModelChange)="patch({ sortOrder: +$event || 0 })" />
-        </label>
-        <div class="flex flex-col gap-2">
-            <span class="text-sm font-medium">Brand owner</span>
-            @if (form().ownerOrganizationName) {
-                <div class="flex items-center justify-between gap-2">
-                    <span>{{ form().ownerOrganizationName }}</span>
-                    <p-button label="Clear" size="small" [text]="true" (onClick)="clearOwner()" />
-                </div>
-            }
-            <div class="flex gap-2">
-                <input pInputText class="w-full" placeholder="Search sellers" [ngModel]="ownerSearch()" (ngModelChange)="ownerSearch.set($event)" (keyup.enter)="searchOwners()" />
-                <p-button label="Search" [outlined]="true" [loading]="searchingOwners()" (onClick)="searchOwners()" />
-            </div>
-            @if (owners().length) {
-                <div class="flex flex-col gap-1">
-                    @for (owner of owners(); track owner.organizationId) {
-                        <button type="button" class="cursor-pointer rounded border border-surface-200 bg-transparent px-3 py-2 text-left" (click)="chooseOwner(owner)">
-                            <span class="font-medium">{{ owner.displayName || owner.legalName }}</span>
-                            <span class="block text-sm text-muted-color">{{ owner.email }}</span>
-                        </button>
-                    }
-                </div>
-            }
-        </div>
-        <label class="inline-flex items-center gap-2">
-            <p-checkbox [binary]="true" [ngModel]="form().isActive" (ngModelChange)="patch({ isActive: $event })" />
-            <span>Active</span>
-        </label>
-        <label class="flex flex-col gap-1">
-            <span class="text-sm font-medium">Logo</span>
-            @if (mediaUrl(form().logoUrl); as src) {
-                <img [src]="src" alt="" class="h-16 w-16 rounded object-contain" />
-            }
-            <input type="file" accept="image/jpeg,image/png,.jpg,.jpeg,.png" (change)="onLogo($event)" />
-            <span class="text-sm text-muted-color">JPG or PNG, up to 2 MB.</span>
-            @if (imageError()) {
-                <span class="text-sm text-red-600">{{ imageError() }}</span>
-            }
-        </label>
-    </div>
-    <ng-template #footer>
-        <p-button label="Cancel" [text]="true" (onClick)="dialogOpen.set(false)" />
-        <p-button label="Save" icon="pi pi-check" [loading]="saving()" (onClick)="save()" />
-    </ng-template>
-</p-dialog>

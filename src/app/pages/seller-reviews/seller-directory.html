@@ -6,11 +6,10 @@
             <h1 class="m-0 text-2xl font-semibold">All sellers</h1>
             <p class="m-0 mt-1 text-sm text-muted-color">Every seller account, including approved and suspended stores.</p>
         </div>
-        <select class="rounded-border border border-surface bg-surface-0 px-3 py-2 text-sm" [ngModel]="status()" (ngModelChange)="setStatus($event)">
-            @for (option of statuses; track option.value) {
-                <option [value]="option.value">{{ option.label }}</option>
-            }
-        </select>
+        <div class="w-56">
+            <label class="mb-1 block text-sm font-medium" for="seller-status">Status</label>
+            <app-select-control inputId="seller-status" label="Status" [control]="statusControl" [options]="statuses" optionLabel="label" optionValue="value" [showClear]="false" [filter]="false" appendTo="body" [flowError]="true" />
+        </div>
     </div>
 
     <div class="mb-4">

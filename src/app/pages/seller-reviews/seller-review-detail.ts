@@ -1,10 +1,10 @@
 import { DatePipe } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { MenuItem } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
-import { TextareaModule } from 'primeng/textarea';
+import { InputControlComponent } from '@/app/shared-components/input-control/input-control.component';
 import { environment } from '@/environments/environment';
 import {
     APPROVAL_STATUS_LABEL,
@@ -29,7 +29,7 @@ interface SummaryRow {
 @Component({
     selector: 'app-seller-review-detail',
     standalone: true,
-    imports: [DatePipe, FormsModule, BreadCrumbComponent, ButtonModule, TextareaModule],
+    imports: [DatePipe, ReactiveFormsModule, BreadCrumbComponent, InputControlComponent, ButtonModule],
     templateUrl: './seller-review-detail.html'
 })
 export class SellerReviewDetail implements OnInit {
@@ -45,9 +45,9 @@ export class SellerReviewDetail implements OnInit {
     readonly error = signal<string | null>(null);
     readonly busySection = signal<OnboardingSection | null>(null);
     readonly rejectSection = signal<OnboardingSection | null>(null);
-    readonly rejectNote = signal('');
+    readonly rejectNote = new FormControl('', { nonNullable: true });
     readonly suspendOpen = signal(false);
-    readonly suspendNote = signal('');
+    readonly suspendNote = new FormControl('', { nonNullable: true });
     readonly accountBusy = signal(false);
     readonly ApprovalStatus = ApprovalStatus;
     private organizationId = '';
@@ -194,13 +194,13 @@ export class SellerReviewDetail implements OnInit {
 
     startReject(section: OnboardingSection): void {
         this.rejectSection.set(section);
-        this.rejectNote.set('');
+        this.rejectNote.setValue('');
         this.error.set(null);
     }
 
     cancelReject(): void {
         this.rejectSection.set(null);
-        this.rejectNote.set('');
+        this.rejectNote.setValue('');
     }
 
     approve(section: OnboardingSection): void {
@@ -208,7 +208,7 @@ export class SellerReviewDetail implements OnInit {
     }
 
     confirmReject(section: OnboardingSection): void {
-        const note = this.rejectNote().trim();
+        const note = this.rejectNote.value.trim();
         if (!note) {
             this.error.set('Tell the seller why this section was rejected.');
             return;
@@ -274,17 +274,17 @@ export class SellerReviewDetail implements OnInit {
 
     startSuspend(): void {
         this.suspendOpen.set(true);
-        this.suspendNote.set('');
+        this.suspendNote.setValue('');
         this.error.set(null);
     }
 
     cancelSuspend(): void {
         this.suspendOpen.set(false);
-        this.suspendNote.set('');
+        this.suspendNote.setValue('');
     }
 
     confirmSuspend(): void {
-        const note = this.suspendNote().trim();
+        const note = this.suspendNote.value.trim();
         if (!note) {
             this.error.set('Enter the reason for the suspension.');
             return;

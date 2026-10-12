@@ -1,7 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormsModule } from '@angular/forms';
+import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Observable } from 'rxjs';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { MenuItem } from 'primeng/api';
@@ -12,6 +12,8 @@ import { SelectModule } from 'primeng/select';
 import { TableModule } from 'primeng/table';
 import { TextareaModule } from 'primeng/textarea';
 import { BreadCrumbComponent } from '@/app/shared-components/bread-crumb/bread-crumb.component';
+import { InputControlComponent } from '@/app/shared-components/input-control/input-control.component';
+import { SelectControlComponent } from '@/app/shared-components/select-control/select-control.component';
 import { SearchControlComponent } from '@/app/shared-components/search-control/search-control.component';
 import { catalogErrorMessage, includesQuery, localDateTimeValue, toApiDateTime } from '../catalog.util';
 import { CatalogAttribute } from '../attributes/attribute.models';
@@ -42,7 +44,7 @@ function emptyCommission(): CommissionForm {
 @Component({
     selector: 'app-category-detail',
     standalone: true,
-    imports: [DatePipe, FormsModule, RouterLink, BreadCrumbComponent, SearchControlComponent, ButtonModule, CheckboxModule, InputTextModule, SelectModule, TableModule, TextareaModule],
+    imports: [DatePipe, FormsModule, ReactiveFormsModule, RouterLink, BreadCrumbComponent, SearchControlComponent, InputControlComponent, SelectControlComponent, ButtonModule, CheckboxModule, TableModule],
     templateUrl: './category-detail.html'
 })
 export class CategoryDetailPage implements OnInit {
@@ -70,6 +72,22 @@ export class CategoryDetailPage implements OnInit {
     readonly visibleRates = computed(() =>
         (this.detail()?.commissionRates ?? []).filter((rate) => includesQuery(this.rateQuery(), rate.name, this.fulfillmentLabel(rate.fulfillmentType), rate.commissionPercent, rate.closingFee))
     );
+    readonly returnsForm = new FormGroup({
+        returnWindowDays: new FormControl(14, { nonNullable: true }),
+        notes: new FormControl('', { nonNullable: true, validators: [Validators.maxLength(1000)] })
+    });
+    readonly warrantyForm = new FormGroup({
+        minDurationMonths: new FormControl(0, { nonNullable: true })
+    });
+    readonly commissionForm = new FormGroup({
+        name: new FormControl('Default', { nonNullable: true, validators: [Validators.required, Validators.maxLength(100)] }),
+        fulfillmentType: new FormControl('', { nonNullable: true }),
+        commissionPercent: new FormControl(0, { nonNullable: true }),
+        closingFee: new FormControl(0, { nonNullable: true }),
+        effectiveFrom: new FormControl(localDateTimeValue(), { nonNullable: true }),
+        effectiveTo: new FormControl('', { nonNullable: true })
+    });
+    private readonly orderControls = new Map<string, FormControl<number>>();
     readonly returns = signal<CategoryReturnPolicy>({ returnsAllowed: true, returnWindowDays: 14, notes: '' });
     readonly warranty = signal<CategoryWarrantyRule>({ warrantyRequired: false, minDurationMonths: 0, serialOrImeiRequired: false });
     readonly commission = signal<CommissionForm>(emptyCommission());
@@ -150,6 +168,16 @@ export class CategoryDetailPage implements OnInit {
         this.links.update((rows) => rows.filter((row) => row.attributeId !== attributeId));
     }
 
+    orderControl(row: CategoryAttributeLink): FormControl<number> {
+        let control = this.orderControls.get(row.attributeId);
+        if (!control) {
+            control = new FormControl(row.displayOrder, { nonNullable: true });
+            control.valueChanges.subscribe((value) => this.patchLink(row.attributeId, { displayOrder: Number(value) || 0 }));
+            this.orderControls.set(row.attributeId, control);
+        }
+        return control;
+    }
+
     saveAttributes(): void {
         const id = this.detail()?.id;
         if (!id) {
@@ -164,12 +192,13 @@ export class CategoryDetailPage implements OnInit {
             return;
         }
         const current = this.returns();
+        const fields = this.returnsForm.getRawValue();
         this.persist(
             'returns',
             this.categories.saveReturnPolicy(id, {
                 returnsAllowed: current.returnsAllowed,
-                returnWindowDays: current.returnsAllowed ? Number(current.returnWindowDays) || 0 : 0,
-                notes: current.notes?.trim() || null
+                returnWindowDays: current.returnsAllowed ? Number(fields.returnWindowDays) || 0 : 0,
+                notes: fields.notes.trim() || null
             }),
             'Return policy saved.'
         );
@@ -185,7 +214,7 @@ export class CategoryDetailPage implements OnInit {
             'warranty',
             this.categories.saveWarranty(id, {
                 warrantyRequired: current.warrantyRequired,
-                minDurationMonths: Number(current.minDurationMonths) || 0,
+                minDurationMonths: Number(this.warrantyForm.controls.minDurationMonths.value) || 0,
                 serialOrImeiRequired: current.serialOrImeiRequired
             }),
             'Warranty rule saved.'
@@ -194,7 +223,7 @@ export class CategoryDetailPage implements OnInit {
 
     saveCommission(): void {
         const id = this.detail()?.id;
-        const current = this.commission();
+        const current = this.commissionForm.getRawValue();
         const effectiveFrom = toApiDateTime(current.effectiveFrom);
         if (!id || !current.name.trim() || !effectiveFrom) {
             this.error.set('Enter a commission name and a start date.');
@@ -263,7 +292,16 @@ export class CategoryDetailPage implements OnInit {
             { label: 'Categories', routerLink: '/catalog/categories' },
             { label: detail.name }
         ]);
+        this.orderControls.clear();
         this.links.set([...(detail.attributes ?? [])].sort((a, b) => a.displayOrder - b.displayOrder));
+        this.returnsForm.patchValue(
+            {
+                returnWindowDays: detail.returnPolicy?.returnWindowDays ?? 14,
+                notes: detail.returnPolicy?.notes ?? ''
+            },
+            { emitEvent: false }
+        );
+        this.warrantyForm.patchValue({ minDurationMonths: detail.warrantyRule?.minDurationMonths ?? 0 }, { emitEvent: false });
         this.returns.set({
             returnsAllowed: detail.returnPolicy?.returnsAllowed ?? true,
             returnWindowDays: detail.returnPolicy?.returnWindowDays ?? 14,

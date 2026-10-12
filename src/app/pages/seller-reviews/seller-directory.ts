@@ -1,7 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormsModule } from '@angular/forms';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MenuItem } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
@@ -10,6 +10,7 @@ import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { BreadCrumbComponent } from '@/app/shared-components/bread-crumb/bread-crumb.component';
 import { SearchControlComponent } from '@/app/shared-components/search-control/search-control.component';
+import { SelectControlComponent } from '@/app/shared-components/select-control/select-control.component';
 import { APPROVAL_STATUS_LABEL, ApprovalStatus } from './seller-review.models';
 import { SellerDirectoryItem, SellerReviewService } from './seller-review.service';
 
@@ -21,7 +22,7 @@ interface StatusOption {
 @Component({
     selector: 'app-seller-directory',
     standalone: true,
-    imports: [DatePipe, FormsModule, RouterLink, BreadCrumbComponent, SearchControlComponent, ButtonModule, PaginatorModule, TableModule, TagModule],
+    imports: [DatePipe, ReactiveFormsModule, RouterLink, BreadCrumbComponent, SearchControlComponent, SelectControlComponent, ButtonModule, PaginatorModule, TableModule, TagModule],
     templateUrl: './seller-directory.html'
 })
 export class SellerDirectoryPage implements OnInit {
@@ -42,6 +43,7 @@ export class SellerDirectoryPage implements OnInit {
     ];
 
     readonly crumbs: MenuItem[] = [{ label: 'All sellers' }];
+    readonly statusControl = new FormControl('', { nonNullable: true });
     readonly status = signal('');
     readonly search = signal('');
     readonly first = signal(0);
@@ -52,8 +54,13 @@ export class SellerDirectoryPage implements OnInit {
     readonly error = signal<string | null>(null);
 
     ngOnInit(): void {
+        this.statusControl.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((status) => this.setStatus(status));
         this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
-            this.status.set(params.get('status') ?? '');
+            const status = params.get('status') ?? '';
+            this.status.set(status);
+            if (this.statusControl.value !== status) {
+                this.statusControl.setValue(status, { emitEvent: false });
+            }
             this.first.set(0);
             this.load();
         });
