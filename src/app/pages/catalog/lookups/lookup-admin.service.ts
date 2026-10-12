@@ -50,9 +50,12 @@ export class LookupAdminService {
         );
     }
 
-    values(typeName: string): Observable<LookupTypeValue[]> {
-        const params = new HttpParams().set('lookupTypeName', typeName).set('pageNo', 1).set('pageSize', 200);
-        return this.http.get<PageResult<LookupTypeValue>>(this.valuesUrl, { params, context: catalogErrors }).pipe(map((page) => page.items ?? []));
+    values(typeName: string, search: string, pageNo: number, pageSize: number): Observable<PageResult<LookupTypeValue>> {
+        let params = new HttpParams().set('lookupTypeName', typeName).set('pageNo', pageNo).set('pageSize', pageSize);
+        if (search.trim()) {
+            params = params.set('searchText', search.trim());
+        }
+        return this.http.get<PageResult<LookupTypeValue>>(this.valuesUrl, { params, context: catalogErrors });
     }
 
     create(body: LookupValueWrite): Observable<string> {

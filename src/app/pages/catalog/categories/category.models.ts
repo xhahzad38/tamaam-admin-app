@@ -1,3 +1,20 @@
+export interface CategoryListItem {
+    id: string;
+    parentCategoryId: string | null;
+    parentName: string | null;
+    name: string;
+    description: string | null;
+    slug: string;
+    level: number;
+    sortOrder: number;
+    badge: boolean;
+    badgeText: string | null;
+    requiresExtraApproval: boolean;
+    isActive: boolean;
+    imageUrl: string | null;
+    approvalStatus: number;
+}
+
 export interface CategoryNode {
     id: string;
     parentCategoryId: string | null;

@@ -3,12 +3,12 @@ import { FormsModule } from '@angular/forms';
 import { MenuItem } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
-import { IconFieldModule } from 'primeng/iconfield';
-import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
+import { PaginatorModule, PaginatorState } from 'primeng/paginator';
 import { SelectModule } from 'primeng/select';
 import { TableModule } from 'primeng/table';
 import { BreadCrumbComponent } from '@/app/shared-components/bread-crumb/bread-crumb.component';
+import { SearchControlComponent } from '@/app/shared-components/search-control/search-control.component';
 import { catalogErrorMessage, toSlug } from '../catalog.util';
 import { ATTRIBUTE_DISPLAY_TYPES, AttributeValueWrite, AttributeWrite, CatalogAttribute, CatalogAttributeValue, displayTypeLabel } from './attribute.models';
 import { AttributeService } from './attribute.service';
@@ -42,7 +42,7 @@ function emptyValue(): ValueForm {
 @Component({
     selector: 'app-attribute-list',
     standalone: true,
-    imports: [FormsModule, BreadCrumbComponent, ButtonModule, DialogModule, IconFieldModule, InputIconModule, InputTextModule, SelectModule, TableModule],
+    imports: [FormsModule, BreadCrumbComponent, SearchControlComponent, ButtonModule, DialogModule, InputTextModule, PaginatorModule, SelectModule, TableModule],
     templateUrl: './attribute-list.html'
 })
 export class AttributeListPage implements OnInit {
@@ -53,15 +53,19 @@ export class AttributeListPage implements OnInit {
     readonly displayTypeLabel = displayTypeLabel;
 
     readonly items = signal<CatalogAttribute[]>([]);
-    readonly total = signal(0);
-    readonly page = signal(1);
-    readonly pageSize = 20;
+    readonly first = signal(0);
+    readonly rows = signal(10);
+    readonly totalRecords = signal(0);
     readonly search = signal('');
     readonly loading = signal(false);
     readonly error = signal<string | null>(null);
 
     readonly selected = signal<CatalogAttribute | null>(null);
     readonly values = signal<CatalogAttributeValue[]>([]);
+    readonly valueQuery = signal('');
+    readonly valueFirst = signal(0);
+    readonly valueRows = signal(10);
+    readonly valueTotal = signal(0);
     readonly valuesLoading = signal(false);
 
     readonly attributeDialog = signal(false);
@@ -75,12 +79,13 @@ export class AttributeListPage implements OnInit {
     }
 
     load(): void {
+        const pageNo = Math.floor(this.first() / this.rows()) + 1;
         this.loading.set(true);
         this.error.set(null);
-        this.attributes.list(this.search(), this.page(), this.pageSize).subscribe({
+        this.attributes.list(this.search(), pageNo, this.rows()).subscribe({
             next: (page) => {
                 this.items.set(page.items ?? []);
-                this.total.set(page.totalCount ?? 0);
+                this.totalRecords.set(page.totalCount ?? 0);
                 this.loading.set(false);
             },
             error: (error) => {
@@ -90,17 +95,15 @@ export class AttributeListPage implements OnInit {
         });
     }
 
-    searchNow(): void {
-        this.page.set(1);
+    onSearch(value: string): void {
+        this.search.set(value);
+        this.first.set(0);
         this.load();
     }
 
-    go(page: number): void {
-        const pages = Math.max(1, Math.ceil(this.total() / this.pageSize));
-        if (page < 1 || page > pages) {
-            return;
-        }
-        this.page.set(page);
+    pageChange(event: PaginatorState): void {
+        this.first.set(event.first ?? 0);
+        this.rows.set(event.rows ?? 10);
         this.load();
     }
 
@@ -179,10 +182,36 @@ export class AttributeListPage implements OnInit {
 
     select(attribute: CatalogAttribute): void {
         this.selected.set(attribute);
+        this.valueQuery.set('');
+        this.valueFirst.set(0);
+        this.loadValues(attribute);
+    }
+
+    onValueSearch(value: string): void {
+        this.valueQuery.set(value);
+        this.valueFirst.set(0);
+        const attribute = this.selected();
+        if (attribute) {
+            this.loadValues(attribute);
+        }
+    }
+
+    onValuePage(event: PaginatorState): void {
+        this.valueFirst.set(event.first ?? 0);
+        this.valueRows.set(event.rows ?? 10);
+        const attribute = this.selected();
+        if (attribute) {
+            this.loadValues(attribute);
+        }
+    }
+
+    private loadValues(attribute: CatalogAttribute): void {
+        const pageNo = Math.floor(this.valueFirst() / this.valueRows()) + 1;
         this.valuesLoading.set(true);
-        this.attributes.values(attribute.id).subscribe({
-            next: (values) => {
-                this.values.set(values);
+        this.attributes.values(attribute.id, this.valueQuery(), pageNo, this.valueRows()).subscribe({
+            next: (page) => {
+                this.values.set(page.items ?? []);
+                this.valueTotal.set(page.totalCount ?? 0);
                 this.valuesLoading.set(false);
             },
             error: (error) => {

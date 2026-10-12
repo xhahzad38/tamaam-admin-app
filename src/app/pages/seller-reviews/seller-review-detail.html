@@ -1,5 +1,6 @@
+<app-bread-crumb [items]="crumbs()" />
+
 <div class="card">
-    <a routerLink="/seller-reviews" class="text-sm font-medium text-primary no-underline hover:underline">Back to queue</a>
 
     @if (loading()) {
         <p class="mt-4 text-muted-color">Loading application…</p>

@@ -35,6 +35,14 @@ export function readImageFile(file: File | null): string | null {
     return null;
 }
 
+export function includesQuery(query: string, ...values: Array<string | number | null | undefined>): boolean {
+    const text = query.trim().toLowerCase();
+    if (!text) {
+        return true;
+    }
+    return values.some((value) => String(value ?? '').toLowerCase().includes(text));
+}
+
 export function toSlug(value: string): string {
     return value
         .trim()

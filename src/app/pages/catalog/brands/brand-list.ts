@@ -7,11 +7,13 @@ import { CheckboxModule } from 'primeng/checkbox';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
+import { PaginatorModule, PaginatorState } from 'primeng/paginator';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { TextareaModule } from 'primeng/textarea';
 import { SellerDirectoryItem, SellerReviewService } from '@/app/pages/seller-reviews/seller-review.service';
 import { BreadCrumbComponent } from '@/app/shared-components/bread-crumb/bread-crumb.component';
+import { SearchControlComponent } from '@/app/shared-components/search-control/search-control.component';
 import { catalogErrorMessage, catalogMediaUrl, readImageFile } from '../catalog.util';
 import { Brand, BrandWrite, EnforcementOption } from './brand.models';
 import { BrandService } from './brand.service';
@@ -47,7 +49,7 @@ function emptyForm(): BrandForm {
 @Component({
     selector: 'app-brand-list',
     standalone: true,
-    imports: [FormsModule, BreadCrumbComponent, ButtonModule, CheckboxModule, DialogModule, InputTextModule, SelectModule, TableModule, TagModule, TextareaModule],
+    imports: [FormsModule, BreadCrumbComponent, SearchControlComponent, ButtonModule, CheckboxModule, DialogModule, InputTextModule, PaginatorModule, SelectModule, TableModule, TagModule, TextareaModule],
     templateUrl: './brand-list.html'
 })
 export class BrandListPage implements OnInit {
@@ -56,6 +58,10 @@ export class BrandListPage implements OnInit {
     private readonly router = inject(Router);
 
     readonly items = signal<Brand[]>([]);
+    readonly query = signal('');
+    readonly first = signal(0);
+    readonly rows = signal(10);
+    readonly totalRecords = signal(0);
     readonly enforcements = signal<EnforcementOption[]>([]);
     readonly owners = signal<SellerDirectoryItem[]>([]);
     readonly loading = signal(false);
@@ -88,11 +94,13 @@ export class BrandListPage implements OnInit {
     }
 
     load(): void {
+        const pageNo = Math.floor(this.first() / this.rows()) + 1;
         this.loading.set(true);
         this.error.set(null);
-        this.brands.list().subscribe({
-            next: (items) => {
-                this.items.set(items);
+        this.brands.list(this.query(), pageNo, this.rows()).subscribe({
+            next: (page) => {
+                this.items.set(page.items ?? []);
+                this.totalRecords.set(page.totalCount ?? 0);
                 this.loading.set(false);
             },
             error: (error) => {
@@ -100,6 +108,18 @@ export class BrandListPage implements OnInit {
                 this.error.set(catalogErrorMessage(error, 'Could not load brands.'));
             }
         });
+    }
+
+    onSearch(value: string): void {
+        this.query.set(value);
+        this.first.set(0);
+        this.load();
+    }
+
+    pageChange(event: PaginatorState): void {
+        this.first.set(event.first ?? 0);
+        this.rows.set(event.rows ?? 10);
+        this.load();
     }
 
     openCreate(): void {
@@ -147,7 +167,7 @@ export class BrandListPage implements OnInit {
         this.searchingOwners.set(true);
         this.sellers.directory(this.ownerSearch(), '', 1, 10).subscribe({
             next: (page) => {
-                this.owners.set(page.data ?? []);
+                this.owners.set(page.items ?? []);
                 this.searchingOwners.set(false);
             },
             error: (error) => {

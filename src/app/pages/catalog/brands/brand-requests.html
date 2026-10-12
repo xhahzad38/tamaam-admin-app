@@ -6,6 +6,10 @@
         <p class="m-0 mt-1 text-sm text-muted-color">Pending edits to name, slug, description, or logo. Brands created here are already approved.</p>
     </div>
 
+    <div class="mb-4">
+        <app-search-control (searchChange)="onSearch($event)" />
+    </div>
+
     @if (error()) {
         <p class="text-red-600" role="alert">{{ error() }}</p>
     }
@@ -42,4 +46,16 @@
             </tr>
         </ng-template>
     </p-table>
+
+    <div class="mt-3 flex justify-between">
+        <p-paginator
+            (onPageChange)="pageChange($event)"
+            [first]="first()"
+            [rows]="rows()"
+            [totalRecords]="totalRecords()"
+            [rowsPerPageOptions]="[10, 20, 30]"
+            [showCurrentPageReport]="true"
+            currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
+        />
+    </div>
 </div>

@@ -9,14 +9,19 @@
         <p-button label="Add category" icon="pi pi-plus" (onClick)="openForm()" />
     </div>
 
+    <div class="mb-4">
+        <app-search-control (searchChange)="onSearch($event)" />
+    </div>
+
     @if (error()) {
         <p class="text-red-600" role="alert">{{ error() }}</p>
     }
 
-    <p-treetable [value]="nodes()" [loading]="loading()" [tableStyle]="{ 'min-width': '56rem' }">
+    <p-table [value]="items()" [loading]="loading()" responsiveLayout="scroll">
         <ng-template #header>
             <tr>
                 <th>Name</th>
+                <th>Parent</th>
                 <th>Slug</th>
                 <th>Sort</th>
                 <th>Extra approval</th>
@@ -24,39 +29,51 @@
                 <th></th>
             </tr>
         </ng-template>
-        <ng-template #body let-rowNode let-rowData="rowData">
-            <tr [ttRow]="rowNode">
+        <ng-template #body let-item>
+            <tr>
                 <td>
                     <span class="inline-flex items-center gap-2">
-                        <p-treeTableToggler [rowNode]="rowNode" />
-                        <span class="font-medium">{{ rowData.name }}</span>
-                        @if (!rowData.isActive) {
+                        <span class="font-medium">{{ item.name }}</span>
+                        @if (!item.isActive) {
                             <p-tag value="Inactive" severity="secondary" />
                         }
                     </span>
                 </td>
-                <td>{{ rowData.slug }}</td>
-                <td>{{ rowData.sortOrder }}</td>
-                <td>{{ rowData.requiresExtraApproval ? 'Yes' : 'No' }}</td>
+                <td>{{ item.parentName || '—' }}</td>
+                <td>{{ item.slug }}</td>
+                <td>{{ item.sortOrder }}</td>
+                <td>{{ item.requiresExtraApproval ? 'Yes' : 'No' }}</td>
                 <td>
-                    @if (mediaUrl(rowData.imageUrl); as src) {
-                        <img [src]="src" [alt]="rowData.name" class="h-10 w-10 rounded object-cover" />
+                    @if (mediaUrl(item.imageUrl); as src) {
+                        <img [src]="src" [alt]="item.name" class="h-10 w-10 rounded object-cover" />
                     } @else {
                         <span class="text-muted-color">—</span>
                     }
                 </td>
                 <td class="whitespace-nowrap">
-                    <a [routerLink]="['/catalog/categories', rowData.id]" class="mr-3 font-medium text-primary no-underline hover:underline">Rules</a>
-                    <button type="button" class="mr-3 cursor-pointer border-0 bg-transparent p-0 font-medium text-primary" (click)="openForm(rowData.id)">Add child</button>
-                    <button type="button" class="mr-3 cursor-pointer border-0 bg-transparent p-0 font-medium text-primary" (click)="openEdit(rowData.id)">Edit</button>
-                    <button type="button" class="cursor-pointer border-0 bg-transparent p-0 font-medium text-red-600" (click)="remove(rowData)">Delete</button>
+                    <a [routerLink]="['/catalog/categories', item.id]" class="mr-3 font-medium text-primary no-underline hover:underline">Rules</a>
+                    <button type="button" class="mr-3 cursor-pointer border-0 bg-transparent p-0 font-medium text-primary" (click)="openForm(item.id)">Add child</button>
+                    <button type="button" class="mr-3 cursor-pointer border-0 bg-transparent p-0 font-medium text-primary" (click)="openEdit(item.id)">Edit</button>
+                    <button type="button" class="cursor-pointer border-0 bg-transparent p-0 font-medium text-red-600" (click)="remove(item)">Delete</button>
                 </td>
             </tr>
         </ng-template>
         <ng-template #emptymessage>
             <tr>
-                <td colspan="6" class="text-center text-muted-color">No categories yet.</td>
+                <td colspan="7" class="text-center text-muted-color">No categories found.</td>
             </tr>
         </ng-template>
-    </p-treetable>
+    </p-table>
+
+    <div class="mt-3 flex justify-between">
+        <p-paginator
+            (onPageChange)="pageChange($event)"
+            [first]="first()"
+            [rows]="rows()"
+            [totalRecords]="totalRecords()"
+            [rowsPerPageOptions]="[10, 20, 30]"
+            [showCurrentPageReport]="true"
+            currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
+        />
+    </div>
 </div>

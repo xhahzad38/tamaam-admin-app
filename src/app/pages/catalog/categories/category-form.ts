@@ -12,7 +12,8 @@ import { TableModule } from 'primeng/table';
 import { TextareaModule } from 'primeng/textarea';
 import { BreadCrumbComponent } from '@/app/shared-components/bread-crumb/bread-crumb.component';
 import { APPROVAL_STATUS_LABEL, ApprovalStatus } from '@/app/pages/seller-reviews/seller-review.models';
-import { catalogErrorMessage, catalogMediaUrl, localDateTimeValue, readImageFile, toApiDateTime } from '../catalog.util';
+import { SearchControlComponent } from '@/app/shared-components/search-control/search-control.component';
+import { catalogErrorMessage, catalogMediaUrl, includesQuery, localDateTimeValue, readImageFile, toApiDateTime } from '../catalog.util';
 import { CatalogAttribute } from '../attributes/attribute.models';
 import { AttributeService } from '../attributes/attribute.service';
 import { CategoryAttributeLink, CategoryDetail, CategoryNode, CategoryReturnPolicy, CategoryWarrantyRule, CategoryWrite, collectCategoryIds, findCategory, flattenCategories, fulfillmentLabel } from './category.models';
@@ -62,7 +63,7 @@ function emptyCategory(parentCategoryId: string | null = null): CategoryFormStat
 @Component({
     selector: 'app-category-form',
     standalone: true,
-    imports: [DatePipe, FormsModule, RouterLink, BreadCrumbComponent, ButtonModule, CheckboxModule, InputTextModule, SelectModule, TableModule, TextareaModule],
+    imports: [DatePipe, FormsModule, RouterLink, BreadCrumbComponent, SearchControlComponent, ButtonModule, CheckboxModule, InputTextModule, SelectModule, TableModule, TextareaModule],
     templateUrl: './category-form.html'
 })
 export class CategoryFormPage implements OnInit {
@@ -99,6 +100,8 @@ export class CategoryFormPage implements OnInit {
         return flattenCategories(this.tree()).filter((option) => !exclude.has(option.id));
     });
     readonly links = signal<CategoryAttributeLink[]>([]);
+    readonly linkQuery = signal('');
+    readonly visibleLinks = computed(() => this.links().filter((row) => includesQuery(this.linkQuery(), row.attributeName)));
     readonly returns = signal<CategoryReturnPolicy>({ returnsAllowed: true, returnWindowDays: 14, notes: '' });
     readonly warranty = signal<CategoryWarrantyRule>({ warrantyRequired: false, minDurationMonths: 0, serialOrImeiRequired: false });
     readonly commission = signal<CommissionForm>({
@@ -110,6 +113,8 @@ export class CategoryFormPage implements OnInit {
         effectiveTo: ''
     });
     readonly rates = signal<CategoryDetail['commissionRates']>([]);
+    readonly rateQuery = signal('');
+    readonly visibleRates = computed(() => this.rates().filter((rate) => includesQuery(this.rateQuery(), rate.name, this.fulfillmentLabel(rate.fulfillmentType), rate.commissionPercent, rate.closingFee)));
     readonly search = signal('');
     readonly searchResults = signal<CatalogAttribute[]>([]);
     readonly loading = signal(false);
@@ -191,6 +196,11 @@ export class CategoryFormPage implements OnInit {
                 this.error.set(catalogErrorMessage(error, 'Could not save the category.'));
             }
         });
+    }
+
+    onAttributeSearch(value: string): void {
+        this.search.set(value);
+        this.searchAttributes();
     }
 
     searchAttributes(): void {

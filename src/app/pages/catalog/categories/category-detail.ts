@@ -1,5 +1,5 @@
 import { DatePipe } from '@angular/common';
-import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { Observable } from 'rxjs';
@@ -7,14 +7,13 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { MenuItem } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { CheckboxModule } from 'primeng/checkbox';
-import { IconFieldModule } from 'primeng/iconfield';
-import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
 import { TableModule } from 'primeng/table';
 import { TextareaModule } from 'primeng/textarea';
 import { BreadCrumbComponent } from '@/app/shared-components/bread-crumb/bread-crumb.component';
-import { catalogErrorMessage, localDateTimeValue, toApiDateTime } from '../catalog.util';
+import { SearchControlComponent } from '@/app/shared-components/search-control/search-control.component';
+import { catalogErrorMessage, includesQuery, localDateTimeValue, toApiDateTime } from '../catalog.util';
 import { CatalogAttribute } from '../attributes/attribute.models';
 import { AttributeService } from '../attributes/attribute.service';
 import { CategoryAttributeLink, CategoryDetail, CategoryReturnPolicy, CategoryWarrantyRule, fulfillmentLabel } from './category.models';
@@ -43,7 +42,7 @@ function emptyCommission(): CommissionForm {
 @Component({
     selector: 'app-category-detail',
     standalone: true,
-    imports: [DatePipe, FormsModule, RouterLink, BreadCrumbComponent, ButtonModule, CheckboxModule, IconFieldModule, InputIconModule, InputTextModule, SelectModule, TableModule, TextareaModule],
+    imports: [DatePipe, FormsModule, RouterLink, BreadCrumbComponent, SearchControlComponent, ButtonModule, CheckboxModule, InputTextModule, SelectModule, TableModule, TextareaModule],
     templateUrl: './category-detail.html'
 })
 export class CategoryDetailPage implements OnInit {
@@ -65,6 +64,12 @@ export class CategoryDetailPage implements OnInit {
 
     readonly detail = signal<CategoryDetail | null>(null);
     readonly links = signal<CategoryAttributeLink[]>([]);
+    readonly linkQuery = signal('');
+    readonly visibleLinks = computed(() => this.links().filter((row) => includesQuery(this.linkQuery(), row.attributeName)));
+    readonly rateQuery = signal('');
+    readonly visibleRates = computed(() =>
+        (this.detail()?.commissionRates ?? []).filter((rate) => includesQuery(this.rateQuery(), rate.name, this.fulfillmentLabel(rate.fulfillmentType), rate.commissionPercent, rate.closingFee))
+    );
     readonly returns = signal<CategoryReturnPolicy>({ returnsAllowed: true, returnWindowDays: 14, notes: '' });
     readonly warranty = signal<CategoryWarrantyRule>({ warrantyRequired: false, minDurationMonths: 0, serialOrImeiRequired: false });
     readonly commission = signal<CommissionForm>(emptyCommission());
@@ -98,6 +103,11 @@ export class CategoryDetailPage implements OnInit {
                 this.error.set(catalogErrorMessage(error, 'Could not load this category.'));
             }
         });
+    }
+
+    onAttributeSearch(value: string): void {
+        this.search.set(value);
+        this.searchAttributes();
     }
 
     searchAttributes(): void {

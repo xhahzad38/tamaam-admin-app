@@ -4,10 +4,12 @@ import { MenuItem } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
+import { PaginatorModule, PaginatorState } from 'primeng/paginator';
 import { TableModule } from 'primeng/table';
 import { TextareaModule } from 'primeng/textarea';
 import { LookupTypeValue } from '@/app/shared/services/lookup.service';
 import { BreadCrumbComponent } from '@/app/shared-components/bread-crumb/bread-crumb.component';
+import { SearchControlComponent } from '@/app/shared-components/search-control/search-control.component';
 import { catalogErrorMessage } from '../catalog.util';
 import { LookupValueWrite, MARKETPLACE_LOOKUP_TYPES, LookupAdminService } from './lookup-admin.service';
 
@@ -25,7 +27,7 @@ function emptyForm(): LookupForm {
 @Component({
     selector: 'app-lookup-admin',
     standalone: true,
-    imports: [FormsModule, BreadCrumbComponent, ButtonModule, DialogModule, InputTextModule, TableModule, TextareaModule],
+    imports: [FormsModule, BreadCrumbComponent, SearchControlComponent, ButtonModule, DialogModule, InputTextModule, PaginatorModule, TableModule, TextareaModule],
     templateUrl: './lookup-admin.html'
 })
 export class LookupAdminPage implements OnInit {
@@ -36,6 +38,10 @@ export class LookupAdminPage implements OnInit {
     readonly typeName = signal(MARKETPLACE_LOOKUP_TYPES[0].name);
     readonly typeId = signal<string | null>(null);
     readonly items = signal<LookupTypeValue[]>([]);
+    readonly query = signal('');
+    readonly first = signal(0);
+    readonly rows = signal(10);
+    readonly totalRecords = signal(0);
     readonly loading = signal(false);
     readonly saving = signal(false);
     readonly dialogOpen = signal(false);
@@ -48,6 +54,8 @@ export class LookupAdminPage implements OnInit {
 
     selectType(name: string): void {
         this.typeName.set(name);
+        this.query.set('');
+        this.first.set(0);
         this.typeId.set(null);
         this.items.set([]);
         this.loading.set(true);
@@ -122,11 +130,25 @@ export class LookupAdminPage implements OnInit {
         });
     }
 
+    onSearch(value: string): void {
+        this.query.set(value);
+        this.first.set(0);
+        this.loadValues(this.typeName());
+    }
+
+    pageChange(event: PaginatorState): void {
+        this.first.set(event.first ?? 0);
+        this.rows.set(event.rows ?? 10);
+        this.loadValues(this.typeName());
+    }
+
     private loadValues(name: string): void {
+        const pageNo = Math.floor(this.first() / this.rows()) + 1;
         this.loading.set(true);
-        this.lookups.values(name).subscribe({
-            next: (items) => {
-                this.items.set(items);
+        this.lookups.values(name, this.query(), pageNo, this.rows()).subscribe({
+            next: (page) => {
+                this.items.set(page.items ?? []);
+                this.totalRecords.set(page.totalCount ?? 0);
                 this.loading.set(false);
             },
             error: (error) => {

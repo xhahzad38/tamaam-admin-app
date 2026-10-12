@@ -1,8 +1,8 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, map } from 'rxjs';
 import { environment } from '@/environments/environment';
-import { ApiResponse } from '@/app/shared/models/api.types';
+import { ApiResponse, PageResult } from '@/app/shared/models/api.types';
 import { catalogErrors } from '../catalog.util';
 import { Brand, BrandAuthorization, BrandAuthorizationWrite, BrandChangeRequest, BrandDocument, BrandWrite, EnforcementOption } from './brand.models';
 
@@ -12,18 +12,19 @@ export class BrandService {
 
     constructor(private readonly http: HttpClient) {}
 
-    list(): Observable<Brand[]> {
-        return this.http.get<ApiResponse<Brand[]>>(this.baseUrl, { context: catalogErrors }).pipe(map((response) => response.data ?? []));
+    list(search: string, pageNo: number, pageSize: number): Observable<PageResult<Brand>> {
+        return this.http.get<PageResult<Brand>>(this.baseUrl, { params: this.pageParams(search, pageNo, pageSize), context: catalogErrors });
     }
 
     get(id: string): Observable<Brand> {
         return this.http.get<ApiResponse<Brand>>(`${this.baseUrl}/${id}`, { context: catalogErrors }).pipe(map((response) => response.data));
     }
 
-    documents(brandId: string): Observable<BrandDocument[]> {
-        return this.http
-            .get<ApiResponse<BrandDocument[]>>(`${this.baseUrl}/${brandId}/documents`, { context: catalogErrors })
-            .pipe(map((response) => response.data ?? []));
+    documents(brandId: string, search: string, pageNo: number, pageSize: number): Observable<PageResult<BrandDocument>> {
+        return this.http.get<PageResult<BrandDocument>>(`${this.baseUrl}/${brandId}/documents`, {
+            params: this.pageParams(search, pageNo, pageSize),
+            context: catalogErrors
+        });
     }
 
     uploadDocument(brandId: string, file: File, documentKind: string, expiresOn: string | null): Observable<BrandDocument> {
@@ -44,10 +45,11 @@ export class BrandService {
             .pipe(map((response) => response.data));
     }
 
-    authorizations(brandId: string): Observable<BrandAuthorization[]> {
-        return this.http
-            .get<ApiResponse<BrandAuthorization[]>>(`${this.baseUrl}/${brandId}/authorizations`, { context: catalogErrors })
-            .pipe(map((response) => response.data ?? []));
+    authorizations(brandId: string, search: string, pageNo: number, pageSize: number): Observable<PageResult<BrandAuthorization>> {
+        return this.http.get<PageResult<BrandAuthorization>>(`${this.baseUrl}/${brandId}/authorizations`, {
+            params: this.pageParams(search, pageNo, pageSize),
+            context: catalogErrors
+        });
     }
 
     saveAuthorization(brandId: string, body: BrandAuthorizationWrite): Observable<BrandAuthorization> {
@@ -86,15 +88,24 @@ export class BrandService {
             .pipe(map((response) => response.data ?? []));
     }
 
-    changeRequests(): Observable<BrandChangeRequest[]> {
-        return this.http
-            .get<ApiResponse<BrandChangeRequest[]>>(`${this.baseUrl}/change-requests`, { context: catalogErrors })
-            .pipe(map((response) => response.data ?? []));
+    changeRequests(search: string, pageNo: number, pageSize: number): Observable<PageResult<BrandChangeRequest>> {
+        return this.http.get<PageResult<BrandChangeRequest>>(`${this.baseUrl}/change-requests`, {
+            params: this.pageParams(search, pageNo, pageSize),
+            context: catalogErrors
+        });
     }
 
     review(id: string, approve: boolean): Observable<BrandChangeRequest> {
         return this.http
             .post<ApiResponse<BrandChangeRequest>>(`${this.baseUrl}/change-requests/${id}`, { approve }, { context: catalogErrors })
             .pipe(map((response) => response.data));
+    }
+
+    private pageParams(search: string, pageNo: number, pageSize: number): HttpParams {
+        let params = new HttpParams().set('pageNo', pageNo).set('pageSize', pageSize);
+        if (search.trim()) {
+            params = params.set('searchText', search.trim());
+        }
+        return params;
     }
 }

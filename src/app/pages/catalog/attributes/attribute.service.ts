@@ -40,11 +40,12 @@ export class AttributeService {
             .pipe(map((response) => response.data));
     }
 
-    values(attributeId: string): Observable<CatalogAttributeValue[]> {
-        const params = new HttpParams().set('attributeId', attributeId).set('pageNo', 1).set('pageSize', 200);
-        return this.http
-            .get<PageResult<CatalogAttributeValue>>(this.valuesUrl, { params, context: catalogErrors })
-            .pipe(map((page) => page.items ?? []));
+    values(attributeId: string, search: string, pageNo: number, pageSize: number): Observable<PageResult<CatalogAttributeValue>> {
+        let params = new HttpParams().set('attributeId', attributeId).set('pageNo', pageNo).set('pageSize', pageSize);
+        if (search.trim()) {
+            params = params.set('searchText', search.trim());
+        }
+        return this.http.get<PageResult<CatalogAttributeValue>>(this.valuesUrl, { params, context: catalogErrors });
     }
 
     createValue(body: AttributeValueWrite): Observable<string> {

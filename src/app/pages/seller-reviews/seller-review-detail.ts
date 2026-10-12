@@ -2,6 +2,7 @@ import { DatePipe } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { MenuItem } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { TextareaModule } from 'primeng/textarea';
 import { environment } from '@/environments/environment';
@@ -17,6 +18,7 @@ import {
     SellerReview,
     TaxDeclaration
 } from './seller-review.models';
+import { BreadCrumbComponent } from '@/app/shared-components/bread-crumb/bread-crumb.component';
 import { SellerReviewService } from './seller-review.service';
 
 interface SummaryRow {
@@ -27,13 +29,17 @@ interface SummaryRow {
 @Component({
     selector: 'app-seller-review-detail',
     standalone: true,
-    imports: [DatePipe, FormsModule, RouterLink, ButtonModule, TextareaModule],
+    imports: [DatePipe, FormsModule, BreadCrumbComponent, ButtonModule, TextareaModule],
     templateUrl: './seller-review-detail.html'
 })
 export class SellerReviewDetail implements OnInit {
     private readonly route = inject(ActivatedRoute);
     private readonly reviews = inject(SellerReviewService);
 
+    readonly crumbs = signal<MenuItem[]>([
+        { label: 'Seller reviews', routerLink: '/seller-reviews' },
+        { label: 'Application' }
+    ]);
     readonly state = signal<SellerReview | null>(null);
     readonly loading = signal(true);
     readonly error = signal<string | null>(null);
@@ -56,6 +62,10 @@ export class SellerReviewDetail implements OnInit {
         this.error.set(null);
         this.reviews.get(this.organizationId).subscribe({
             next: (state) => {
+                this.crumbs.set([
+                    { label: 'Seller reviews', routerLink: '/seller-reviews' },
+                    { label: state.store?.name || state.profile?.registeredName || state.email || 'Application' }
+                ]);
                 this.state.set(state);
                 this.loading.set(false);
             },

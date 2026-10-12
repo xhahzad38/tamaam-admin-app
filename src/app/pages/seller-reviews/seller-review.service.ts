@@ -3,7 +3,7 @@ import { Injectable } from '@angular/core';
 import { Observable, map } from 'rxjs';
 import { environment } from '@/environments/environment';
 import { SKIP_ERROR_TOAST } from '@/app/_helpers/error.interceptor';
-import { ApiResponse } from '@/app/shared/models/api.types';
+import { ApiResponse, PageResult } from '@/app/shared/models/api.types';
 import { ReviewListItem, SectionDecision, SellerReview } from './seller-review.models';
 
 export interface SellerDirectoryItem {
@@ -28,15 +28,6 @@ export interface SellerCenterStats {
     suspended: number;
 }
 
-export interface PagedResponse<T> {
-    succeeded: boolean;
-    data: T;
-    pageNumber: number;
-    pageSize: number;
-    totalCount: number;
-    totalPages: number;
-}
-
 @Injectable({ providedIn: 'root' })
 export class SellerReviewService {
     private readonly baseUrl = `${environment.apiUrl}/api/SellerOnboardingReview`;
@@ -44,14 +35,12 @@ export class SellerReviewService {
 
     constructor(private readonly http: HttpClient) {}
 
-    list(queue: string, search: string): Observable<ReviewListItem[]> {
-        let params = new HttpParams().set('queue', queue);
+    list(queue: string, search: string, pageNo: number, pageSize: number): Observable<PageResult<ReviewListItem>> {
+        let params = new HttpParams().set('queue', queue).set('pageNo', pageNo).set('pageSize', pageSize);
         if (search.trim()) {
-            params = params.set('search', search.trim());
+            params = params.set('searchText', search.trim());
         }
-        return this.http
-            .get<ApiResponse<ReviewListItem[]>>(this.baseUrl, { params, context: this.inlineErrors })
-            .pipe(map((response) => response.data ?? []));
+        return this.http.get<PageResult<ReviewListItem>>(this.baseUrl, { params, context: this.inlineErrors });
     }
 
     get(organizationId: string): Observable<SellerReview> {
@@ -79,15 +68,15 @@ export class SellerReviewService {
             .pipe(map((response) => response.data));
     }
 
-    directory(search: string, status: string, pageNumber: number, pageSize: number): Observable<PagedResponse<SellerDirectoryItem[]>> {
-        let params = new HttpParams().set('pageNumber', pageNumber).set('pageSize', pageSize);
+    directory(search: string, status: string, pageNo: number, pageSize: number): Observable<PageResult<SellerDirectoryItem>> {
+        let params = new HttpParams().set('pageNo', pageNo).set('pageSize', pageSize);
         if (search.trim()) {
-            params = params.set('search', search.trim());
+            params = params.set('searchText', search.trim());
         }
         if (status) {
             params = params.set('status', status);
         }
-        return this.http.get<PagedResponse<SellerDirectoryItem[]>>(`${this.baseUrl}/directory`, { params, context: this.inlineErrors });
+        return this.http.get<PageResult<SellerDirectoryItem>>(`${this.baseUrl}/directory`, { params, context: this.inlineErrors });
     }
 
     suspend(organizationId: string, note: string): Observable<SellerReview> {

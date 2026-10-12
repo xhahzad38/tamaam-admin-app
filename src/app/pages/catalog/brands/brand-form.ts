@@ -6,12 +6,14 @@ import { MenuItem } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { CheckboxModule } from 'primeng/checkbox';
 import { InputTextModule } from 'primeng/inputtext';
+import { PaginatorModule, PaginatorState } from 'primeng/paginator';
 import { SelectModule } from 'primeng/select';
 import { TableModule } from 'primeng/table';
 import { TextareaModule } from 'primeng/textarea';
 import { APPROVAL_STATUS_LABEL, ApprovalStatus } from '@/app/pages/seller-reviews/seller-review.models';
 import { SellerDirectoryItem, SellerReviewService } from '@/app/pages/seller-reviews/seller-review.service';
 import { BreadCrumbComponent } from '@/app/shared-components/bread-crumb/bread-crumb.component';
+import { SearchControlComponent } from '@/app/shared-components/search-control/search-control.component';
 import { catalogErrorMessage, catalogMediaUrl, readImageFile } from '../catalog.util';
 import { BRAND_AUTHORIZATION_TYPES, BRAND_DOCUMENT_KINDS, Brand, BrandAuthorization, BrandDocument, BrandWrite, EnforcementOption } from './brand.models';
 import { BrandService } from './brand.service';
@@ -47,7 +49,7 @@ function emptyBrand(): BrandFormState {
 @Component({
     selector: 'app-brand-form',
     standalone: true,
-    imports: [FormsModule, BreadCrumbComponent, ButtonModule, CheckboxModule, InputTextModule, SelectModule, TableModule, TextareaModule],
+    imports: [FormsModule, BreadCrumbComponent, SearchControlComponent, ButtonModule, CheckboxModule, InputTextModule, PaginatorModule, SelectModule, TableModule, TextareaModule],
     templateUrl: './brand-form.html'
 })
 export class BrandFormPage implements OnInit {
@@ -75,7 +77,15 @@ export class BrandFormPage implements OnInit {
     readonly form = signal<BrandFormState>(emptyBrand());
     readonly enforcements = signal<EnforcementOption[]>([]);
     readonly documents = signal<BrandDocument[]>([]);
+    readonly documentQuery = signal('');
+    readonly documentFirst = signal(0);
+    readonly documentRows = signal(10);
+    readonly documentTotal = signal(0);
     readonly authorizations = signal<BrandAuthorization[]>([]);
+    readonly authorizationQuery = signal('');
+    readonly authorizationFirst = signal(0);
+    readonly authorizationRows = signal(10);
+    readonly authorizationTotal = signal(0);
     readonly owners = signal<SellerDirectoryItem[]>([]);
     readonly ownerSearch = signal('');
     readonly loading = signal(false);
@@ -157,7 +167,7 @@ export class BrandFormPage implements OnInit {
 
     searchOwners(): void {
         this.sellers.directory(this.ownerSearch(), '', 1, 10).subscribe({
-            next: (page) => this.owners.set(page.data ?? []),
+            next: (page) => this.owners.set(page.items ?? []),
             error: (error) => this.error.set(catalogErrorMessage(error, 'Could not search sellers.'))
         });
     }
@@ -353,16 +363,60 @@ export class BrandFormPage implements OnInit {
         });
     }
 
+    onDocumentSearch(value: string): void {
+        this.documentQuery.set(value);
+        this.documentFirst.set(0);
+        const id = this.brandId();
+        if (id) {
+            this.loadDocuments(id);
+        }
+    }
+
+    onDocumentPage(event: PaginatorState): void {
+        this.documentFirst.set(event.first ?? 0);
+        this.documentRows.set(event.rows ?? 10);
+        const id = this.brandId();
+        if (id) {
+            this.loadDocuments(id);
+        }
+    }
+
+    onAuthorizationSearch(value: string): void {
+        this.authorizationQuery.set(value);
+        this.authorizationFirst.set(0);
+        const id = this.brandId();
+        if (id) {
+            this.loadAuthorizations(id);
+        }
+    }
+
+    onAuthorizationPage(event: PaginatorState): void {
+        this.authorizationFirst.set(event.first ?? 0);
+        this.authorizationRows.set(event.rows ?? 10);
+        const id = this.brandId();
+        if (id) {
+            this.loadAuthorizations(id);
+        }
+    }
+
     private loadDocuments(id: string): void {
-        this.brands.documents(id).subscribe({
-            next: (items) => this.documents.set(items),
+        const pageNo = Math.floor(this.documentFirst() / this.documentRows()) + 1;
+        this.brands.documents(id, this.documentQuery(), pageNo, this.documentRows()).subscribe({
+            next: (page) => {
+                this.documents.set(page.items ?? []);
+                this.documentTotal.set(page.totalCount ?? 0);
+            },
             error: (error) => this.error.set(catalogErrorMessage(error, 'Could not load documents.'))
         });
     }
 
     private loadAuthorizations(id: string): void {
-        this.brands.authorizations(id).subscribe({
-            next: (items) => this.authorizations.set(items),
+        const pageNo = Math.floor(this.authorizationFirst() / this.authorizationRows()) + 1;
+        this.brands.authorizations(id, this.authorizationQuery(), pageNo, this.authorizationRows()).subscribe({
+            next: (page) => {
+                this.authorizations.set(page.items ?? []);
+                this.authorizationTotal.set(page.totalCount ?? 0);
+            },
             error: (error) => this.error.set(catalogErrorMessage(error, 'Could not load authorizations.'))
         });
     }
