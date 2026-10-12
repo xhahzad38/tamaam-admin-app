@@ -1,11 +1,13 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { MenuItem } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
 import { TableModule } from 'primeng/table';
 import { TextareaModule } from 'primeng/textarea';
 import { LookupTypeValue } from '@/app/shared/services/lookup.service';
+import { BreadCrumbComponent } from '@/app/shared-components/bread-crumb/bread-crumb.component';
 import { catalogErrorMessage } from '../catalog.util';
 import { LookupValueWrite, MARKETPLACE_LOOKUP_TYPES, LookupAdminService } from './lookup-admin.service';
 
@@ -23,12 +25,13 @@ function emptyForm(): LookupForm {
 @Component({
     selector: 'app-lookup-admin',
     standalone: true,
-    imports: [FormsModule, ButtonModule, DialogModule, InputTextModule, TableModule, TextareaModule],
+    imports: [FormsModule, BreadCrumbComponent, ButtonModule, DialogModule, InputTextModule, TableModule, TextareaModule],
     templateUrl: './lookup-admin.html'
 })
 export class LookupAdminPage implements OnInit {
     private readonly lookups = inject(LookupAdminService);
 
+    readonly crumbs: MenuItem[] = [{ label: 'Lookups' }];
     readonly types = MARKETPLACE_LOOKUP_TYPES;
     readonly typeName = signal(MARKETPLACE_LOOKUP_TYPES[0].name);
     readonly typeId = signal<string | null>(null);

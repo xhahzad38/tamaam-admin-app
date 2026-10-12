@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { MenuItem } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { CheckboxModule } from 'primeng/checkbox';
 import { DialogModule } from 'primeng/dialog';
@@ -10,6 +11,7 @@ import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { TextareaModule } from 'primeng/textarea';
 import { SellerDirectoryItem, SellerReviewService } from '@/app/pages/seller-reviews/seller-review.service';
+import { BreadCrumbComponent } from '@/app/shared-components/bread-crumb/bread-crumb.component';
 import { catalogErrorMessage, catalogMediaUrl, readImageFile } from '../catalog.util';
 import { Brand, BrandWrite, EnforcementOption } from './brand.models';
 import { BrandService } from './brand.service';
@@ -45,7 +47,7 @@ function emptyForm(): BrandForm {
 @Component({
     selector: 'app-brand-list',
     standalone: true,
-    imports: [FormsModule, ButtonModule, CheckboxModule, DialogModule, InputTextModule, SelectModule, TableModule, TagModule, TextareaModule],
+    imports: [FormsModule, BreadCrumbComponent, ButtonModule, CheckboxModule, DialogModule, InputTextModule, SelectModule, TableModule, TagModule, TextareaModule],
     templateUrl: './brand-list.html'
 })
 export class BrandListPage implements OnInit {
@@ -64,6 +66,7 @@ export class BrandListPage implements OnInit {
     readonly imageError = signal<string | null>(null);
     readonly ownerSearch = signal('');
     readonly form = signal<BrandForm>(emptyForm());
+    readonly crumbs: MenuItem[] = [{ label: 'Brands' }];
     readonly mediaUrl = catalogMediaUrl;
 
     logoFile: File | null = null;
@@ -78,6 +81,10 @@ export class BrandListPage implements OnInit {
 
     openRequests(): void {
         void this.router.navigate(['/catalog/brands/requests']);
+    }
+
+    openForm(id?: string): void {
+        void this.router.navigate(id ? ['/catalog/brands', id] : ['/catalog/brands/new']);
     }
 
     load(): void {

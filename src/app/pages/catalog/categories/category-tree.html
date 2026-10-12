@@ -1,10 +1,12 @@
+<app-bread-crumb [items]="crumbs" />
+
 <div class="card">
     <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
             <h1 class="m-0 text-2xl font-semibold">Categories</h1>
             <p class="m-0 mt-1 text-sm text-muted-color">Parent and child categories, with slug, sort order, extra approval, and image.</p>
         </div>
-        <p-button label="Add category" icon="pi pi-plus" (onClick)="openCreate()" />
+        <p-button label="Add category" icon="pi pi-plus" (onClick)="openForm()" />
     </div>
 
     @if (error()) {
@@ -45,8 +47,8 @@
                 </td>
                 <td class="whitespace-nowrap">
                     <a [routerLink]="['/catalog/categories', rowData.id]" class="mr-3 font-medium text-primary no-underline hover:underline">Rules</a>
-                    <button type="button" class="mr-3 cursor-pointer border-0 bg-transparent p-0 font-medium text-primary" (click)="openCreate(rowData.id)">Add child</button>
-                    <button type="button" class="mr-3 cursor-pointer border-0 bg-transparent p-0 font-medium text-primary" (click)="openEdit(rowData)">Edit</button>
+                    <button type="button" class="mr-3 cursor-pointer border-0 bg-transparent p-0 font-medium text-primary" (click)="openForm(rowData.id)">Add child</button>
+                    <button type="button" class="mr-3 cursor-pointer border-0 bg-transparent p-0 font-medium text-primary" (click)="openEdit(rowData.id)">Edit</button>
                     <button type="button" class="cursor-pointer border-0 bg-transparent p-0 font-medium text-red-600" (click)="remove(rowData)">Delete</button>
                 </td>
             </tr>
@@ -58,81 +60,3 @@
         </ng-template>
     </p-treetable>
 </div>
-
-<p-dialog
-    [header]="form().id ? 'Edit category' : 'Add category'"
-    [visible]="dialogOpen()"
-    (visibleChange)="dialogOpen.set($event)"
-    [modal]="true"
-    [style]="{ width: '36rem' }"
->
-    <div class="flex flex-col gap-4">
-        @if (error()) {
-            <p class="m-0 text-red-600" role="alert">{{ error() }}</p>
-        }
-        <label class="flex flex-col gap-1">
-            <span class="text-sm font-medium">Name</span>
-            <input pInputText class="w-full" maxlength="200" [ngModel]="form().name" (ngModelChange)="patch({ name: $event })" />
-        </label>
-        <label class="flex flex-col gap-1">
-            <span class="text-sm font-medium">Slug</span>
-            <input pInputText class="w-full" maxlength="200" placeholder="Leave blank to generate from the name" [ngModel]="form().slug" (ngModelChange)="patch({ slug: $event })" />
-        </label>
-        <label class="flex flex-col gap-1">
-            <span class="text-sm font-medium">Description</span>
-            <textarea pTextarea class="w-full" rows="3" maxlength="500" [ngModel]="form().description" (ngModelChange)="patch({ description: $event })"></textarea>
-        </label>
-        <label class="flex flex-col gap-1">
-            <span class="text-sm font-medium">Parent</span>
-            <p-select
-                [options]="parentOptions()"
-                optionLabel="label"
-                optionValue="id"
-                placeholder="No parent"
-                [showClear]="true"
-                appendTo="body"
-                [ngModel]="form().parentCategoryId"
-                (ngModelChange)="patch({ parentCategoryId: $event })"
-            />
-        </label>
-        <label class="flex flex-col gap-1">
-            <span class="text-sm font-medium">Sort order</span>
-            <input pInputText type="number" class="w-full" [ngModel]="form().sortOrder" (ngModelChange)="patch({ sortOrder: +$event || 0 })" />
-        </label>
-        <div class="flex flex-wrap gap-4">
-            <label class="inline-flex items-center gap-2">
-                <p-checkbox [binary]="true" [ngModel]="form().requiresExtraApproval" (ngModelChange)="patch({ requiresExtraApproval: $event })" />
-                <span>Needs extra approval</span>
-            </label>
-            <label class="inline-flex items-center gap-2">
-                <p-checkbox [binary]="true" [ngModel]="form().isActive" (ngModelChange)="patch({ isActive: $event })" />
-                <span>Active</span>
-            </label>
-            <label class="inline-flex items-center gap-2">
-                <p-checkbox [binary]="true" [ngModel]="form().badge" (ngModelChange)="patch({ badge: $event })" />
-                <span>Badge</span>
-            </label>
-        </div>
-        @if (form().badge) {
-            <label class="flex flex-col gap-1">
-                <span class="text-sm font-medium">Badge text</span>
-                <input pInputText class="w-full" maxlength="100" [ngModel]="form().badgeText" (ngModelChange)="patch({ badgeText: $event })" />
-            </label>
-        }
-        <label class="flex flex-col gap-1">
-            <span class="text-sm font-medium">Image</span>
-            @if (mediaUrl(form().imageUrl); as src) {
-                <img [src]="src" alt="" class="h-16 w-16 rounded object-cover" />
-            }
-            <input type="file" accept="image/jpeg,image/png,.jpg,.jpeg,.png" (change)="onImage($event)" />
-            <span class="text-sm text-muted-color">JPG or PNG, up to 2 MB. Uploaded after the category is saved.</span>
-            @if (imageError()) {
-                <span class="text-sm text-red-600">{{ imageError() }}</span>
-            }
-        </label>
-    </div>
-    <ng-template #footer>
-        <p-button label="Cancel" [text]="true" (onClick)="dialogOpen.set(false)" />
-        <p-button label="Save" icon="pi pi-check" [loading]="saving()" (onClick)="save()" />
-    </ng-template>
-</p-dialog>

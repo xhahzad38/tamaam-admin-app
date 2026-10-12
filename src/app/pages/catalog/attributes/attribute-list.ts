@@ -1,5 +1,6 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { MenuItem } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { IconFieldModule } from 'primeng/iconfield';
@@ -7,6 +8,7 @@ import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
 import { TableModule } from 'primeng/table';
+import { BreadCrumbComponent } from '@/app/shared-components/bread-crumb/bread-crumb.component';
 import { catalogErrorMessage, toSlug } from '../catalog.util';
 import { ATTRIBUTE_DISPLAY_TYPES, AttributeValueWrite, AttributeWrite, CatalogAttribute, CatalogAttributeValue, displayTypeLabel } from './attribute.models';
 import { AttributeService } from './attribute.service';
@@ -40,12 +42,13 @@ function emptyValue(): ValueForm {
 @Component({
     selector: 'app-attribute-list',
     standalone: true,
-    imports: [FormsModule, ButtonModule, DialogModule, IconFieldModule, InputIconModule, InputTextModule, SelectModule, TableModule],
+    imports: [FormsModule, BreadCrumbComponent, ButtonModule, DialogModule, IconFieldModule, InputIconModule, InputTextModule, SelectModule, TableModule],
     templateUrl: './attribute-list.html'
 })
 export class AttributeListPage implements OnInit {
     private readonly attributes = inject(AttributeService);
 
+    readonly crumbs: MenuItem[] = [{ label: 'Attributes' }];
     readonly displayTypes = ATTRIBUTE_DISPLAY_TYPES;
     readonly displayTypeLabel = displayTypeLabel;
 

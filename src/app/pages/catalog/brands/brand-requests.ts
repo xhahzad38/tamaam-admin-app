@@ -1,9 +1,10 @@
 import { DatePipe } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { MenuItem } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { TableModule } from 'primeng/table';
 import { APPROVAL_STATUS_LABEL, ApprovalStatus } from '@/app/pages/seller-reviews/seller-review.models';
+import { BreadCrumbComponent } from '@/app/shared-components/bread-crumb/bread-crumb.component';
 import { catalogErrorMessage } from '../catalog.util';
 import { BrandChangeRequest } from './brand.models';
 import { BrandService } from './brand.service';
@@ -11,11 +12,15 @@ import { BrandService } from './brand.service';
 @Component({
     selector: 'app-brand-requests',
     standalone: true,
-    imports: [DatePipe, RouterLink, ButtonModule, TableModule],
+    imports: [DatePipe, BreadCrumbComponent, ButtonModule, TableModule],
     templateUrl: './brand-requests.html'
 })
 export class BrandRequestsPage implements OnInit {
     private readonly brands = inject(BrandService);
+    readonly crumbs: MenuItem[] = [
+        { label: 'Brands', routerLink: '/catalog/brands' },
+        { label: 'Change requests' }
+    ];
 
     readonly items = signal<BrandChangeRequest[]>([]);
     readonly loading = signal(false);

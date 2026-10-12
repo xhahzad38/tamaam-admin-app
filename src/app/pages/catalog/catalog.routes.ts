@@ -6,6 +6,14 @@ export default [
         loadComponent: () => import('./categories/category-tree').then((m) => m.CategoryTreePage)
     },
     {
+        path: 'categories/new',
+        loadComponent: () => import('./categories/category-form').then((m) => m.CategoryFormPage)
+    },
+    {
+        path: 'categories/:id/edit',
+        loadComponent: () => import('./categories/category-form').then((m) => m.CategoryFormPage)
+    },
+    {
         path: 'categories/:id',
         loadComponent: () => import('./categories/category-detail').then((m) => m.CategoryDetailPage)
     },
@@ -16,6 +24,14 @@ export default [
     {
         path: 'brands/requests',
         loadComponent: () => import('./brands/brand-requests').then((m) => m.BrandRequestsPage)
+    },
+    {
+        path: 'brands/new',
+        loadComponent: () => import('./brands/brand-form').then((m) => m.BrandFormPage)
+    },
+    {
+        path: 'brands/:id',
+        loadComponent: () => import('./brands/brand-form').then((m) => m.BrandFormPage)
     },
     {
         path: 'brands',

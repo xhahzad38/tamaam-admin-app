@@ -1,3 +1,5 @@
+<app-bread-crumb [items]="crumbs" />
+
 <div class="card">
     <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
@@ -6,7 +8,7 @@
         </div>
         <div class="flex gap-2">
             <p-button label="Change requests" [outlined]="true" (onClick)="openRequests()" />
-            <p-button label="Add brand" icon="pi pi-plus" (onClick)="openCreate()" />
+            <p-button label="Add brand" icon="pi pi-plus" (onClick)="openForm()" />
         </div>
     </div>
 
@@ -45,7 +47,7 @@
                 <td>{{ brand.ownerOrganizationName || '—' }}</td>
                 <td>{{ brand.sortOrder }}</td>
                 <td class="whitespace-nowrap">
-                    <button type="button" class="mr-3 cursor-pointer border-0 bg-transparent p-0 font-medium text-primary" (click)="openEdit(brand)">Edit</button>
+                    <button type="button" class="mr-3 cursor-pointer border-0 bg-transparent p-0 font-medium text-primary" (click)="openForm(brand.id)">Edit</button>
                     <button type="button" class="cursor-pointer border-0 bg-transparent p-0 font-medium text-red-600" (click)="remove(brand)">Delete</button>
                 </td>
             </tr>

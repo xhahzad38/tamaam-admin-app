@@ -39,3 +39,53 @@ export interface EnforcementOption {
     id: string;
     name: string;
 }
+
+export interface BrandDocument {
+    id: string;
+    brandId: string;
+    documentKind: string;
+    blobUrl: string;
+    fileName: string;
+    expiresOn: string | null;
+    isActive: boolean;
+}
+
+export interface BrandAuthorization {
+    id: string;
+    brandId: string;
+    storeId: string;
+    storeName: string;
+    authorizationType: string;
+    documentId: string | null;
+    documentFileName: string | null;
+    approvalStatus: number;
+    validFrom: string | null;
+    validTo: string | null;
+    reviewedByUserId: string | null;
+    reviewNote: string | null;
+    isActive: boolean;
+}
+
+export interface BrandAuthorizationWrite {
+    id?: string | null;
+    storeId: string;
+    authorizationType: string;
+    documentId: string | null;
+    approvalStatus: number;
+    validFrom: string | null;
+    validTo: string | null;
+    reviewNote: string | null;
+    isActive: boolean;
+}
+
+export const BRAND_DOCUMENT_KINDS = [
+    { label: 'Trademark certificate', value: 'TrademarkCertificate' },
+    { label: 'Authorization letter', value: 'AuthorizationLetter' },
+    { label: 'Distribution agreement', value: 'DistributionAgreement' }
+];
+
+export const BRAND_AUTHORIZATION_TYPES = [
+    { label: 'Authorized reseller', value: 'AuthorizedReseller' },
+    { label: 'Distributor', value: 'Distributor' },
+    { label: 'Brand owner', value: 'BrandOwner' }
+];

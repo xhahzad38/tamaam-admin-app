@@ -4,6 +4,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { Observable } from 'rxjs';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { MenuItem } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { CheckboxModule } from 'primeng/checkbox';
 import { IconFieldModule } from 'primeng/iconfield';
@@ -12,6 +13,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
 import { TableModule } from 'primeng/table';
 import { TextareaModule } from 'primeng/textarea';
+import { BreadCrumbComponent } from '@/app/shared-components/bread-crumb/bread-crumb.component';
 import { catalogErrorMessage, localDateTimeValue, toApiDateTime } from '../catalog.util';
 import { CatalogAttribute } from '../attributes/attribute.models';
 import { AttributeService } from '../attributes/attribute.service';
@@ -41,7 +43,7 @@ function emptyCommission(): CommissionForm {
 @Component({
     selector: 'app-category-detail',
     standalone: true,
-    imports: [DatePipe, FormsModule, RouterLink, ButtonModule, CheckboxModule, IconFieldModule, InputIconModule, InputTextModule, SelectModule, TableModule, TextareaModule],
+    imports: [DatePipe, FormsModule, RouterLink, BreadCrumbComponent, ButtonModule, CheckboxModule, IconFieldModule, InputIconModule, InputTextModule, SelectModule, TableModule, TextareaModule],
     templateUrl: './category-detail.html'
 })
 export class CategoryDetailPage implements OnInit {
@@ -55,6 +57,10 @@ export class CategoryDetailPage implements OnInit {
         { label: 'FBM', value: '0' },
         { label: 'FBT', value: '1' }
     ];
+    readonly crumbs = signal<MenuItem[]>([
+        { label: 'Categories', routerLink: '/catalog/categories' },
+        { label: 'Category' }
+    ]);
     readonly fulfillmentLabel = fulfillmentLabel;
 
     readonly detail = signal<CategoryDetail | null>(null);
@@ -243,6 +249,10 @@ export class CategoryDetailPage implements OnInit {
 
     private apply(detail: CategoryDetail): void {
         this.detail.set(detail);
+        this.crumbs.set([
+            { label: 'Categories', routerLink: '/catalog/categories' },
+            { label: detail.name }
+        ]);
         this.links.set([...(detail.attributes ?? [])].sort((a, b) => a.displayOrder - b.displayOrder));
         this.returns.set({
             returnsAllowed: detail.returnPolicy?.returnsAllowed ?? true,

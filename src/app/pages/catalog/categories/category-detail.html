@@ -1,8 +1,9 @@
+<app-bread-crumb [items]="crumbs()" />
+
 <div class="card">
     <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
-            <a routerLink="/catalog/categories" class="text-sm text-primary no-underline hover:underline">Categories</a>
-            <h1 class="m-0 mt-1 text-2xl font-semibold">{{ detail()?.name || 'Category' }}</h1>
+            <h1 class="m-0 text-2xl font-semibold">{{ detail()?.name || 'Category' }}</h1>
             <p class="m-0 mt-1 text-sm text-muted-color">{{ detail()?.slug }}</p>
         </div>
     </div>
