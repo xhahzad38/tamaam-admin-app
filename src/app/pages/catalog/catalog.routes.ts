@@ -10,6 +10,18 @@ export default [
         loadComponent: () => import('./categories/category-form').then((m) => m.CategoryFormPage)
     },
     {
+        path: 'categories/commission',
+        loadComponent: () => import('./categories/category-commission').then((m) => m.CategoryCommissionPage)
+    },
+    {
+        path: 'categories/return-policy',
+        loadComponent: () => import('./categories/category-returns').then((m) => m.CategoryReturnPolicyPage)
+    },
+    {
+        path: 'categories/warranty',
+        loadComponent: () => import('./categories/category-warranty').then((m) => m.CategoryWarrantyPage)
+    },
+    {
         path: 'categories/:id/edit',
         loadComponent: () => import('./categories/category-form').then((m) => m.CategoryFormPage)
     },

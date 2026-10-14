@@ -51,7 +51,9 @@
                     }
                 </td>
                 <td class="whitespace-nowrap">
-                    <a [routerLink]="['/catalog/categories', item.id]" class="mr-3 font-medium text-primary no-underline hover:underline">Rules</a>
+                    <a [routerLink]="['/catalog/categories/commission']" [queryParams]="{ category: item.id }" class="mr-3 font-medium text-primary no-underline hover:underline">Commission</a>
+                    <a [routerLink]="['/catalog/categories/return-policy']" [queryParams]="{ category: item.id }" class="mr-3 font-medium text-primary no-underline hover:underline">Returns</a>
+                    <a [routerLink]="['/catalog/categories/warranty']" [queryParams]="{ category: item.id }" class="mr-3 font-medium text-primary no-underline hover:underline">Warranty</a>
                     <button type="button" class="mr-3 cursor-pointer border-0 bg-transparent p-0 font-medium text-primary" (click)="openForm(item.id)">Add child</button>
                     <button type="button" class="mr-3 cursor-pointer border-0 bg-transparent p-0 font-medium text-primary" (click)="openEdit(item.id)">Edit</button>
                     <button type="button" class="cursor-pointer border-0 bg-transparent p-0 font-medium text-red-600" (click)="remove(item)">Delete</button>

@@ -37,7 +37,18 @@ export class AppMenu {
             {
                 label: 'Catalog',
                 items: [
-                    { label: 'Categories', icon: 'pi pi-fw pi-sitemap', routerLink: ['/catalog/categories'] },
+                    {
+                        label: 'Categories',
+                        icon: 'pi pi-fw pi-sitemap',
+                        path: '/catalog/categories',
+                        items: [
+                            { label: 'All categories', icon: 'pi pi-fw pi-list', routerLink: ['/catalog/categories'] },
+                            { label: 'Add category', icon: 'pi pi-fw pi-plus', routerLink: ['/catalog/categories/new'] },
+                            { label: 'Commission', icon: 'pi pi-fw pi-percentage', routerLink: ['/catalog/categories/commission'] },
+                            { label: 'Return policy', icon: 'pi pi-fw pi-replay', routerLink: ['/catalog/categories/return-policy'] },
+                            { label: 'Warranty rule', icon: 'pi pi-fw pi-shield', routerLink: ['/catalog/categories/warranty'] }
+                        ]
+                    },
                     { label: 'Attributes', icon: 'pi pi-fw pi-list', routerLink: ['/catalog/attributes'] },
                     { label: 'Brands', icon: 'pi pi-fw pi-bookmark', routerLink: ['/catalog/brands'] },
                     { label: 'Brand requests', icon: 'pi pi-fw pi-check-square', routerLink: ['/catalog/brands/requests'] },

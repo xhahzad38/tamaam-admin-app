@@ -1,4 +1,3 @@
-import { DatePipe } from '@angular/common';
 import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -15,10 +14,10 @@ import { InputControlComponent } from '@/app/shared-components/input-control/inp
 import { SelectControlComponent } from '@/app/shared-components/select-control/select-control.component';
 import { APPROVAL_STATUS_LABEL, ApprovalStatus } from '@/app/pages/seller-reviews/seller-review.models';
 import { SearchControlComponent } from '@/app/shared-components/search-control/search-control.component';
-import { catalogErrorMessage, catalogMediaUrl, includesQuery, localDateTimeValue, readImageFile, toApiDateTime } from '../catalog.util';
+import { catalogErrorMessage, catalogMediaUrl, includesQuery, readImageFile } from '../catalog.util';
 import { CatalogAttribute } from '../attributes/attribute.models';
 import { AttributeService } from '../attributes/attribute.service';
-import { CategoryAttributeLink, CategoryDetail, CategoryNode, CategoryReturnPolicy, CategoryWarrantyRule, CategoryWrite, collectCategoryIds, findCategory, flattenCategories, fulfillmentLabel } from './category.models';
+import { CategoryAttributeLink, CategoryDetail, CategoryNode, CategoryWrite, collectCategoryIds, findCategory, flattenCategories } from './category.models';
 import { CategoryService } from './category.service';
 
 interface CategoryFormState {
@@ -34,15 +33,6 @@ interface CategoryFormState {
     imageUrl: string | null;
     level: number | null;
     approvalStatus: number | null;
-}
-
-interface CommissionForm {
-    name: string;
-    fulfillmentType: string;
-    commissionPercent: number;
-    closingFee: number;
-    effectiveFrom: string;
-    effectiveTo: string;
 }
 
 function emptyCategory(parentCategoryId: string | null = null): CategoryFormState {
@@ -65,7 +55,7 @@ function emptyCategory(parentCategoryId: string | null = null): CategoryFormStat
 @Component({
     selector: 'app-category-form',
     standalone: true,
-    imports: [DatePipe, FormsModule, ReactiveFormsModule, RouterLink, BreadCrumbComponent, SearchControlComponent, InputControlComponent, SelectControlComponent, ButtonModule, CheckboxModule, TableModule],
+    imports: [FormsModule, ReactiveFormsModule, RouterLink, BreadCrumbComponent, SearchControlComponent, InputControlComponent, SelectControlComponent, ButtonModule, CheckboxModule, TableModule],
     templateUrl: './category-form.html'
 })
 export class CategoryFormPage implements OnInit {
@@ -74,16 +64,10 @@ export class CategoryFormPage implements OnInit {
     private readonly route = inject(ActivatedRoute);
     private readonly destroyRef = inject(DestroyRef);
 
-    readonly fulfillmentOptions = [
-        { label: 'Both', value: '' },
-        { label: 'FBM', value: '0' },
-        { label: 'FBT', value: '1' }
-    ];
     readonly crumbs = signal<MenuItem[]>([
         { label: 'Categories', routerLink: '/catalog/categories' },
         { label: 'Add category' }
     ]);
-    readonly fulfillmentLabel = fulfillmentLabel;
     readonly mediaUrl = catalogMediaUrl;
     readonly statusLabel = (status: number | null) => (status === null ? '' : APPROVAL_STATUS_LABEL[status as ApprovalStatus] ?? 'Draft');
 
@@ -97,21 +81,6 @@ export class CategoryFormPage implements OnInit {
         sortOrder: new FormControl(0, { nonNullable: true }),
         description: new FormControl('', { nonNullable: true, validators: [Validators.maxLength(500)] }),
         badgeText: new FormControl('', { nonNullable: true, validators: [Validators.maxLength(100)] })
-    });
-    readonly returnsForm = new FormGroup({
-        returnWindowDays: new FormControl(14, { nonNullable: true }),
-        notes: new FormControl('', { nonNullable: true, validators: [Validators.maxLength(1000)] })
-    });
-    readonly warrantyForm = new FormGroup({
-        minDurationMonths: new FormControl(0, { nonNullable: true })
-    });
-    readonly commissionForm = new FormGroup({
-        name: new FormControl('Default', { nonNullable: true, validators: [Validators.required, Validators.maxLength(100)] }),
-        fulfillmentType: new FormControl('', { nonNullable: true }),
-        commissionPercent: new FormControl(0, { nonNullable: true }),
-        closingFee: new FormControl(0, { nonNullable: true }),
-        effectiveFrom: new FormControl(localDateTimeValue(), { nonNullable: true }),
-        effectiveTo: new FormControl('', { nonNullable: true })
     });
     private readonly orderControls = new Map<string, FormControl<number>>();
     readonly parentOptions = computed(() => {
@@ -128,19 +97,6 @@ export class CategoryFormPage implements OnInit {
     readonly links = signal<CategoryAttributeLink[]>([]);
     readonly linkQuery = signal('');
     readonly visibleLinks = computed(() => this.links().filter((row) => includesQuery(this.linkQuery(), row.attributeName)));
-    readonly returns = signal<CategoryReturnPolicy>({ returnsAllowed: true, returnWindowDays: 14, notes: '' });
-    readonly warranty = signal<CategoryWarrantyRule>({ warrantyRequired: false, minDurationMonths: 0, serialOrImeiRequired: false });
-    readonly commission = signal<CommissionForm>({
-        name: 'Default',
-        fulfillmentType: '',
-        commissionPercent: 0,
-        closingFee: 0,
-        effectiveFrom: localDateTimeValue(),
-        effectiveTo: ''
-    });
-    readonly rates = signal<CategoryDetail['commissionRates']>([]);
-    readonly rateQuery = signal('');
-    readonly visibleRates = computed(() => this.rates().filter((rate) => includesQuery(this.rateQuery(), rate.name, this.fulfillmentLabel(rate.fulfillmentType), rate.commissionPercent, rate.closingFee)));
     readonly search = signal('');
     readonly searchResults = signal<CatalogAttribute[]>([]);
     readonly loading = signal(false);
@@ -286,114 +242,12 @@ export class CategoryFormPage implements OnInit {
         });
     }
 
-    saveReturns(): void {
-        const id = this.categoryId();
-        if (!id) {
-            return;
-        }
-        const current = this.returns();
-        const fields = this.returnsForm.getRawValue();
-        this.saving.set('returns');
-        this.categories
-            .saveReturnPolicy(id, {
-                returnsAllowed: current.returnsAllowed,
-                returnWindowDays: current.returnsAllowed ? Number(fields.returnWindowDays) || 0 : 0,
-                notes: fields.notes.trim() || null
-            })
-            .subscribe({
-                next: (detail) => {
-                    this.applyRelated(detail);
-                    this.notice.set('Return policy saved.');
-                    this.saving.set(null);
-                },
-                error: (error) => {
-                    this.saving.set(null);
-                    this.error.set(catalogErrorMessage(error, 'Could not save the return policy.'));
-                }
-            });
-    }
-
-    saveWarranty(): void {
-        const id = this.categoryId();
-        if (!id) {
-            return;
-        }
-        const current = this.warranty();
-        this.saving.set('warranty');
-        this.categories
-            .saveWarranty(id, {
-                warrantyRequired: current.warrantyRequired,
-                minDurationMonths: Number(this.warrantyForm.controls.minDurationMonths.value) || 0,
-                serialOrImeiRequired: current.serialOrImeiRequired
-            })
-            .subscribe({
-                next: (detail) => {
-                    this.applyRelated(detail);
-                    this.notice.set('Warranty rule saved.');
-                    this.saving.set(null);
-                },
-                error: (error) => {
-                    this.saving.set(null);
-                    this.error.set(catalogErrorMessage(error, 'Could not save the warranty rule.'));
-                }
-            });
-    }
-
-    saveCommission(): void {
-        const id = this.categoryId();
-        const current = this.commissionForm.getRawValue();
-        const effectiveFrom = toApiDateTime(current.effectiveFrom);
-        if (!id || !current.name.trim() || !effectiveFrom) {
-            this.error.set('Enter a commission name and a start date.');
-            return;
-        }
-        this.saving.set('commission');
-        this.categories
-            .saveCommission({
-                name: current.name.trim(),
-                categoryId: id,
-                fulfillmentType: current.fulfillmentType === '' ? null : Number(current.fulfillmentType),
-                commissionPercent: Number(current.commissionPercent) || 0,
-                closingFee: Number(current.closingFee) || 0,
-                effectiveFrom,
-                effectiveTo: toApiDateTime(current.effectiveTo)
-            })
-            .subscribe({
-                next: () => {
-                    this.categories.get(id).subscribe({
-                        next: (detail) => {
-                            this.applyRelated(detail);
-                            this.notice.set('Commission rate saved.');
-                            this.saving.set(null);
-                        },
-                        error: () => this.saving.set(null)
-                    });
-                },
-                error: (error) => {
-                    this.saving.set(null);
-                    this.error.set(catalogErrorMessage(error, 'Could not save the commission rate.'));
-                }
-            });
-    }
-
-    patchReturns(partial: Partial<CategoryReturnPolicy>): void {
-        this.returns.update((current) => ({ ...current, ...partial }));
-    }
-
-    patchWarranty(partial: Partial<CategoryWarrantyRule>): void {
-        this.warranty.update((current) => ({ ...current, ...partial }));
-    }
-
-    patchCommission(partial: Partial<CommissionForm>): void {
-        this.commission.update((current) => ({ ...current, ...partial }));
-    }
-
     private afterCategorySave(detail: CategoryDetail): void {
         const finish = () => {
             this.saving.set(null);
             this.imageFile = null;
             this.applyCategory(detail);
-            this.notice.set('Category saved. Set attributes, returns, warranty, and commission below.');
+            this.notice.set('Category saved.');
             this.refreshTree();
         };
         if (!this.imageFile) {
@@ -450,25 +304,6 @@ export class CategoryFormPage implements OnInit {
     private applyRelated(detail: CategoryDetail): void {
         this.orderControls.clear();
         this.links.set([...(detail.attributes ?? [])].sort((a, b) => a.displayOrder - b.displayOrder));
-        this.returnsForm.patchValue(
-            {
-                returnWindowDays: detail.returnPolicy?.returnWindowDays ?? 14,
-                notes: detail.returnPolicy?.notes ?? ''
-            },
-            { emitEvent: false }
-        );
-        this.warrantyForm.patchValue({ minDurationMonths: detail.warrantyRule?.minDurationMonths ?? 0 }, { emitEvent: false });
-        this.returns.set({
-            returnsAllowed: detail.returnPolicy?.returnsAllowed ?? true,
-            returnWindowDays: detail.returnPolicy?.returnWindowDays ?? 14,
-            notes: detail.returnPolicy?.notes ?? ''
-        });
-        this.warranty.set({
-            warrantyRequired: detail.warrantyRule?.warrantyRequired ?? false,
-            minDurationMonths: detail.warrantyRule?.minDurationMonths ?? 0,
-            serialOrImeiRequired: detail.warrantyRule?.serialOrImeiRequired ?? false
-        });
-        this.rates.set(detail.commissionRates ?? []);
     }
 
     private refreshTree(): void {

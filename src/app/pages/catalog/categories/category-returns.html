@@ -1,0 +1,40 @@
+<app-bread-crumb [items]="crumbs" />
+
+<div class="card">
+    <h1 class="m-0 text-2xl font-semibold">Return policy</h1>
+    <p class="m-0 mt-1 text-sm text-muted-color">Choose a category, then save its return window. The default is 14 days. Turning returns off sets the window to 0.</p>
+
+    @if (error()) {
+        <p class="mt-4 text-red-600" role="alert">{{ error() }}</p>
+    }
+    @if (notice()) {
+        <p class="mt-4 text-green-700" role="status">{{ notice() }}</p>
+    }
+
+    <div class="mt-4 grid max-w-xl gap-4">
+        <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium" for="return-category">Category</label>
+            <app-select-control inputId="return-category" label="Category" [control]="categoryId" [options]="categoryOptions()" optionLabel="label" optionValue="id" placeholder="Choose a category" [showClear]="false" appendTo="body" [flowError]="true" />
+        </div>
+
+        @if (loading()) {
+            <p class="m-0 text-sm text-muted-color">Loading return policy…</p>
+        }
+
+        <label class="inline-flex items-center gap-2">
+            <p-checkbox [binary]="true" [ngModel]="returns().returnsAllowed" (ngModelChange)="patch({ returnsAllowed: $event })" />
+            <span>Returns allowed</span>
+        </label>
+        <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium" for="return-days">Window (days)</label>
+            <app-input-control inputId="return-days" label="Window" type="number" [control]="fields.controls.returnWindowDays" [readonly]="!returns().returnsAllowed" [showCount]="false" [flowError]="true" />
+        </div>
+        <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium" for="return-notes">Notes</label>
+            <app-input-control inputId="return-notes" label="Notes" type="textarea" [control]="fields.controls.notes" [maxLength]="1000" [showCount]="false" [flowError]="true" />
+        </div>
+        <div>
+            <p-button label="Save return policy" [loading]="saving()" (onClick)="save()" />
+        </div>
+    </div>
+</div>

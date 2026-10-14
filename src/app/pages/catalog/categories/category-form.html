@@ -3,7 +3,7 @@
 <div class="mb-4 flex flex-wrap items-start justify-between gap-3">
     <div>
         <h1 class="m-0 text-2xl font-semibold">{{ categoryId() ? form().name || 'Edit category' : 'Add category' }}</h1>
-        <p class="m-0 mt-1 max-w-2xl text-sm text-muted-color">Save the category first. Attributes, returns, warranty, and commission appear underneath.</p>
+        <p class="m-0 mt-1 max-w-2xl text-sm text-muted-color">Save the category first. Link attributes underneath. Return policy, warranty, and commission are under Categories in the menu.</p>
     </div>
     <p-button [label]="categoryId() ? 'Save category' : 'Create category'" icon="pi pi-check" [loading]="saving() === 'category'" (onClick)="saveCategory()" />
 </div>
@@ -132,110 +132,6 @@
         </p-table>
         <div class="mt-3">
             <p-button label="Save attributes" [loading]="saving() === 'attributes'" (onClick)="saveAttributes()" />
-        </div>
-    </section>
-
-    <div class="mt-4 grid grid-cols-1 items-start gap-4 xl:grid-cols-2">
-        <section class="card">
-            <h2 class="m-0 text-lg font-semibold">Return policy</h2>
-            <p class="m-0 mt-1 text-sm text-muted-color">Default window is 14 days. Turning returns off sets the window to 0.</p>
-            <div class="mt-4 grid gap-4">
-                <label class="inline-flex items-center gap-2">
-                    <p-checkbox [binary]="true" [ngModel]="returns().returnsAllowed" (ngModelChange)="patchReturns({ returnsAllowed: $event })" />
-                    <span>Returns allowed</span>
-                </label>
-                <div class="flex flex-col gap-1">
-                    <label class="text-sm font-medium" for="return-days">Window (days)</label>
-                    <app-input-control inputId="return-days" label="Window" type="number" [control]="returnsForm.controls.returnWindowDays" [readonly]="!returns().returnsAllowed" [showCount]="false" [flowError]="true" />
-                </div>
-                <div class="flex flex-col gap-1">
-                    <label class="text-sm font-medium" for="return-notes">Notes</label>
-                    <app-input-control inputId="return-notes" label="Notes" type="textarea" [control]="returnsForm.controls.notes" [maxLength]="1000" [showCount]="false" [flowError]="true" />
-                </div>
-                <div><p-button label="Save return policy" [loading]="saving() === 'returns'" (onClick)="saveReturns()" /></div>
-            </div>
-        </section>
-
-        <section class="card">
-            <h2 class="m-0 text-lg font-semibold">Warranty</h2>
-            <p class="m-0 mt-1 text-sm text-muted-color">Whether a product in this category must include a warranty and a serial or IMEI.</p>
-            <div class="mt-4 grid gap-4">
-                <label class="inline-flex items-center gap-2">
-                    <p-checkbox [binary]="true" [ngModel]="warranty().warrantyRequired" (ngModelChange)="patchWarranty({ warrantyRequired: $event })" />
-                    <span>Warranty required</span>
-                </label>
-                <div class="flex flex-col gap-1">
-                    <label class="text-sm font-medium" for="warranty-months">Minimum months</label>
-                    <app-input-control inputId="warranty-months" label="Minimum months" type="number" [control]="warrantyForm.controls.minDurationMonths" [showCount]="false" [flowError]="true" />
-                </div>
-                <label class="inline-flex items-center gap-2">
-                    <p-checkbox [binary]="true" [ngModel]="warranty().serialOrImeiRequired" (ngModelChange)="patchWarranty({ serialOrImeiRequired: $event })" />
-                    <span>Serial or IMEI required</span>
-                </label>
-                <div><p-button label="Save warranty" [loading]="saving() === 'warranty'" (onClick)="saveWarranty()" /></div>
-            </div>
-        </section>
-    </div>
-
-    <section class="card mt-4">
-        <h2 class="m-0 text-lg font-semibold">Commission</h2>
-        <p class="m-0 mt-1 text-sm text-muted-color">Percent and closing fee. Leave fulfillment as Both, or add a separate FBM or FBT rate.</p>
-        <div class="mt-4 mb-3">
-            <app-search-control (searchChange)="rateQuery.set($event)" />
-        </div>
-        <p-table [value]="visibleRates()" class="mt-4">
-            <ng-template #header>
-                <tr>
-                    <th>Name</th>
-                    <th>Fulfillment</th>
-                    <th>Percent</th>
-                    <th>Closing fee</th>
-                    <th>From</th>
-                    <th>To</th>
-                </tr>
-            </ng-template>
-            <ng-template #body let-rate>
-                <tr>
-                    <td>{{ rate.name }}</td>
-                    <td>{{ fulfillmentLabel(rate.fulfillmentType) }}</td>
-                    <td>{{ rate.commissionPercent }}%</td>
-                    <td>{{ rate.closingFee }}</td>
-                    <td>{{ rate.effectiveFrom | date: 'medium' }}</td>
-                    <td>{{ rate.effectiveTo ? (rate.effectiveTo | date: 'medium') : 'Open' }}</td>
-                </tr>
-            </ng-template>
-            <ng-template #emptymessage>
-                <tr><td colspan="6" class="text-center text-muted-color">No commission rates yet.</td></tr>
-            </ng-template>
-        </p-table>
-        <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
-            <div class="flex flex-col gap-1">
-                <label class="text-sm font-medium" for="commission-name">Name</label>
-                <app-input-control inputId="commission-name" label="Name" [control]="commissionForm.controls.name" [maxLength]="100" [showCount]="false" [flowError]="true" />
-            </div>
-            <div class="flex flex-col gap-1">
-                <label class="text-sm font-medium" for="commission-fulfillment">Fulfillment</label>
-                <app-select-control inputId="commission-fulfillment" label="Fulfillment" [control]="commissionForm.controls.fulfillmentType" [options]="fulfillmentOptions" optionLabel="label" optionValue="value" [showClear]="false" appendTo="body" [flowError]="true" />
-            </div>
-            <div class="flex flex-col gap-1">
-                <label class="text-sm font-medium" for="commission-percent">Commission percent</label>
-                <app-input-control inputId="commission-percent" label="Commission percent" type="number" [control]="commissionForm.controls.commissionPercent" [showCount]="false" [flowError]="true" />
-            </div>
-            <div class="flex flex-col gap-1">
-                <label class="text-sm font-medium" for="commission-fee">Closing fee</label>
-                <app-input-control inputId="commission-fee" label="Closing fee" type="number" [control]="commissionForm.controls.closingFee" [showCount]="false" [flowError]="true" />
-            </div>
-            <div class="flex flex-col gap-1">
-                <label class="text-sm font-medium" for="commission-from">Effective from</label>
-                <app-input-control inputId="commission-from" label="Effective from" type="datetime-local" [control]="commissionForm.controls.effectiveFrom" [showCount]="false" [flowError]="true" />
-            </div>
-            <div class="flex flex-col gap-1">
-                <label class="text-sm font-medium" for="commission-to">Effective to</label>
-                <app-input-control inputId="commission-to" label="Effective to" type="datetime-local" [control]="commissionForm.controls.effectiveTo" [showCount]="false" [flowError]="true" />
-            </div>
-        </div>
-        <div class="mt-4">
-            <p-button label="Add commission rate" [loading]="saving() === 'commission'" (onClick)="saveCommission()" />
         </div>
     </section>
 }
