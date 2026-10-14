@@ -10,6 +10,10 @@ export default [
         loadComponent: () => import('./categories/category-form').then((m) => m.CategoryFormPage)
     },
     {
+        path: 'categories/commission/new',
+        loadComponent: () => import('./categories/category-commission-form').then((m) => m.CategoryCommissionFormPage)
+    },
+    {
         path: 'categories/commission',
         loadComponent: () => import('./categories/category-commission').then((m) => m.CategoryCommissionPage)
     },

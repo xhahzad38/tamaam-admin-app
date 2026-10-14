@@ -55,6 +55,7 @@ export interface CategoryCommission {
     id: string;
     name: string;
     categoryId: string | null;
+    categoryName: string | null;
     fulfillmentType: number | null;
     commissionPercent: number;
     closingFee: number;

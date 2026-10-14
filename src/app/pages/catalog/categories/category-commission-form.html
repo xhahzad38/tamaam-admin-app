@@ -1,0 +1,47 @@
+<app-bread-crumb [items]="crumbs" />
+
+@if (error()) {
+    <div class="mb-4 rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">{{ error() }}</div>
+}
+@if (notice()) {
+    <div class="mb-4 rounded-lg border border-green-300 bg-green-50 px-4 py-3 text-sm text-green-800" role="status">{{ notice() }}</div>
+}
+
+<section class="card">
+    <h2 class="m-0 text-lg font-semibold">Add commission</h2>
+    <p class="m-0 mt-1 text-sm text-muted-color">Choose a category, then set the percent and closing fee. Leave fulfillment as Both, or save a separate FBM or FBT rate.</p>
+    <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div class="flex flex-col gap-1 md:col-span-2">
+            <label class="text-sm font-medium" for="commission-category">Category</label>
+            <app-select-control inputId="commission-category" label="Category" [control]="categoryId" [options]="categoryOptions()" optionLabel="label" optionValue="id" placeholder="Choose a category" [showClear]="false" appendTo="body" [flowError]="true" />
+        </div>
+        <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium" for="commission-name">Name</label>
+            <app-input-control inputId="commission-name" label="Name" [control]="fields.controls.name" [maxLength]="100" [showCount]="false" [flowError]="true" />
+        </div>
+        <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium" for="commission-fulfillment">Fulfillment</label>
+            <app-select-control inputId="commission-fulfillment" label="Fulfillment" [control]="fields.controls.fulfillmentType" [options]="fulfillmentOptions" optionLabel="label" optionValue="value" [showClear]="false" appendTo="body" [flowError]="true" />
+        </div>
+        <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium" for="commission-percent">Commission percent</label>
+            <app-input-control inputId="commission-percent" label="Commission percent" type="number" [control]="fields.controls.commissionPercent" [showCount]="false" [flowError]="true" />
+        </div>
+        <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium" for="commission-fee">Closing fee</label>
+            <app-input-control inputId="commission-fee" label="Closing fee" type="number" [control]="fields.controls.closingFee" [showCount]="false" [flowError]="true" />
+        </div>
+        <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium" for="commission-from">Effective from</label>
+            <app-input-control inputId="commission-from" label="Effective from" type="datetime-local" [control]="fields.controls.effectiveFrom" [showCount]="false" [flowError]="true" />
+        </div>
+        <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium" for="commission-to">Effective to</label>
+            <app-input-control inputId="commission-to" label="Effective to" type="datetime-local" [control]="fields.controls.effectiveTo" [showCount]="false" [flowError]="true" />
+        </div>
+    </div>
+    <div class="mt-5 flex justify-end gap-2 border-t border-surface pt-4">
+        <p-button label="Close" [outlined]="true" (onClick)="close()" />
+        <p-button label="Save" icon="pi pi-check" [loading]="saving()" (onClick)="save()" />
+    </div>
+</section>

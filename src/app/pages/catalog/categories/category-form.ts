@@ -1,7 +1,7 @@
 import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MenuItem } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { CheckboxModule } from 'primeng/checkbox';
@@ -62,6 +62,7 @@ export class CategoryFormPage implements OnInit {
     private readonly categories = inject(CategoryService);
     private readonly attributes = inject(AttributeService);
     private readonly route = inject(ActivatedRoute);
+    private readonly router = inject(Router);
     private readonly destroyRef = inject(DestroyRef);
 
     readonly crumbs = signal<MenuItem[]>([
@@ -104,6 +105,7 @@ export class CategoryFormPage implements OnInit {
     readonly error = signal<string | null>(null);
     readonly notice = signal<string | null>(null);
     readonly imageError = signal<string | null>(null);
+    readonly imageName = signal<string | null>(null);
 
     imageFile: File | null = null;
 
@@ -122,6 +124,8 @@ export class CategoryFormPage implements OnInit {
             this.form.set(emptyCategory(parent));
             this.details.reset({ name: '', slug: '', parentCategoryId: parent, sortOrder: 0, description: '', badgeText: '' });
             this.categoryId.set(null);
+            this.imageName.set(null);
+            this.imageFile = null;
         });
     }
 
@@ -149,6 +153,7 @@ export class CategoryFormPage implements OnInit {
         const message = readImageFile(file);
         this.imageError.set(message);
         this.imageFile = message ? null : file;
+        this.imageName.set(message ? null : file?.name ?? null);
     }
 
     orderControl(row: CategoryAttributeLink): FormControl<number> {
@@ -159,6 +164,10 @@ export class CategoryFormPage implements OnInit {
             this.orderControls.set(row.attributeId, control);
         }
         return control;
+    }
+
+    close(): void {
+        void this.router.navigate(['/catalog/categories']);
     }
 
     saveCategory(): void {

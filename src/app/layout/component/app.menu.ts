@@ -45,6 +45,7 @@ export class AppMenu {
                             { label: 'All categories', icon: 'pi pi-fw pi-list', routerLink: ['/catalog/categories'] },
                             { label: 'Add category', icon: 'pi pi-fw pi-plus', routerLink: ['/catalog/categories/new'] },
                             { label: 'Commission', icon: 'pi pi-fw pi-percentage', routerLink: ['/catalog/categories/commission'] },
+                            { label: 'Add commission', icon: 'pi pi-fw pi-plus', routerLink: ['/catalog/categories/commission/new'] },
                             { label: 'Return policy', icon: 'pi pi-fw pi-replay', routerLink: ['/catalog/categories/return-policy'] },
                             { label: 'Warranty rule', icon: 'pi pi-fw pi-shield', routerLink: ['/catalog/categories/warranty'] }
                         ]

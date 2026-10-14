@@ -7,7 +7,11 @@ export const catalogErrors = new HttpContext().set(SKIP_ERROR_TOAST, true);
 export function catalogErrorMessage(error: unknown, fallback: string): string {
     const messages = (error as { messages?: string[] } | null)?.messages;
     const message = (error as { message?: string } | null)?.message;
-    return messages?.[0] || message || fallback;
+    const text = messages?.[0] || message;
+    if (!text || text === 'OK') {
+        return fallback;
+    }
+    return text;
 }
 
 export function catalogMediaUrl(path: string | null | undefined): string | null {

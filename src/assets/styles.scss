@@ -2,3 +2,7 @@
 @use 'primeicons/primeicons.css';
 @use '@/assets/layout/layout.scss';
 @use '@/assets/demo/demo.scss';
+
+.p-paginator {
+    justify-content: flex-end;
+}

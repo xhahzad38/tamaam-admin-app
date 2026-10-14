@@ -1,31 +1,32 @@
 <app-bread-crumb [items]="crumbs" />
 
 <div class="card">
-    <h1 class="m-0 text-2xl font-semibold">Commission</h1>
-    <p class="m-0 mt-1 text-sm text-muted-color">Choose a category, then add a percent and closing fee. Leave fulfillment as Both, or save a separate FBM or FBT rate. Saving a new open rate closes the previous one for that fulfillment type.</p>
+    <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div>
+            <h1 class="m-0 text-2xl font-semibold">Commission</h1>
+            <p class="m-0 mt-1 text-sm text-muted-color">Percent and closing fee for a category. Leave fulfillment as Both, or add a separate FBM or FBT rate.</p>
+        </div>
+        <p-button label="Add commission" icon="pi pi-plus" (onClick)="openForm()" />
+    </div>
 
     @if (error()) {
-        <p class="mt-4 text-red-600" role="alert">{{ error() }}</p>
-    }
-    @if (notice()) {
-        <p class="mt-4 text-green-700" role="status">{{ notice() }}</p>
+        <p class="mb-4 text-red-600" role="alert">{{ error() }}</p>
     }
 
-    <div class="mt-4 max-w-sm">
-        <label class="mb-1 block text-sm font-medium" for="commission-category">Category</label>
-        <app-select-control inputId="commission-category" label="Category" [control]="categoryId" [options]="categoryOptions()" optionLabel="label" optionValue="id" placeholder="Choose a category" [showClear]="false" appendTo="body" [flowError]="true" />
+    <div class="mb-4 flex flex-col gap-3 md:flex-row md:items-end">
+        <div class="min-w-0 flex-1">
+            <app-search-control (searchChange)="onSearch($event)" />
+        </div>
+        <div class="w-full md:w-72">
+            <label class="mb-1 block text-sm font-medium" for="commission-category">Category</label>
+            <app-select-control inputId="commission-category" label="Category" [control]="categoryId" [options]="categoryOptions()" optionLabel="label" optionValue="id" placeholder="All categories" appendTo="body" [flowError]="true" />
+        </div>
     </div>
 
-    @if (loading()) {
-        <p class="mt-4 text-sm text-muted-color">Loading commission rates…</p>
-    }
-
-    <div class="mt-4 mb-3">
-        <app-search-control (searchChange)="rateQuery.set($event)" />
-    </div>
-    <p-table [value]="visibleRates()" [loading]="loading()">
+    <p-table [value]="rates()" [loading]="loading()">
         <ng-template #header>
             <tr>
+                <th>Category</th>
                 <th>Name</th>
                 <th>Fulfillment</th>
                 <th>Percent</th>
@@ -37,6 +38,7 @@
         </ng-template>
         <ng-template #body let-rate>
             <tr>
+                <td>{{ rate.categoryName || '—' }}</td>
                 <td>{{ rate.name }}</td>
                 <td>{{ fulfillmentLabel(rate.fulfillmentType) }}</td>
                 <td>{{ rate.commissionPercent }}%</td>
@@ -44,44 +46,26 @@
                 <td>{{ rate.effectiveFrom | date: 'medium' }}</td>
                 <td>{{ rate.effectiveTo ? (rate.effectiveTo | date: 'medium') : 'Open' }}</td>
                 <td class="text-right">
-                    <button type="button" class="cursor-pointer border-0 bg-transparent p-0 font-medium text-primary" (click)="editRate(rate)">Edit</button>
+                    <button type="button" class="cursor-pointer border-0 bg-transparent p-0 font-medium text-primary" (click)="openForm(rate)">Edit</button>
                 </td>
             </tr>
         </ng-template>
         <ng-template #emptymessage>
             <tr>
-                <td colspan="7" class="text-center text-muted-color">No commission rates for this category yet.</td>
+                <td colspan="8" class="text-center text-muted-color">No commission rates yet.</td>
             </tr>
         </ng-template>
     </p-table>
 
-    <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
-        <div class="flex flex-col gap-1">
-            <label class="text-sm font-medium" for="commission-name">Name</label>
-            <app-input-control inputId="commission-name" label="Name" [control]="fields.controls.name" [maxLength]="100" [showCount]="false" [flowError]="true" />
-        </div>
-        <div class="flex flex-col gap-1">
-            <label class="text-sm font-medium" for="commission-fulfillment">Fulfillment</label>
-            <app-select-control inputId="commission-fulfillment" label="Fulfillment" [control]="fields.controls.fulfillmentType" [options]="fulfillmentOptions" optionLabel="label" optionValue="value" [showClear]="false" appendTo="body" [flowError]="true" />
-        </div>
-        <div class="flex flex-col gap-1">
-            <label class="text-sm font-medium" for="commission-percent">Commission percent</label>
-            <app-input-control inputId="commission-percent" label="Commission percent" type="number" [control]="fields.controls.commissionPercent" [showCount]="false" [flowError]="true" />
-        </div>
-        <div class="flex flex-col gap-1">
-            <label class="text-sm font-medium" for="commission-fee">Closing fee</label>
-            <app-input-control inputId="commission-fee" label="Closing fee" type="number" [control]="fields.controls.closingFee" [showCount]="false" [flowError]="true" />
-        </div>
-        <div class="flex flex-col gap-1">
-            <label class="text-sm font-medium" for="commission-from">Effective from</label>
-            <app-input-control inputId="commission-from" label="Effective from" type="datetime-local" [control]="fields.controls.effectiveFrom" [showCount]="false" [flowError]="true" />
-        </div>
-        <div class="flex flex-col gap-1">
-            <label class="text-sm font-medium" for="commission-to">Effective to</label>
-            <app-input-control inputId="commission-to" label="Effective to" type="datetime-local" [control]="fields.controls.effectiveTo" [showCount]="false" [flowError]="true" />
-        </div>
-    </div>
-    <div class="mt-4">
-        <p-button label="Save commission rate" [loading]="saving()" (onClick)="save()" />
+    <div class="mt-3 flex justify-end">
+        <p-paginator
+            (onPageChange)="pageChange($event)"
+            [first]="first()"
+            [rows]="rows()"
+            [totalRecords]="totalRecords()"
+            [rowsPerPageOptions]="[10, 20, 30]"
+            [showCurrentPageReport]="true"
+            currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
+        />
     </div>
 </div>

@@ -1,26 +1,78 @@
 <app-bread-crumb [items]="crumbs" />
 
 <div class="card">
-    <h1 class="m-0 text-2xl font-semibold">Warranty rule</h1>
-    <p class="m-0 mt-1 text-sm text-muted-color">Choose a category, then set whether its products need a warranty and a serial or IMEI.</p>
+    <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div>
+            <h1 class="m-0 text-2xl font-semibold">Warranty rule</h1>
+            <p class="m-0 mt-1 text-sm text-muted-color">Whether products in a category need a warranty and a serial or IMEI.</p>
+        </div>
+        <p-button label="Add warranty rule" icon="pi pi-plus" (onClick)="openCreate()" />
+    </div>
 
-    @if (error()) {
-        <p class="mt-4 text-red-600" role="alert">{{ error() }}</p>
-    }
-    @if (notice()) {
-        <p class="mt-4 text-green-700" role="status">{{ notice() }}</p>
+    @if (error() && !dialogOpen()) {
+        <p class="mb-4 text-red-600" role="alert">{{ error() }}</p>
     }
 
-    <div class="mt-4 grid max-w-xl gap-4">
+    <div class="mb-4 flex flex-col gap-3 md:flex-row md:items-end">
+        <div class="min-w-0 flex-1">
+            <app-search-control (searchChange)="onSearch($event)" />
+        </div>
+        <div class="w-full md:w-72">
+            <label class="mb-1 block text-sm font-medium" for="warranty-category-filter">Category</label>
+            <app-select-control inputId="warranty-category-filter" label="Category" [control]="categoryFilter" [options]="categoryOptions()" optionLabel="label" optionValue="id" placeholder="All categories" appendTo="body" [flowError]="true" />
+        </div>
+    </div>
+
+    <p-table [value]="pageRows()" [loading]="loading()">
+        <ng-template #header>
+            <tr>
+                <th>Category</th>
+                <th>Warranty required</th>
+                <th>Minimum months</th>
+                <th>Serial or IMEI</th>
+                <th></th>
+            </tr>
+        </ng-template>
+        <ng-template #body let-row>
+            <tr>
+                <td class="font-medium">{{ row.categoryName }}</td>
+                <td>{{ row.warrantyRequired ? 'Yes' : 'No' }}</td>
+                <td>{{ row.minDurationMonths }}</td>
+                <td>{{ row.serialOrImeiRequired ? 'Yes' : 'No' }}</td>
+                <td class="text-right">
+                    <button type="button" class="cursor-pointer border-0 bg-transparent p-0 font-medium text-primary" (click)="openEdit(row)">Edit</button>
+                </td>
+            </tr>
+        </ng-template>
+        <ng-template #emptymessage>
+            <tr>
+                <td colspan="5" class="text-center text-muted-color">No warranty rules yet.</td>
+            </tr>
+        </ng-template>
+    </p-table>
+
+    <div class="mt-3 flex justify-end">
+        <p-paginator
+            (onPageChange)="pageChange($event)"
+            [first]="first()"
+            [rows]="rows()"
+            [totalRecords]="totalRecords()"
+            [rowsPerPageOptions]="[10, 20, 30]"
+            [showCurrentPageReport]="true"
+            currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
+        />
+    </div>
+</div>
+
+<p-dialog header="Warranty rule" [visible]="dialogOpen()" (visibleChange)="dialogOpen.set($event)" [modal]="true" [style]="{ width: '32rem' }">
+    <div class="flex flex-col gap-4">
+        @if (error()) {
+            <p class="m-0 text-red-600" role="alert">{{ error() }}</p>
+        }
         <div class="flex flex-col gap-1">
             <label class="text-sm font-medium" for="warranty-category">Category</label>
             <app-select-control inputId="warranty-category" label="Category" [control]="categoryId" [options]="categoryOptions()" optionLabel="label" optionValue="id" placeholder="Choose a category" [showClear]="false" appendTo="body" [flowError]="true" />
         </div>
-
-        @if (loading()) {
-            <p class="m-0 text-sm text-muted-color">Loading warranty rule…</p>
-        }
-
         <label class="inline-flex items-center gap-2">
             <p-checkbox [binary]="true" [ngModel]="warranty().warrantyRequired" (ngModelChange)="patch({ warrantyRequired: $event })" />
             <span>Warranty required</span>
@@ -33,8 +85,9 @@
             <p-checkbox [binary]="true" [ngModel]="warranty().serialOrImeiRequired" (ngModelChange)="patch({ serialOrImeiRequired: $event })" />
             <span>Serial or IMEI required</span>
         </label>
-        <div>
-            <p-button label="Save warranty rule" [loading]="saving()" (onClick)="save()" />
-        </div>
     </div>
-</div>
+    <ng-template #footer>
+        <p-button label="Close" [outlined]="true" (onClick)="dialogOpen.set(false)" />
+        <p-button label="Save" icon="pi pi-check" [loading]="saving()" (onClick)="save()" />
+    </ng-template>
+</p-dialog>

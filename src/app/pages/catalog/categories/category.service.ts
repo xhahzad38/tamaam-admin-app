@@ -4,7 +4,7 @@ import { Observable, map } from 'rxjs';
 import { environment } from '@/environments/environment';
 import { ApiResponse, PageResult } from '@/app/shared/models/api.types';
 import { catalogErrors } from '../catalog.util';
-import { CategoryAttributeLink, CategoryDetail, CategoryListItem, CategoryNode, CategoryReturnPolicy, CategoryWarrantyRule, CategoryWrite } from './category.models';
+import { CategoryAttributeLink, CategoryCommission, CategoryDetail, CategoryListItem, CategoryNode, CategoryReturnPolicy, CategoryWarrantyRule, CategoryWrite } from './category.models';
 
 @Injectable({ providedIn: 'root' })
 export class CategoryService {
@@ -84,6 +84,17 @@ export class CategoryService {
         return this.http
             .put<ApiResponse<CategoryDetail>>(`${this.baseUrl}/${id}/warranty`, rule, { context: catalogErrors })
             .pipe(map((response) => response.data));
+    }
+
+    commissions(search: string, categoryId: string | null, pageNo: number, pageSize: number): Observable<PageResult<CategoryCommission>> {
+        let params = new HttpParams().set('pageNo', pageNo).set('pageSize', pageSize);
+        if (search.trim()) {
+            params = params.set('searchText', search.trim());
+        }
+        if (categoryId) {
+            params = params.set('categoryId', categoryId);
+        }
+        return this.http.get<PageResult<CategoryCommission>>(`${this.baseUrl}/commissions`, { params, context: catalogErrors });
     }
 
     saveCommission(body: {
