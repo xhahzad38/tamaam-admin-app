@@ -48,6 +48,14 @@ export class BrandListPage implements OnInit {
         void this.router.navigate(id ? ['/catalog/brands', id] : ['/catalog/brands/new']);
     }
 
+    openDocuments(id: string): void {
+        void this.router.navigate(['/catalog/brands/documents'], { queryParams: { brand: id } });
+    }
+
+    openAuthorizations(id: string): void {
+        void this.router.navigate(['/catalog/brands/authorizations'], { queryParams: { brand: id } });
+    }
+
     load(): void {
         const pageNo = Math.floor(this.first() / this.rows()) + 1;
         this.loading.set(true);

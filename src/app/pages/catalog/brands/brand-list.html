@@ -47,9 +47,12 @@
                 <td>{{ brand.enforcementName }}</td>
                 <td>{{ brand.ownerOrganizationName || '—' }}</td>
                 <td>{{ brand.sortOrder }}</td>
-                <!-- <td class="text-right">
-                    <app-action-menu [items]="rowActions(brand)" />
-                </td> -->
+                <td class="whitespace-nowrap text-right">
+                    <button type="button" class="mr-3 cursor-pointer border-0 bg-transparent p-0 font-medium text-primary" (click)="openForm(brand.id)">Edit</button>
+                    <button type="button" class="mr-3 cursor-pointer border-0 bg-transparent p-0 font-medium text-primary" (click)="openDocuments(brand.id)">Documents</button>
+                    <button type="button" class="mr-3 cursor-pointer border-0 bg-transparent p-0 font-medium text-primary" (click)="openAuthorizations(brand.id)">Authorizations</button>
+                    <button type="button" class="cursor-pointer border-0 bg-transparent p-0 font-medium text-red-600" (click)="remove(brand)">Delete</button>
+                </td>
             </tr>
         </ng-template>
         <ng-template #emptymessage>
