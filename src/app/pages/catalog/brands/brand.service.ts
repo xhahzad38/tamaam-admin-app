@@ -4,7 +4,7 @@ import { Observable, map } from 'rxjs';
 import { environment } from '@/environments/environment';
 import { ApiResponse, PageResult } from '@/app/shared/models/api.types';
 import { catalogErrors } from '../catalog.util';
-import { Brand, BrandAuthorization, BrandAuthorizationWrite, BrandChangeRequest, BrandDocument, BrandWrite, EnforcementOption } from './brand.models';
+import { Brand, BrandAuthorization, BrandAuthorizationQueueItem, BrandAuthorizationWrite, BrandChangeRequest, BrandDocument, BrandWrite, EnforcementOption } from './brand.models';
 
 @Injectable({ providedIn: 'root' })
 export class BrandService {
@@ -98,6 +98,20 @@ export class BrandService {
     review(id: string, approve: boolean): Observable<BrandChangeRequest> {
         return this.http
             .post<ApiResponse<BrandChangeRequest>>(`${this.baseUrl}/change-requests/${id}`, { approve }, { context: catalogErrors })
+            .pipe(map((response) => response.data));
+    }
+
+    authorizationQueue(queue: string, search: string, pageNo: number, pageSize: number): Observable<PageResult<BrandAuthorizationQueueItem>> {
+        let params = new HttpParams().set('queue', queue).set('pageNo', pageNo).set('pageSize', pageSize);
+        if (search.trim()) {
+            params = params.set('searchText', search.trim());
+        }
+        return this.http.get<PageResult<BrandAuthorizationQueueItem>>(`${this.baseUrl}/authorization-queue`, { params, context: catalogErrors });
+    }
+
+    reviewAuthorization(brandId: string, id: string, body: { approve: boolean; note: string | null; validFrom: string | null; validTo: string | null }): Observable<BrandAuthorization> {
+        return this.http
+            .post<ApiResponse<BrandAuthorization>>(`${this.baseUrl}/${brandId}/authorizations/${id}/review`, body, { context: catalogErrors })
             .pipe(map((response) => response.data));
     }
 

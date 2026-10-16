@@ -1,0 +1,103 @@
+<app-bread-crumb [items]="crumbs()" />
+
+<div class="card">
+    @if (loading()) {
+        <p class="text-muted-color">Loading product…</p>
+    } @else if (product(); as item) {
+        <div class="mb-5 flex flex-wrap items-start justify-between gap-3">
+            <div>
+                <h1 class="m-0 text-2xl font-semibold">{{ item.name }}</h1>
+                <p class="m-0 mt-1 text-sm text-muted-color">{{ item.storeName || 'Store' }} · {{ item.brandName }} · {{ item.categoryName || 'No category' }} · {{ structureLabel(item.structure) }}</p>
+            </div>
+            <span class="rounded-full bg-surface-100 px-3 py-1 text-sm font-medium">{{ statusLabel(item.status) }}</span>
+        </div>
+
+        <p class="m-0 whitespace-pre-wrap text-sm">{{ item.description }}</p>
+        <p class="mt-2 text-sm text-muted-color">/{{ item.slug }}</p>
+        @if (item.rejectionReason) {
+            <p class="mt-3 text-sm text-red-700">Rejection note: {{ item.rejectionReason }}</p>
+        }
+
+        <h2 class="mb-3 mt-6 text-lg font-semibold">Photos</h2>
+        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            @for (media of item.media; track media.id) {
+                <div>
+                    @if (media.mediaType === 1) {
+                        <img [src]="mediaUrl(media.url)" [alt]="media.altText || media.fileName" class="h-36 w-full rounded-border object-cover" />
+                    } @else {
+                        <div class="flex h-36 items-center justify-center rounded-border bg-surface-100 text-sm">Video · {{ media.fileName }}</div>
+                    }
+                    @if (media.isPrimary) {
+                        <p class="m-0 mt-1 text-xs text-muted-color">Primary</p>
+                    }
+                </div>
+            } @empty {
+                <p class="text-sm text-muted-color">No photos.</p>
+            }
+        </div>
+
+        <h2 class="mb-3 mt-6 text-lg font-semibold">Variants</h2>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="text-left">
+                        <th class="py-2 pr-3">SKU</th>
+                        <th class="py-2 pr-3">Options</th>
+                        <th class="py-2 pr-3">Barcode</th>
+                        <th class="py-2 pr-3">GTIN</th>
+                        <th class="py-2">Weight / size</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (variant of item.variants; track variant.id) {
+                        <tr>
+                            <td class="py-2 pr-3">{{ variant.sku }}</td>
+                            <td class="py-2 pr-3">{{ variant.attributeCombination || (variant.isDefault ? 'Default' : '—') }}</td>
+                            <td class="py-2 pr-3">{{ variant.barcode || '—' }}</td>
+                            <td class="py-2 pr-3">{{ variant.gtin || '—' }}</td>
+                            <td class="py-2">{{ variant.weightKg ?? '—' }} kg · {{ variant.lengthCm ?? '—' }} × {{ variant.widthCm ?? '—' }} × {{ variant.heightCm ?? '—' }} cm</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        @if (item.bundleItems.length) {
+            <h2 class="mb-3 mt-6 text-lg font-semibold">Bundle</h2>
+            <ul class="m-0 pl-5 text-sm">
+                @for (line of item.bundleItems; track line.componentVariantId) {
+                    <li>{{ line.quantity }} × {{ line.productName }} ({{ line.sku }})</li>
+                }
+            </ul>
+        }
+
+        <h2 class="mb-3 mt-6 text-lg font-semibold">Attributes</h2>
+        @if (!item.attributeValues.length) {
+            <p class="text-sm text-muted-color">No attribute values.</p>
+        } @else {
+            <ul class="m-0 pl-5 text-sm">
+                @for (value of item.attributeValues; track value.attributeValueId) {
+                    <li>{{ value.attributeName }}: {{ value.valueName }}</li>
+                }
+            </ul>
+        }
+
+        @if (item.status === 1) {
+            <div class="mt-6 max-w-xl">
+                <app-input-control inputId="reject-note" label="Rejection note" type="textarea" [control]="note" [flowError]="true" />
+                <div class="mt-3 flex gap-2">
+                    <p-button label="Approve" [loading]="saving()" (onClick)="approve()" />
+                    <p-button label="Reject" severity="danger" [outlined]="true" [loading]="saving()" (onClick)="reject()" />
+                </div>
+            </div>
+        }
+    }
+
+    @if (error()) {
+        <p class="mt-4 text-sm text-red-700" role="alert">{{ error() }}</p>
+    }
+    @if (notice()) {
+        <p class="mt-4 text-sm text-green-700">{{ notice() }}</p>
+    }
+    <a class="mt-4 inline-block text-sm" routerLink="/catalog/product-reviews">Back to the queue</a>
+</div>

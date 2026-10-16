@@ -1,0 +1,76 @@
+<app-bread-crumb [items]="crumbs()" />
+
+<div class="card">
+    @if (loading()) {
+        <p class="text-muted-color">Loading change request…</p>
+    } @else if (request(); as item) {
+        <h1 class="m-0 text-2xl font-semibold">{{ item.current.name }}</h1>
+        <p class="m-0 mt-1 text-sm text-muted-color">{{ item.current.storeName }} · {{ item.statusName }}</p>
+        @if (item.reviewNote) {
+            <p class="mt-3 text-sm">Review note: {{ item.reviewNote }}</p>
+        }
+
+        <div class="mt-6 grid gap-6 lg:grid-cols-2">
+            <section>
+                <h2 class="m-0 text-lg font-semibold">Live now</h2>
+                <p class="mt-3 text-sm font-medium">{{ item.current.name }}</p>
+                <p class="whitespace-pre-wrap text-sm">{{ item.current.description }}</p>
+                <p class="text-sm text-muted-color">/{{ item.current.slug }}</p>
+                <ul class="mt-3 pl-5 text-sm">
+                    @for (variant of item.current.variants; track variant.id) {
+                        <li>{{ variant.attributeCombination || 'Default' }} · {{ variant.sku }} {{ variant.barcode ? '· ' + variant.barcode : '' }}</li>
+                    }
+                </ul>
+            </section>
+            <section>
+                <h2 class="m-0 text-lg font-semibold">Proposed</h2>
+                <p class="mt-3 text-sm font-medium">{{ item.proposed.name }}</p>
+                <p class="whitespace-pre-wrap text-sm">{{ item.proposed.description }}</p>
+                <p class="text-sm text-muted-color">/{{ item.proposed.slug }}</p>
+                <ul class="mt-3 pl-5 text-sm">
+                    @for (variant of item.proposed.variants; track variant.id) {
+                        <li>{{ variant.attributeCombination || 'Default' }} · {{ variant.sku }} {{ variant.barcode ? '· ' + variant.barcode : '' }}</li>
+                    }
+                </ul>
+                @if (item.proposed.bundleItems.length) {
+                    <p class="mt-3 text-sm font-medium">Bundle</p>
+                    <ul class="pl-5 text-sm">
+                        @for (line of item.proposed.bundleItems; track line.componentVariantId) {
+                            <li>{{ line.quantity }} × {{ line.productName }} ({{ line.sku }})</li>
+                        }
+                    </ul>
+                }
+                <div class="mt-3 grid grid-cols-2 gap-2">
+                    @for (media of item.proposed.media; track media.id) {
+                        @if (media.mediaType === 1) {
+                            <img [src]="mediaUrl(media.url)" [alt]="media.fileName" class="h-24 w-full rounded object-cover" />
+                        }
+                    }
+                </div>
+                <ul class="mt-3 pl-5 text-sm">
+                    @for (value of item.proposed.attributeValues; track value.attributeValueId) {
+                        <li>{{ value.attributeName }}: {{ value.valueName }}</li>
+                    }
+                </ul>
+            </section>
+        </div>
+
+        @if (item.statusCode === 'PENDING') {
+            <div class="mt-6 max-w-xl">
+                <app-input-control inputId="change-note" label="Note" type="textarea" [control]="note" [flowError]="true" />
+                <div class="mt-3 flex gap-2">
+                    <p-button label="Approve and apply" [loading]="saving()" (onClick)="decide(true)" />
+                    <p-button label="Reject" severity="danger" [outlined]="true" [loading]="saving()" (onClick)="decide(false)" />
+                </div>
+            </div>
+        }
+    }
+
+    @if (error()) {
+        <p class="mt-4 text-sm text-red-700" role="alert">{{ error() }}</p>
+    }
+    @if (notice()) {
+        <p class="mt-4 text-sm text-green-700">{{ notice() }}</p>
+    }
+    <a class="mt-4 inline-block text-sm" routerLink="/catalog/change-requests">Back to the queue</a>
+</div>

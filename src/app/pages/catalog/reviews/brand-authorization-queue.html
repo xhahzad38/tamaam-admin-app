@@ -1,0 +1,72 @@
+<app-bread-crumb [items]="crumbs" />
+
+<div class="card">
+    <h1 class="m-0 text-2xl font-semibold">Brand authorization review</h1>
+    <p class="m-0 mt-1 text-sm text-muted-color">Sellers waiting for the right to sell a restricted brand.</p>
+    <div class="my-4 flex flex-wrap gap-2">
+        @for (option of queues; track option.id) {
+            <p-button [label]="option.label" [outlined]="queue() !== option.id" size="small" (onClick)="selectQueue(option.id)" />
+        }
+    </div>
+    <div class="mb-4">
+        <app-search-control (searchChange)="onSearch($event)" />
+    </div>
+    @if (error()) {
+        <p class="text-red-600" role="alert">{{ error() }}</p>
+    }
+    @if (notice()) {
+        <p class="text-sm text-green-700">{{ notice() }}</p>
+    }
+    <p-table [value]="items()" [loading]="loading()" responsiveLayout="scroll">
+        <ng-template #header>
+            <tr>
+                <th>Brand</th>
+                <th>Store</th>
+                <th>Letter</th>
+                <th>Submitted</th>
+                <th>Status</th>
+                <th></th>
+            </tr>
+        </ng-template>
+        <ng-template #body let-item>
+            <tr>
+                <td>{{ item.brandName }}</td>
+                <td>{{ item.storeName }}</td>
+                <td>
+                    @if (mediaUrl(item.documentUrl); as url) {
+                        <a [href]="url" target="_blank" rel="noopener">{{ item.documentFileName || 'Letter' }}</a>
+                    } @else {
+                        —
+                    }
+                </td>
+                <td>{{ item.createdAt | date: 'mediumDate' }}</td>
+                <td>{{ statusLabel(item.approvalStatus) }}</td>
+                <td><button type="button" class="text-sm" (click)="open(item)">Review</button></td>
+            </tr>
+        </ng-template>
+        <ng-template #emptymessage>
+            <tr><td colspan="6">Nothing in this queue.</td></tr>
+        </ng-template>
+    </p-table>
+    <p-paginator [first]="first()" [rows]="rows()" [totalRecords]="totalRecords()" [rowsPerPageOptions]="[10, 20, 50]" (onPageChange)="pageChange($event)" />
+
+    @if (selected(); as row) {
+        <form class="mt-6 max-w-xl border-t border-surface pt-4" [formGroup]="dates">
+            <h2 class="m-0 text-lg font-semibold">{{ row.storeName }} · {{ row.brandName }}</h2>
+            @if (row.reviewNote) {
+                <p class="mt-2 text-sm">Previous note: {{ row.reviewNote }}</p>
+            }
+            <div class="mt-4 grid gap-4 md:grid-cols-2">
+                <app-input-control inputId="valid-from" label="Valid from" type="date" [control]="dates.controls.validFrom" [flowError]="true" />
+                <app-input-control inputId="valid-to" label="Valid to" type="date" [control]="dates.controls.validTo" [flowError]="true" />
+            </div>
+            <div class="mt-4">
+                <app-input-control inputId="auth-note" label="Note" type="textarea" [control]="dates.controls.note" [flowError]="true" />
+            </div>
+            <div class="mt-3 flex gap-2">
+                <p-button label="Approve" [loading]="saving()" (onClick)="decide(true)" />
+                <p-button label="Reject" severity="danger" [outlined]="true" [loading]="saving()" (onClick)="decide(false)" />
+            </div>
+        </form>
+    }
+</div>

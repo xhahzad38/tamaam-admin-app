@@ -64,7 +64,10 @@ export class AppMenu {
                             { label: 'Change requests', icon: 'pi pi-fw pi-check-square', routerLink: ['/catalog/brands/requests'] }
                         ]
                     },
-                    { label: 'Lookups', icon: 'pi pi-fw pi-tags', routerLink: ['/catalog/lookups'] }
+                    { label: 'Lookups', icon: 'pi pi-fw pi-tags', routerLink: ['/catalog/lookups'] },
+                    { label: 'Product review', icon: 'pi pi-fw pi-check-circle', routerLink: ['/catalog/product-reviews'] },
+                    { label: 'Catalog changes', icon: 'pi pi-fw pi-pencil', routerLink: ['/catalog/change-requests'] },
+                    { label: 'Authorization review', icon: 'pi pi-fw pi-verified', routerLink: ['/catalog/brand-authorization-reviews'] }
                 ]
             },
         ];

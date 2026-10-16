@@ -78,6 +78,12 @@ export interface BrandAuthorizationWrite {
     isActive: boolean;
 }
 
+export interface BrandAuthorizationQueueItem extends BrandAuthorization {
+    brandName: string;
+    documentUrl: string | null;
+    createdAt: string;
+}
+
 export const BRAND_DOCUMENT_KINDS = [
     { label: 'Trademark certificate', value: 'TrademarkCertificate' },
     { label: 'Authorization letter', value: 'AuthorizationLetter' },

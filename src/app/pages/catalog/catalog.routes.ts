@@ -2,6 +2,26 @@ import { Routes } from '@angular/router';
 
 export default [
     {
+        path: 'product-reviews',
+        loadComponent: () => import('./reviews/product-review-list').then((m) => m.ProductReviewListPage)
+    },
+    {
+        path: 'product-reviews/:id',
+        loadComponent: () => import('./reviews/product-review-detail').then((m) => m.ProductReviewDetailPage)
+    },
+    {
+        path: 'change-requests',
+        loadComponent: () => import('./reviews/change-request-list').then((m) => m.ChangeRequestListPage)
+    },
+    {
+        path: 'change-requests/:id',
+        loadComponent: () => import('./reviews/change-request-detail').then((m) => m.ChangeRequestDetailPage)
+    },
+    {
+        path: 'brand-authorization-reviews',
+        loadComponent: () => import('./reviews/brand-authorization-queue').then((m) => m.BrandAuthorizationQueuePage)
+    },
+    {
         path: 'categories',
         loadComponent: () => import('./categories/category-tree').then((m) => m.CategoryTreePage)
     },
