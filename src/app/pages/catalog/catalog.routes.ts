@@ -42,6 +42,18 @@ export default [
         loadComponent: () => import('./brands/brand-requests').then((m) => m.BrandRequestsPage)
     },
     {
+        path: 'brands/documents',
+        loadComponent: () => import('./brands/brand-documents').then((m) => m.BrandDocumentsPage)
+    },
+    {
+        path: 'brands/authorizations/new',
+        loadComponent: () => import('./brands/brand-authorization-form').then((m) => m.BrandAuthorizationFormPage)
+    },
+    {
+        path: 'brands/authorizations',
+        loadComponent: () => import('./brands/brand-authorizations').then((m) => m.BrandAuthorizationsPage)
+    },
+    {
         path: 'brands/new',
         loadComponent: () => import('./brands/brand-form').then((m) => m.BrandFormPage)
     },

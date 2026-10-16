@@ -51,8 +51,19 @@ export class AppMenu {
                         ]
                     },
                     { label: 'Attributes', icon: 'pi pi-fw pi-list', routerLink: ['/catalog/attributes'] },
-                    { label: 'Brands', icon: 'pi pi-fw pi-bookmark', routerLink: ['/catalog/brands'] },
-                    { label: 'Brand requests', icon: 'pi pi-fw pi-check-square', routerLink: ['/catalog/brands/requests'] },
+                    {
+                        label: 'Brands',
+                        icon: 'pi pi-fw pi-bookmark',
+                        path: '/catalog/brands',
+                        items: [
+                            { label: 'All brands', icon: 'pi pi-fw pi-list', routerLink: ['/catalog/brands'] },
+                            { label: 'Add brand', icon: 'pi pi-fw pi-plus', routerLink: ['/catalog/brands/new'] },
+                            { label: 'Documents', icon: 'pi pi-fw pi-file', routerLink: ['/catalog/brands/documents'] },
+                            { label: 'Authorizations', icon: 'pi pi-fw pi-verified', routerLink: ['/catalog/brands/authorizations'] },
+                            { label: 'Add authorization', icon: 'pi pi-fw pi-plus', routerLink: ['/catalog/brands/authorizations/new'] },
+                            { label: 'Change requests', icon: 'pi pi-fw pi-check-square', routerLink: ['/catalog/brands/requests'] }
+                        ]
+                    },
                     { label: 'Lookups', icon: 'pi pi-fw pi-tags', routerLink: ['/catalog/lookups'] }
                 ]
             },

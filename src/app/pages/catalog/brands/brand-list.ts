@@ -35,8 +35,13 @@ export class BrandListPage implements OnInit {
         this.load();
     }
 
-    openRequests(): void {
-        void this.router.navigate(['/catalog/brands/requests']);
+    rowActions(brand: Brand): MenuItem[] {
+        return [
+            { label: 'Edit', icon: 'pi pi-pencil', command: () => this.openForm(brand.id) },
+            { label: 'Documents', icon: 'pi pi-file', command: () => void this.router.navigate(['/catalog/brands/documents'], { queryParams: { brand: brand.id } }) },
+            { label: 'Authorizations', icon: 'pi pi-verified', command: () => void this.router.navigate(['/catalog/brands/authorizations'], { queryParams: { brand: brand.id } }) },
+            { label: 'Delete', icon: 'pi pi-trash', command: () => this.remove(brand) }
+        ];
     }
 
     openForm(id?: string): void {

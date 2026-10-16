@@ -1,0 +1,67 @@
+<app-bread-crumb [items]="crumbs" />
+
+<div class="card">
+    <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div>
+            <h1 class="m-0 text-2xl font-semibold">Brand authorization List</h1>
+            <p class="m-0 mt-1 text-sm text-muted-color">Which seller store may sell a brand, and which document proves it.</p>
+        </div>
+        <p-button label="Add authorization" icon="pi pi-plus" (onClick)="openForm()" />
+    </div>
+
+    @if (error()) {
+        <p class="mb-4 text-red-600" role="alert">{{ error() }}</p>
+    }
+
+    <div class="mb-4 flex flex-col gap-3 md:flex-row md:items-end">
+        <div class="min-w-0 flex-1">
+            <app-search-control (searchChange)="onSearch($event)" />
+        </div>
+        <div class="w-full md:w-72">
+            <label class="mb-1 block text-sm font-medium" for="authorization-brand-filter">Brand</label>
+            <app-select-control inputId="authorization-brand-filter" label="Brand" [control]="brandFilter" [options]="brandOptions()" optionLabel="name" optionValue="id" placeholder="All brands" appendTo="body" [flowError]="true" />
+        </div>
+    </div>
+
+    <p-table [value]="pageRows()" [loading]="loading()">
+        <ng-template #header>
+            <tr>
+                <th>Brand</th>
+                <th>Store</th>
+                <th>Type</th>
+                <th>Status</th>
+                <th>Valid</th>
+                <th></th>
+            </tr>
+        </ng-template>
+        <ng-template #body let-row>
+            <tr>
+                <td class="font-medium">{{ row.brandName }}</td>
+                <td>{{ row.storeName }}</td>
+                <td>{{ row.authorizationType }}</td>
+                <td>{{ statusLabel(row.approvalStatus) }}</td>
+                <td>{{ row.validFrom || '—' }} – {{ row.validTo || '—' }}</td>
+                <td class="text-right">
+                    <!-- <app-action-menu [items]="rowActions(row)" /> -->
+                </td>
+            </tr>
+        </ng-template>
+        <ng-template #emptymessage>
+            <tr>
+                <td colspan="6" class="text-center text-muted-color">No store is authorized yet.</td>
+            </tr>
+        </ng-template>
+    </p-table>
+
+    <div class="mt-3 flex justify-end">
+        <p-paginator
+            (onPageChange)="pageChange($event)"
+            [first]="first()"
+            [rows]="rows()"
+            [totalRecords]="totalRecords()"
+            [rowsPerPageOptions]="[10, 20, 30]"
+            [showCurrentPageReport]="true"
+            currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
+        />
+    </div>
+</div>

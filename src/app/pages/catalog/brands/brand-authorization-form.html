@@ -1,0 +1,71 @@
+<app-bread-crumb [items]="crumbs" />
+
+@if (error()) {
+    <div class="mb-4 rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">{{ error() }}</div>
+}
+@if (notice()) {
+    <div class="mb-4 rounded-lg border border-green-300 bg-green-50 px-4 py-3 text-sm text-green-800" role="status">{{ notice() }}</div>
+}
+
+<section class="card">
+    <h2 class="m-0 text-lg font-semibold">{{ heading() }}</h2>
+    <p class="m-0 mt-1 text-sm text-muted-color">Choose the brand and the seller store that may sell it.</p>
+    <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div class="flex flex-col gap-1 md:col-span-2">
+            <label class="text-sm font-medium" for="authorization-brand">Brand</label>
+            <app-select-control inputId="authorization-brand" label="Brand" [control]="brandId" [options]="brandOptions()" optionLabel="name" optionValue="id" placeholder="Choose a brand" [showClear]="false" appendTo="body" [flowError]="true" />
+        </div>
+        <div class="flex flex-col gap-2 md:col-span-2">
+            <span class="text-sm font-medium">Store</span>
+            @if (storeName()) {
+                <div class="rounded-lg border border-surface px-3 py-2 font-medium">{{ storeName() }}</div>
+            }
+            <div class="flex gap-2">
+                <app-input-control inputId="authorization-store-search" label="Store search" [control]="storeSearch" placeholder="Search seller name or email" [showCount]="false" [flowError]="true" />
+                <p-button label="Search" [outlined]="true" (onClick)="searchStores()" />
+            </div>
+            @if (owners().length) {
+                <div class="flex flex-col gap-1">
+                    @for (owner of owners(); track owner.organizationId) {
+                        <button type="button" class="cursor-pointer rounded border border-surface bg-transparent px-3 py-2 text-left" (click)="chooseStore(owner)">
+                            <span class="font-medium">{{ owner.displayName || owner.legalName }}</span>
+                            <span class="block text-sm text-muted-color">{{ owner.storeName || 'No store' }}</span>
+                        </button>
+                    }
+                </div>
+            }
+        </div>
+        <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium" for="auth-type">Authorization type</label>
+            <app-select-control inputId="auth-type" label="Authorization type" [control]="fields.controls.type" [options]="authorizationTypes" optionLabel="label" optionValue="value" [showClear]="false" appendTo="body" [flowError]="true" />
+        </div>
+        <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium" for="auth-document">Supporting document</label>
+            <app-select-control inputId="auth-document" label="Supporting document" [control]="fields.controls.documentId" [options]="documents()" optionLabel="fileName" optionValue="id" placeholder="None" appendTo="body" [flowError]="true" />
+        </div>
+        <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium" for="auth-status">Approval status</label>
+            <app-select-control inputId="auth-status" label="Approval status" [control]="fields.controls.status" [options]="approvalOptions" optionLabel="label" optionValue="value" [showClear]="false" appendTo="body" [flowError]="true" />
+        </div>
+        <label class="inline-flex items-center gap-2 self-end pb-2">
+            <p-checkbox [binary]="true" [ngModel]="active()" (ngModelChange)="active.set($event)" />
+            <span>Active</span>
+        </label>
+        <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium" for="auth-from">Valid from</label>
+            <app-input-control inputId="auth-from" label="Valid from" type="date" [control]="fields.controls.validFrom" [showCount]="false" [flowError]="true" />
+        </div>
+        <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium" for="auth-to">Valid to</label>
+            <app-input-control inputId="auth-to" label="Valid to" type="date" [control]="fields.controls.validTo" [showCount]="false" [flowError]="true" />
+        </div>
+        <div class="flex flex-col gap-1 md:col-span-2">
+            <label class="text-sm font-medium" for="auth-note">Review note</label>
+            <app-input-control inputId="auth-note" label="Review note" type="textarea" [control]="fields.controls.note" [maxLength]="1000" [showCount]="false" [flowError]="true" />
+        </div>
+    </div>
+    <div class="mt-5 flex justify-end gap-2 border-t border-surface pt-4">
+        <p-button label="Close" [outlined]="true" (onClick)="close()" />
+        <p-button label="Save" icon="pi pi-check" [loading]="saving()" (onClick)="save()" />
+    </div>
+</section>

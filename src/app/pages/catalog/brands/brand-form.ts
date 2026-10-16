@@ -15,7 +15,6 @@ import { SellerDirectoryItem, SellerReviewService } from '@/app/pages/seller-rev
 import { BreadCrumbComponent } from '@/app/shared-components/bread-crumb/bread-crumb.component';
 import { InputControlComponent } from '@/app/shared-components/input-control/input-control.component';
 import { SelectControlComponent } from '@/app/shared-components/select-control/select-control.component';
-import { SearchControlComponent } from '@/app/shared-components/search-control/search-control.component';
 import { catalogErrorMessage, catalogMediaUrl, readImageFile } from '../catalog.util';
 import { BRAND_AUTHORIZATION_TYPES, BRAND_DOCUMENT_KINDS, Brand, BrandAuthorization, BrandDocument, BrandWrite, EnforcementOption } from './brand.models';
 import { BrandService } from './brand.service';
@@ -51,7 +50,7 @@ function emptyBrand(): BrandFormState {
 @Component({
     selector: 'app-brand-form',
     standalone: true,
-    imports: [FormsModule, ReactiveFormsModule, BreadCrumbComponent, SearchControlComponent, InputControlComponent, SelectControlComponent, ButtonModule, CheckboxModule, PaginatorModule, TableModule],
+    imports: [FormsModule, ReactiveFormsModule, BreadCrumbComponent, InputControlComponent, SelectControlComponent, ButtonModule, CheckboxModule],
     templateUrl: './brand-form.html'
 })
 export class BrandFormPage implements OnInit {
@@ -115,6 +114,7 @@ export class BrandFormPage implements OnInit {
     readonly error = signal<string | null>(null);
     readonly notice = signal<string | null>(null);
     readonly imageError = signal<string | null>(null);
+    readonly logoName = signal<string | null>(null);
     readonly documentKind = signal('TrademarkCertificate');
     readonly documentExpires = signal('');
     readonly documentError = signal<string | null>(null);
@@ -163,6 +163,11 @@ export class BrandFormPage implements OnInit {
         const message = readImageFile(file);
         this.imageError.set(message);
         this.logoFile = message ? null : file;
+        this.logoName.set(message ? null : file?.name ?? null);
+    }
+
+    close(): void {
+        void this.router.navigate(['/catalog/brands']);
     }
 
     onDocument(event: Event): void {

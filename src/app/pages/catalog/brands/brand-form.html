@@ -1,13 +1,8 @@
 <app-bread-crumb [items]="crumbs()" />
 
-<div class="mb-4 flex flex-wrap items-start justify-between gap-3">
-    <div>
-        <h1 class="m-0 text-2xl font-semibold">{{ brandId() ? 'Edit brand' : 'Add brand' }}</h1>
-        <p class="m-0 mt-1 max-w-2xl text-sm text-muted-color">Identity, enforcement, and owner first. Documents and store authorizations open after the brand is saved.</p>
-    </div>
-    <p-button [label]="brandId() ? 'Save brand' : 'Create brand'" icon="pi pi-check" [loading]="saving()" (onClick)="saveBrand()" />
-</div>
-
+@if (loading()) {
+    <p class="mb-4 text-sm text-muted-color">Loading brand…</p>
+}
 @if (error()) {
     <div class="mb-4 rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">{{ error() }}</div>
 }
@@ -15,250 +10,81 @@
     <div class="mb-4 rounded-lg border border-green-300 bg-green-50 px-4 py-3 text-sm text-green-800" role="status">{{ notice() }}</div>
 }
 
-<div class="grid grid-cols-1 items-start gap-4 xl:grid-cols-3">
-    <section class="card xl:col-span-2">
-        <h2 class="m-0 text-lg font-semibold">Brand details</h2>
-        <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
-            <div class="flex flex-col gap-1">
-                <label class="text-sm font-medium" for="brand-name">Name</label>
-                <app-input-control inputId="brand-name" label="Name" [control]="details.controls.name" [maxLength]="200" [showCount]="false" [flowError]="true" />
-            </div>
-            <div class="flex flex-col gap-1">
-                <label class="text-sm font-medium" for="brand-slug">Slug</label>
-                <app-input-control inputId="brand-slug" label="Slug" [control]="details.controls.slug" placeholder="Generated from the name if blank" [maxLength]="200" [showCount]="false" [flowError]="true" />
-            </div>
-            <div class="flex flex-col gap-1">
-                <label class="text-sm font-medium" for="brand-enforcement">Enforcement</label>
-                <app-select-control inputId="brand-enforcement" label="Enforcement" [control]="details.controls.enforcementId" [options]="enforcements()" optionLabel="name" optionValue="id" placeholder="Choose enforcement" [showClear]="false" appendTo="body" [flowError]="true" />
-            </div>
-            <div class="flex flex-col gap-1">
-                <label class="text-sm font-medium" for="brand-sort">Sort order</label>
-                <app-input-control inputId="brand-sort" label="Sort order" type="number" [control]="details.controls.sortOrder" [showCount]="false" [flowError]="true" />
-            </div>
-            <div class="flex flex-col gap-1 md:col-span-2">
-                <label class="text-sm font-medium" for="brand-description">Description</label>
-                <app-input-control inputId="brand-description" label="Description" type="textarea" [control]="details.controls.description" [maxLength]="500" [showCount]="false" [flowError]="true" />
-            </div>
-            <div class="flex flex-col gap-2 md:col-span-2">
-                <span class="text-sm font-medium">Brand owner</span>
-                @if (form().ownerOrganizationName) {
-                    <div class="flex items-center justify-between gap-3 rounded-lg border border-surface px-3 py-2">
-                        <span class="font-medium">{{ form().ownerOrganizationName }}</span>
-                        <p-button label="Clear" size="small" [text]="true" (onClick)="clearOwner()" />
-                    </div>
-                }
-                <div class="flex gap-2">
-                    <app-input-control inputId="brand-owner-search" label="Seller search" [control]="details.controls.ownerSearch" placeholder="Search seller name or email" [showCount]="false" [flowError]="true" />
-                    <p-button label="Search" [outlined]="true" (onClick)="searchOwners()" />
-                </div>
-                @if (owners().length) {
-                    <div class="overflow-hidden rounded-lg border border-surface">
-                        @for (owner of owners(); track owner.organizationId) {
-                            <button type="button" class="flex w-full cursor-pointer flex-col border-0 border-b border-surface bg-transparent px-3 py-2 text-left last:border-b-0 hover:bg-surface-50" (click)="chooseOwner(owner)">
-                                <span class="font-medium">{{ owner.displayName || owner.legalName }}</span>
-                                <span class="text-sm text-muted-color">{{ owner.storeName || 'No store' }} · {{ owner.email }}</span>
-                            </button>
-                        }
-                    </div>
-                }
-            </div>
-            <label class="inline-flex items-center gap-2">
-                <p-checkbox [binary]="true" [ngModel]="form().isActive" (ngModelChange)="patch({ isActive: $event })" />
-                <span>Active</span>
-            </label>
+<section class="card">
+    <h2 class="m-0 text-lg font-semibold">{{ brandId() ? form().name || 'Edit brand' : 'Add brand' }}</h2>
+    <p class="m-0 mt-1 text-sm text-muted-color">Identity, enforcement, and owner. Documents and store authorizations are under Brands in the menu.</p>
+    <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium" for="brand-name">Name</label>
+            <app-input-control inputId="brand-name" label="Name" [control]="details.controls.name" [maxLength]="200" [showCount]="false" [flowError]="true" />
         </div>
-    </section>
-
-    <section class="card">
-        <h2 class="m-0 text-lg font-semibold">Logo</h2>
-        <div class="mt-4 flex flex-col items-start gap-3">
-            @if (mediaUrl(form().logoUrl); as src) {
-                <img [src]="src" alt="" class="h-28 w-28 rounded-lg border border-surface object-contain p-2" />
-            } @else {
-                <div class="flex h-28 w-28 items-center justify-center rounded-lg border border-dashed border-surface text-sm text-muted-color">No logo</div>
-            }
-            <input type="file" accept="image/jpeg,image/png,.jpg,.jpeg,.png" (change)="onLogo($event)" />
-            <span class="text-sm text-muted-color">JPG or PNG, up to 2 MB.</span>
-            @if (imageError()) {
-                <span class="text-sm text-red-600">{{ imageError() }}</span>
-            }
-            @if (form().approvalStatus !== null) {
-                <span class="rounded-full bg-surface-100 px-3 py-1 text-sm font-medium">{{ statusLabel(form().approvalStatus!) }}</span>
-            }
+        <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium" for="brand-slug">Slug</label>
+            <app-input-control inputId="brand-slug" label="Slug" [control]="details.controls.slug" placeholder="Generated from the name if blank" [maxLength]="200" [showCount]="false" [flowError]="true" />
         </div>
-    </section>
-</div>
-
-@if (brandId()) {
-    <section class="card mt-4">
-        <div class="mb-4">
-            <h2 class="m-0 text-lg font-semibold">Documents</h2>
-            <p class="m-0 mt-1 text-sm text-muted-color">Trademark certificate, authorization letter, or distribution agreement. PDF, JPG, or PNG, up to 5 MB.</p>
+        <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium" for="brand-enforcement">Enforcement</label>
+            <app-select-control inputId="brand-enforcement" label="Enforcement" [control]="details.controls.enforcementId" [options]="enforcements()" optionLabel="name" optionValue="id" placeholder="Choose enforcement" [showClear]="false" appendTo="body" [flowError]="true" />
         </div>
-        <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
-            <div class="flex flex-col gap-1">
-                <label class="text-sm font-medium" for="document-kind">Kind</label>
-                <app-select-control inputId="document-kind" label="Kind" [control]="documentForm.controls.kind" [options]="documentKinds" optionLabel="label" optionValue="value" [showClear]="false" appendTo="body" [flowError]="true" />
-            </div>
-            <div class="flex flex-col gap-1">
-                <label class="text-sm font-medium" for="document-expires">Expires on</label>
-                <app-input-control inputId="document-expires" label="Expires on" type="date" [control]="documentForm.controls.expiresOn" [showCount]="false" [flowError]="true" />
-            </div>
-            <label class="flex flex-col gap-1">
-                <span class="text-sm font-medium">File</span>
-                <input type="file" accept="application/pdf,image/jpeg,image/png,.pdf,.jpg,.jpeg,.png" (change)="onDocument($event)" />
-                @if (documentError()) {
-                    <span class="text-sm text-red-600">{{ documentError() }}</span>
-                }
-            </label>
+        <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium" for="brand-sort">Sort order</label>
+            <app-input-control inputId="brand-sort" label="Sort order" type="number" [control]="details.controls.sortOrder" [showCount]="false" [flowError]="true" />
         </div>
-        <div class="mt-3">
-            <p-button label="Upload document" icon="pi pi-upload" [outlined]="true" [loading]="saving()" (onClick)="uploadDocument()" />
+        <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium" for="brand-description">Description</label>
+            <app-input-control inputId="brand-description" label="Description" type="textarea" [control]="details.controls.description" [maxLength]="500" [showCount]="false" [flowError]="true" />
         </div>
-        <div class="mt-4 mb-3">
-            <app-search-control (searchChange)="onDocumentSearch($event)" />
-        </div>
-        <p-table [value]="documents()" class="mt-4">
-            <ng-template #header>
-                <tr>
-                    <th>File</th>
-                    <th>Kind</th>
-                    <th>Expires</th>
-                    <th></th>
-                </tr>
-            </ng-template>
-            <ng-template #body let-document>
-                <tr>
-                    <td>
-                        @if (mediaUrl(document.blobUrl); as href) {
-                            <a [href]="href" target="_blank" rel="noopener" class="font-medium text-primary no-underline hover:underline">{{ document.fileName }}</a>
-                        }
-                    </td>
-                    <td>{{ document.documentKind }}</td>
-                    <td>{{ document.expiresOn || '—' }}</td>
-                    <td class="text-right">
-                        <button type="button" class="cursor-pointer border-0 bg-transparent p-0 font-medium text-red-600" (click)="removeDocument(document)">Delete</button>
-                    </td>
-                </tr>
-            </ng-template>
-            <ng-template #emptymessage>
-                <tr>
-                    <td colspan="4" class="text-center text-muted-color">No documents yet.</td>
-                </tr>
-            </ng-template>
-        </p-table>
-        <div class="mt-3 flex justify-end">
-            <p-paginator
-                (onPageChange)="onDocumentPage($event)"
-                [first]="documentFirst()"
-                [rows]="documentRows()"
-                [totalRecords]="documentTotal()"
-                [rowsPerPageOptions]="[10, 20, 30]"
-                [showCurrentPageReport]="true"
-                currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
-            />
-        </div>
-    </section>
-
-    <section class="card mt-4">
-        <div class="mb-4">
-            <h2 class="m-0 text-lg font-semibold">Store authorizations</h2>
-            <p class="m-0 mt-1 text-sm text-muted-color">Which seller store may sell this brand, for how long, and which document proves it.</p>
-        </div>
-        <div class="mb-3">
-            <app-search-control (searchChange)="onAuthorizationSearch($event)" />
-        </div>
-        <p-table [value]="authorizations()">
-            <ng-template #header>
-                <tr>
-                    <th>Store</th>
-                    <th>Type</th>
-                    <th>Status</th>
-                    <th>Valid</th>
-                    <th>Document</th>
-                    <th></th>
-                </tr>
-            </ng-template>
-            <ng-template #body let-row>
-                <tr>
-                    <td class="font-medium">{{ row.storeName }}</td>
-                    <td>{{ row.authorizationType }}</td>
-                    <td>{{ statusLabel(row.approvalStatus) }}</td>
-                    <td>{{ row.validFrom || '—' }} – {{ row.validTo || '—' }}</td>
-                    <td>{{ row.documentFileName || '—' }}</td>
-                    <td class="text-right">
-                        <button type="button" class="cursor-pointer border-0 bg-transparent p-0 font-medium text-red-600" (click)="removeAuthorization(row)">Delete</button>
-                    </td>
-                </tr>
-            </ng-template>
-            <ng-template #emptymessage>
-                <tr>
-                    <td colspan="6" class="text-center text-muted-color">No store is authorized yet.</td>
-                </tr>
-            </ng-template>
-        </p-table>
-        <div class="mt-3 flex justify-end">
-            <p-paginator
-                (onPageChange)="onAuthorizationPage($event)"
-                [first]="authorizationFirst()"
-                [rows]="authorizationRows()"
-                [totalRecords]="authorizationTotal()"
-                [rowsPerPageOptions]="[10, 20, 30]"
-                [showCurrentPageReport]="true"
-                currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
-            />
-        </div>
-
-        <div class="mt-5 rounded-lg border border-surface p-4">
-            <h3 class="m-0 text-base font-semibold">Add authorization</h3>
-            <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
-                <div class="flex flex-col gap-2 md:col-span-2">
-                    <span class="text-sm font-medium">Store</span>
-                    @if (authStoreName()) {
-                        <div class="rounded-lg border border-surface px-3 py-2 font-medium">{{ authStoreName() }}</div>
-                    } @else {
-                        <p class="m-0 text-sm text-muted-color">Search for a seller above, then choose their store here.</p>
+        <div class="flex h-full flex-col gap-1">
+            <span class="text-sm font-medium">Logo</span>
+            <div class="flex flex-1 flex-wrap items-center justify-between gap-3 rounded-lg border border-surface px-4 py-3">
+                <div>
+                    <p class="m-0 text-sm text-muted-color">JPG or PNG, up to 2 MB.</p>
+                    @if (logoName(); as name) {
+                        <p class="m-0 mt-1 text-sm">{{ name }}</p>
+                    } @else if (form().logoUrl) {
+                        <p class="m-0 mt-1 text-sm">Logo added</p>
                     }
-                    @if (owners().length) {
-                        <div class="flex flex-wrap gap-2">
-                            @for (owner of owners(); track owner.organizationId) {
-                                <p-button [label]="owner.storeName || 'No store'" size="small" [outlined]="true" [disabled]="!owner.storeId" (onClick)="chooseStore(owner)" />
-                            }
-                        </div>
+                    @if (imageError()) {
+                        <p class="m-0 mt-1 text-sm text-red-600">{{ imageError() }}</p>
                     }
                 </div>
-                <div class="flex flex-col gap-1">
-                    <label class="text-sm font-medium" for="auth-type">Authorization type</label>
-                    <app-select-control inputId="auth-type" label="Authorization type" [control]="authForm.controls.type" [options]="authorizationTypes" optionLabel="label" optionValue="value" [showClear]="false" appendTo="body" [flowError]="true" />
-                </div>
-                <div class="flex flex-col gap-1">
-                    <label class="text-sm font-medium" for="auth-document">Supporting document</label>
-                    <app-select-control inputId="auth-document" label="Supporting document" [control]="authForm.controls.documentId" [options]="documents()" optionLabel="fileName" optionValue="id" placeholder="None" appendTo="body" [flowError]="true" />
-                </div>
-                <div class="flex flex-col gap-1">
-                    <label class="text-sm font-medium" for="auth-status">Approval status</label>
-                    <app-select-control inputId="auth-status" label="Approval status" [control]="authForm.controls.status" [options]="approvalOptions" optionLabel="label" optionValue="value" [showClear]="false" appendTo="body" [flowError]="true" />
-                </div>
-                <label class="inline-flex items-center gap-2 self-end pb-2">
-                    <p-checkbox [binary]="true" [ngModel]="authActive()" (ngModelChange)="authActive.set($event)" />
-                    <span>Active</span>
-                </label>
-                <div class="flex flex-col gap-1">
-                    <label class="text-sm font-medium" for="auth-from">Valid from</label>
-                    <app-input-control inputId="auth-from" label="Valid from" type="date" [control]="authForm.controls.validFrom" [showCount]="false" [flowError]="true" />
-                </div>
-                <div class="flex flex-col gap-1">
-                    <label class="text-sm font-medium" for="auth-to">Valid to</label>
-                    <app-input-control inputId="auth-to" label="Valid to" type="date" [control]="authForm.controls.validTo" [showCount]="false" [flowError]="true" />
-                </div>
-                <div class="flex flex-col gap-1 md:col-span-2">
-                    <label class="text-sm font-medium" for="auth-note">Review note</label>
-                    <app-input-control inputId="auth-note" label="Review note" type="textarea" [control]="authForm.controls.note" [maxLength]="1000" [showCount]="false" [flowError]="true" />
-                </div>
-            </div>
-            <div class="mt-4">
-                <p-button label="Save authorization" icon="pi pi-check" [loading]="saving()" (onClick)="saveAuthorization()" />
+                <p-button label="Upload" icon="pi pi-upload" (onClick)="logoInput.click()" />
+                <input #logoInput class="hidden" type="file" accept="image/jpeg,image/png,.jpg,.jpeg,.png" (change)="onLogo($event)" />
             </div>
         </div>
-    </section>
-}
+        <div class="flex flex-col gap-2 md:col-span-2">
+            <span class="text-sm font-medium">Brand owner</span>
+            @if (form().ownerOrganizationName) {
+                <div class="flex items-center justify-between gap-3 rounded-lg border border-surface px-3 py-2">
+                    <span class="font-medium">{{ form().ownerOrganizationName }}</span>
+                    <p-button label="Clear" size="small" [text]="true" (onClick)="clearOwner()" />
+                </div>
+            }
+            <div class="flex gap-2">
+                <app-input-control inputId="brand-owner-search" label="Seller search" [control]="details.controls.ownerSearch" placeholder="Search seller name or email" [showCount]="false" [flowError]="true" />
+                <p-button label="Search" [outlined]="true" (onClick)="searchOwners()" />
+            </div>
+            @if (owners().length) {
+                <div class="overflow-hidden rounded-lg border border-surface">
+                    @for (owner of owners(); track owner.organizationId) {
+                        <button type="button" class="flex w-full cursor-pointer flex-col border-0 border-b border-surface bg-transparent px-3 py-2 text-left last:border-b-0 hover:bg-surface-50" (click)="chooseOwner(owner)">
+                            <span class="font-medium">{{ owner.displayName || owner.legalName }}</span>
+                            <span class="text-sm text-muted-color">{{ owner.storeName || 'No store' }} · {{ owner.email }}</span>
+                        </button>
+                    }
+                </div>
+            }
+        </div>
+        <label class="inline-flex items-center gap-2">
+            <p-checkbox [binary]="true" [ngModel]="form().isActive" (ngModelChange)="patch({ isActive: $event })" />
+            <span>Active</span>
+        </label>
+        @if (form().approvalStatus !== null) {
+            <p class="m-0 text-sm text-muted-color md:col-span-2">{{ statusLabel(form().approvalStatus!) }}. Admin-created brands are approved.</p>
+        }
+    </div>
+    <div class="mt-5 flex justify-end gap-2 border-t border-surface pt-4">
+        <p-button label="Close" [outlined]="true" (onClick)="close()" />
+        <p-button label="Save" icon="pi pi-check" [loading]="saving()" (onClick)="saveBrand()" />
+    </div>
+</section>

@@ -1,0 +1,107 @@
+<app-bread-crumb [items]="crumbs" />
+
+<div class="card">
+    <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div>
+            <h1 class="m-0 text-2xl font-semibold">Documents</h1>
+            <p class="m-0 mt-1 text-sm text-muted-color">Trademark certificates, authorization letters, and distribution agreements.</p>
+        </div>
+        <p-button label="Add document" icon="pi pi-plus" (onClick)="openCreate()" />
+    </div>
+
+    @if (error() && !dialogOpen()) {
+        <p class="mb-4 text-red-600" role="alert">{{ error() }}</p>
+    }
+
+    <div class="mb-4 flex flex-col gap-3 md:flex-row md:items-end">
+        <div class="min-w-0 flex-1">
+            <app-search-control (searchChange)="onSearch($event)" />
+        </div>
+        <div class="w-full md:w-72">
+            <label class="mb-1 block text-sm font-medium" for="document-brand-filter">Brand</label>
+            <app-select-control inputId="document-brand-filter" label="Brand" [control]="brandFilter" [options]="brandOptions()" optionLabel="name" optionValue="id" placeholder="All brands" appendTo="body" [flowError]="true" />
+        </div>
+    </div>
+
+    <p-table [value]="pageRows()" [loading]="loading()">
+        <ng-template #header>
+            <tr>
+                <th>Brand</th>
+                <th>File</th>
+                <th>Kind</th>
+                <th>Expires</th>
+                <th></th>
+            </tr>
+        </ng-template>
+        <ng-template #body let-row>
+            <tr>
+                <td class="font-medium">{{ row.brandName }}</td>
+                <td>
+                    @if (mediaUrl(row.blobUrl); as href) {
+                        <a [href]="href" target="_blank" rel="noopener" class="text-primary no-underline hover:underline">{{ row.fileName }}</a>
+                    }
+                </td>
+                <td>{{ row.documentKind }}</td>
+                <td>{{ row.expiresOn || '—' }}</td>
+                <!-- <td class="text-right">
+                    <app-action-menu [items]="rowActions(row)" />
+                </td> -->
+            </tr>
+        </ng-template>
+        <ng-template #emptymessage>
+            <tr>
+                <td colspan="5" class="text-center text-muted-color">No documents yet.</td>
+            </tr>
+        </ng-template>
+    </p-table>
+
+    <div class="mt-3 flex justify-end">
+        <p-paginator
+            (onPageChange)="pageChange($event)"
+            [first]="first()"
+            [rows]="rows()"
+            [totalRecords]="totalRecords()"
+            [rowsPerPageOptions]="[10, 20, 30]"
+            [showCurrentPageReport]="true"
+            currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
+        />
+    </div>
+</div>
+
+<p-dialog header="Add document" [visible]="dialogOpen()" (visibleChange)="dialogOpen.set($event)" [modal]="true" [style]="{ width: '32rem' }">
+    <div class="flex flex-col gap-4">
+        @if (error()) {
+            <p class="m-0 text-red-600" role="alert">{{ error() }}</p>
+        }
+        <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium" for="document-brand">Brand</label>
+            <app-select-control inputId="document-brand" label="Brand" [control]="brandId" [options]="brandOptions()" optionLabel="name" optionValue="id" placeholder="Choose a brand" [showClear]="false" appendTo="body" [flowError]="true" />
+        </div>
+        <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium" for="document-kind">Kind</label>
+            <app-select-control inputId="document-kind" label="Kind" [control]="fields.controls.kind" [options]="documentKinds" optionLabel="label" optionValue="value" [showClear]="false" appendTo="body" [flowError]="true" />
+        </div>
+        <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium" for="document-expires">Expires on</label>
+            <app-input-control inputId="document-expires" label="Expires on" type="date" [control]="fields.controls.expiresOn" [showCount]="false" [flowError]="true" />
+        </div>
+        <div class="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-surface px-4 py-3">
+            <div>
+                <p class="m-0 text-sm font-semibold">File</p>
+                <p class="m-0 mt-1 text-sm text-muted-color">PDF, JPG, or PNG, up to 5 MB.</p>
+                @if (fileName(); as name) {
+                    <p class="m-0 mt-1 text-sm">{{ name }}</p>
+                }
+                @if (fileError()) {
+                    <p class="m-0 mt-1 text-sm text-red-600">{{ fileError() }}</p>
+                }
+            </div>
+            <p-button label="Upload" icon="pi pi-upload" (onClick)="fileInput.click()" />
+            <input #fileInput class="hidden" type="file" accept="application/pdf,image/jpeg,image/png,.pdf,.jpg,.jpeg,.png" (change)="onFile($event)" />
+        </div>
+    </div>
+    <ng-template #footer>
+        <p-button label="Close" [outlined]="true" (onClick)="dialogOpen.set(false)" />
+        <p-button label="Save" icon="pi pi-check" [loading]="saving()" (onClick)="save()" />
+    </ng-template>
+</p-dialog>

@@ -6,10 +6,7 @@
             <h1 class="m-0 text-2xl font-semibold">Brands</h1>
             <p class="m-0 mt-1 text-sm text-muted-color">Name, slug, logo, enforcement, and an optional seller organization as the brand owner.</p>
         </div>
-        <div class="flex gap-2">
-            <p-button label="Change requests" [outlined]="true" (onClick)="openRequests()" />
-            <p-button label="Add brand" icon="pi pi-plus" (onClick)="openForm()" />
-        </div>
+        <p-button label="Add brand" icon="pi pi-plus" (onClick)="openForm()" />
     </div>
 
     <div class="mb-4">
@@ -50,10 +47,9 @@
                 <td>{{ brand.enforcementName }}</td>
                 <td>{{ brand.ownerOrganizationName || '—' }}</td>
                 <td>{{ brand.sortOrder }}</td>
-                <td class="whitespace-nowrap">
-                    <button type="button" class="mr-3 cursor-pointer border-0 bg-transparent p-0 font-medium text-primary" (click)="openForm(brand.id)">Edit</button>
-                    <button type="button" class="cursor-pointer border-0 bg-transparent p-0 font-medium text-red-600" (click)="remove(brand)">Delete</button>
-                </td>
+                <!-- <td class="text-right">
+                    <app-action-menu [items]="rowActions(brand)" />
+                </td> -->
             </tr>
         </ng-template>
         <ng-template #emptymessage>
