@@ -84,7 +84,9 @@
 
         @if (item.status === 1) {
             <div class="mt-6 max-w-xl">
-                <app-input-control inputId="reject-note" label="Rejection note" type="textarea" [control]="note" [flowError]="true" />
+                <label class="mb-2 block text-sm font-semibold" for="reject-note">Rejection note</label>
+                <p class="m-0 mb-2 text-xs text-muted-color">Required when you reject. The seller sees this and can edit the product.</p>
+                <app-input-control inputId="reject-note" label="Rejection note" type="textarea" [control]="note" [flowError]="true" [showCount]="false" placeholder="What needs to change before this can go live?" />
                 <div class="mt-3 flex gap-2">
                     <p-button label="Approve" [loading]="saving()" (onClick)="approve()" />
                     <p-button label="Reject" severity="danger" [outlined]="true" [loading]="saving()" (onClick)="reject()" />

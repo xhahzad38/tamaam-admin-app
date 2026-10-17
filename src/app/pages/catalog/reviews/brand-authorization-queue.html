@@ -57,11 +57,20 @@
                 <p class="mt-2 text-sm">Previous note: {{ row.reviewNote }}</p>
             }
             <div class="mt-4 grid gap-4 md:grid-cols-2">
-                <app-input-control inputId="valid-from" label="Valid from" type="date" [control]="dates.controls.validFrom" [flowError]="true" />
-                <app-input-control inputId="valid-to" label="Valid to" type="date" [control]="dates.controls.validTo" [flowError]="true" />
+                <div class="flex flex-col gap-2">
+                    <label class="text-sm font-semibold" for="valid-from">Valid from</label>
+                    <app-input-control inputId="valid-from" label="Valid from" type="date" [control]="dates.controls.validFrom" [flowError]="true" [showCount]="false" />
+                    <p class="m-0 text-xs text-muted-color">First day the seller may list this brand.</p>
+                </div>
+                <div class="flex flex-col gap-2">
+                    <label class="text-sm font-semibold" for="valid-to">Valid to</label>
+                    <app-input-control inputId="valid-to" label="Valid to" type="date" [control]="dates.controls.validTo" [flowError]="true" [showCount]="false" />
+                    <p class="m-0 text-xs text-muted-color">Last day the authorization is valid.</p>
+                </div>
             </div>
-            <div class="mt-4">
-                <app-input-control inputId="auth-note" label="Note" type="textarea" [control]="dates.controls.note" [flowError]="true" />
+            <div class="mt-4 flex flex-col gap-2">
+                <label class="text-sm font-semibold" for="auth-note">Note</label>
+                <app-input-control inputId="auth-note" label="Note" type="textarea" [control]="dates.controls.note" [flowError]="true" [showCount]="false" placeholder="Required if you reject." />
             </div>
             <div class="mt-3 flex gap-2">
                 <p-button label="Approve" [loading]="saving()" (onClick)="decide(true)" />

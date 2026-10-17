@@ -57,7 +57,9 @@
 
         @if (item.statusCode === 'PENDING') {
             <div class="mt-6 max-w-xl">
-                <app-input-control inputId="change-note" label="Note" type="textarea" [control]="note" [flowError]="true" />
+                <label class="mb-2 block text-sm font-semibold" for="change-note">Review note</label>
+                <p class="m-0 mb-2 text-xs text-muted-color">Required when you reject. Optional when you approve.</p>
+                <app-input-control inputId="change-note" label="Review note" type="textarea" [control]="note" [flowError]="true" [showCount]="false" placeholder="Tell the seller what to change." />
                 <div class="mt-3 flex gap-2">
                     <p-button label="Approve and apply" [loading]="saving()" (onClick)="decide(true)" />
                     <p-button label="Reject" severity="danger" [outlined]="true" [loading]="saving()" (onClick)="decide(false)" />
