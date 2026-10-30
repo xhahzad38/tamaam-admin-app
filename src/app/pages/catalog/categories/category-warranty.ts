@@ -1,9 +1,7 @@
-import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { forkJoin, of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
 import { MenuItem } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { CheckboxModule } from 'primeng/checkbox';
@@ -14,14 +12,9 @@ import { BreadCrumbComponent } from '@/app/shared-components/bread-crumb/bread-c
 import { InputControlComponent } from '@/app/shared-components/input-control/input-control.component';
 import { SearchControlComponent } from '@/app/shared-components/search-control/search-control.component';
 import { SelectControlComponent } from '@/app/shared-components/select-control/select-control.component';
-import { catalogErrorMessage, includesQuery } from '../catalog.util';
-import { CategoryOption, CategoryWarrantyRule, flattenCategories } from './category.models';
+import { catalogErrorMessage } from '../catalog.util';
+import { CategoryOption, CategoryWarrantyRow, CategoryWarrantyRule, flattenCategories } from './category.models';
 import { CategoryService } from './category.service';
-
-interface WarrantyRow extends CategoryWarrantyRule {
-    categoryId: string;
-    categoryName: string;
-}
 
 @Component({
     selector: 'app-category-warranty',
@@ -33,7 +26,6 @@ export class CategoryWarrantyPage implements OnInit {
     private readonly categories = inject(CategoryService);
     private readonly route = inject(ActivatedRoute);
     private readonly destroyRef = inject(DestroyRef);
-    private openedPreset = false;
 
     readonly crumbs: MenuItem[] = [
         { label: 'Categories', routerLink: '/catalog/categories' },
@@ -41,37 +33,34 @@ export class CategoryWarrantyPage implements OnInit {
     ];
     readonly categoryOptions = signal<CategoryOption[]>([]);
     readonly categoryFilter = new FormControl<string | null>(null);
-    readonly categoryFilterId = signal<string | null>(null);
     readonly categoryId = new FormControl<string | null>(null, Validators.required);
     readonly warranty = signal<CategoryWarrantyRule>({ warrantyRequired: false, minDurationMonths: 0, serialOrImeiRequired: false });
     readonly fields = new FormGroup({
         minDurationMonths: new FormControl(0, { nonNullable: true })
     });
-    readonly all = signal<WarrantyRow[]>([]);
+    readonly items = signal<CategoryWarrantyRow[]>([]);
     readonly query = signal('');
     readonly first = signal(0);
     readonly rows = signal(10);
-    readonly filtered = computed(() => {
-        const categoryId = this.categoryFilterId();
-        return this.all().filter((row) => {
-            if (categoryId && row.categoryId !== categoryId) {
-                return false;
-            }
-            return includesQuery(this.query(), row.categoryName, row.minDurationMonths, row.warrantyRequired ? 'Yes' : 'No', row.serialOrImeiRequired ? 'Yes' : 'No');
-        });
-    });
-    readonly pageRows = computed(() => this.filtered().slice(this.first(), this.first() + this.rows()));
-    readonly totalRecords = computed(() => this.filtered().length);
+    readonly totalRecords = signal(0);
     readonly loading = signal(false);
     readonly saving = signal(false);
     readonly dialogOpen = signal(false);
     readonly error = signal<string | null>(null);
 
     ngOnInit(): void {
+        const preset = this.route.snapshot.queryParamMap.get('category');
+        if (preset) {
+            this.categoryFilter.setValue(preset, { emitEvent: false });
+        }
         this.load();
-        this.categoryFilter.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((id) => {
-            this.categoryFilterId.set(id);
+        this.categories.tree().subscribe({
+            next: (tree) => this.categoryOptions.set(flattenCategories(tree)),
+            error: (error) => this.error.set(catalogErrorMessage(error, 'Could not load categories.'))
+        });
+        this.categoryFilter.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
             this.first.set(0);
+            this.load();
         });
         this.categoryId.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((id) => {
             if (this.dialogOpen() && id) {
@@ -83,22 +72,24 @@ export class CategoryWarrantyPage implements OnInit {
     onSearch(value: string): void {
         this.query.set(value);
         this.first.set(0);
+        this.load();
     }
 
     pageChange(event: PaginatorState): void {
         this.first.set(event.first ?? 0);
         this.rows.set(event.rows ?? 10);
+        this.load();
     }
 
     openCreate(): void {
         this.error.set(null);
         this.apply(null);
-        this.categoryId.setValue(null, { emitEvent: false });
+        this.categoryId.setValue(this.categoryFilter.value, { emitEvent: false });
         this.categoryId.markAsUntouched();
         this.dialogOpen.set(true);
     }
 
-    openEdit(row: WarrantyRow): void {
+    openEdit(row: CategoryWarrantyRow): void {
         this.error.set(null);
         this.apply(row);
         this.categoryId.setValue(row.categoryId, { emitEvent: false });
@@ -139,50 +130,19 @@ export class CategoryWarrantyPage implements OnInit {
     }
 
     private load(): void {
+        const pageNo = Math.floor(this.first() / this.rows()) + 1;
         this.loading.set(true);
         this.error.set(null);
-        this.categories.tree().subscribe({
-            next: (tree) => {
-                const options = flattenCategories(tree);
-                this.categoryOptions.set(options);
-                if (!options.length) {
-                    this.all.set([]);
-                    this.loading.set(false);
-                    return;
-                }
-                forkJoin(
-                    options.map((option) =>
-                        this.categories.get(option.id).pipe(
-                            map((detail): WarrantyRow | null =>
-                                detail.warrantyRule
-                                    ? {
-                                          categoryId: detail.id,
-                                          categoryName: detail.name,
-                                          warrantyRequired: detail.warrantyRule.warrantyRequired,
-                                          minDurationMonths: detail.warrantyRule.minDurationMonths,
-                                          serialOrImeiRequired: detail.warrantyRule.serialOrImeiRequired
-                                      }
-                                    : null
-                            ),
-                            catchError(() => of(null))
-                        )
-                    )
-                ).subscribe((rows) => {
-                    const items = rows.filter((row): row is WarrantyRow => row !== null);
-                    this.all.set(items);
-                    this.loading.set(false);
-                    const preset = this.route.snapshot.queryParamMap.get('category');
-                    if (preset && !this.openedPreset) {
-                        this.openedPreset = true;
-                        const row = items.find((item) => item.categoryId === preset);
-                        if (row) {
-                            this.openEdit(row);
-                        }
-                    }
-                });
+        this.categories.warranties(this.query(), this.categoryFilter.value, pageNo, this.rows()).subscribe({
+            next: (page) => {
+                this.items.set(page.items ?? []);
+                this.totalRecords.set(page.totalCount ?? 0);
+                this.loading.set(false);
             },
             error: (error) => {
                 this.loading.set(false);
+                this.items.set([]);
+                this.totalRecords.set(0);
                 this.error.set(catalogErrorMessage(error, 'Could not load warranty rules.'));
             }
         });

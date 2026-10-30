@@ -51,6 +51,7 @@
                     }
                 </td>
                 <td class="whitespace-nowrap">
+                    <a [routerLink]="['/catalog/categories/attributes']" [queryParams]="{ category: item.id }" class="mr-3 font-medium text-primary no-underline hover:underline">Attributes</a>
                     <a [routerLink]="['/catalog/categories/commission']" [queryParams]="{ category: item.id }" class="mr-3 font-medium text-primary no-underline hover:underline">Commission</a>
                     <a [routerLink]="['/catalog/categories/return-policy']" [queryParams]="{ category: item.id }" class="mr-3 font-medium text-primary no-underline hover:underline">Returns</a>
                     <a [routerLink]="['/catalog/categories/warranty']" [queryParams]="{ category: item.id }" class="mr-3 font-medium text-primary no-underline hover:underline">Warranty</a>

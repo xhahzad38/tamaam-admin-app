@@ -17,10 +17,6 @@ export interface CatalogVariant {
     sku: string;
     barcode: string | null;
     gtin: string | null;
-    weightKg: number | null;
-    lengthCm: number | null;
-    widthCm: number | null;
-    heightCm: number | null;
     attributeCombination: string;
     isDefault: boolean;
 }

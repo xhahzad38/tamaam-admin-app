@@ -45,7 +45,6 @@
                         <th class="py-2 pr-3">Options</th>
                         <th class="py-2 pr-3">Barcode</th>
                         <th class="py-2 pr-3">GTIN</th>
-                        <th class="py-2">Weight / size</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -55,7 +54,6 @@
                             <td class="py-2 pr-3">{{ variant.attributeCombination || (variant.isDefault ? 'Default' : '—') }}</td>
                             <td class="py-2 pr-3">{{ variant.barcode || '—' }}</td>
                             <td class="py-2 pr-3">{{ variant.gtin || '—' }}</td>
-                            <td class="py-2">{{ variant.weightKg ?? '—' }} kg · {{ variant.lengthCm ?? '—' }} × {{ variant.widthCm ?? '—' }} × {{ variant.heightCm ?? '—' }} cm</td>
                         </tr>
                     }
                 </tbody>

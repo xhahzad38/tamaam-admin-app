@@ -1,23 +1,16 @@
 import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { MenuItem } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { CheckboxModule } from 'primeng/checkbox';
-import { InputTextModule } from 'primeng/inputtext';
-import { SelectModule } from 'primeng/select';
-import { TableModule } from 'primeng/table';
-import { TextareaModule } from 'primeng/textarea';
 import { BreadCrumbComponent } from '@/app/shared-components/bread-crumb/bread-crumb.component';
 import { InputControlComponent } from '@/app/shared-components/input-control/input-control.component';
 import { SelectControlComponent } from '@/app/shared-components/select-control/select-control.component';
 import { APPROVAL_STATUS_LABEL, ApprovalStatus } from '@/app/pages/seller-reviews/seller-review.models';
-import { SearchControlComponent } from '@/app/shared-components/search-control/search-control.component';
-import { catalogErrorMessage, catalogMediaUrl, includesQuery, readImageFile } from '../catalog.util';
-import { CatalogAttribute } from '../attributes/attribute.models';
-import { AttributeService } from '../attributes/attribute.service';
-import { CategoryAttributeLink, CategoryDetail, CategoryNode, CategoryWrite, collectCategoryIds, findCategory, flattenCategories } from './category.models';
+import { catalogErrorMessage, catalogMediaUrl, readImageFile } from '../catalog.util';
+import { CategoryDetail, CategoryNode, CategoryWrite, collectCategoryIds, findCategory, flattenCategories } from './category.models';
 import { CategoryService } from './category.service';
 
 interface CategoryFormState {
@@ -55,12 +48,11 @@ function emptyCategory(parentCategoryId: string | null = null): CategoryFormStat
 @Component({
     selector: 'app-category-form',
     standalone: true,
-    imports: [FormsModule, ReactiveFormsModule, RouterLink, BreadCrumbComponent, SearchControlComponent, InputControlComponent, SelectControlComponent, ButtonModule, CheckboxModule, TableModule],
+    imports: [FormsModule, ReactiveFormsModule, BreadCrumbComponent, InputControlComponent, SelectControlComponent, ButtonModule, CheckboxModule],
     templateUrl: './category-form.html'
 })
 export class CategoryFormPage implements OnInit {
     private readonly categories = inject(CategoryService);
-    private readonly attributes = inject(AttributeService);
     private readonly route = inject(ActivatedRoute);
     private readonly router = inject(Router);
     private readonly destroyRef = inject(DestroyRef);
@@ -83,7 +75,6 @@ export class CategoryFormPage implements OnInit {
         description: new FormControl('', { nonNullable: true, validators: [Validators.maxLength(500)] }),
         badgeText: new FormControl('', { nonNullable: true, validators: [Validators.maxLength(100)] })
     });
-    private readonly orderControls = new Map<string, FormControl<number>>();
     readonly parentOptions = computed(() => {
         const exclude = new Set<string>();
         const id = this.categoryId();
@@ -95,11 +86,6 @@ export class CategoryFormPage implements OnInit {
         }
         return flattenCategories(this.tree()).filter((option) => !exclude.has(option.id));
     });
-    readonly links = signal<CategoryAttributeLink[]>([]);
-    readonly linkQuery = signal('');
-    readonly visibleLinks = computed(() => this.links().filter((row) => includesQuery(this.linkQuery(), row.attributeName)));
-    readonly search = signal('');
-    readonly searchResults = signal<CatalogAttribute[]>([]);
     readonly loading = signal(false);
     readonly saving = signal<string | null>(null);
     readonly error = signal<string | null>(null);
@@ -156,16 +142,6 @@ export class CategoryFormPage implements OnInit {
         this.imageName.set(message ? null : file?.name ?? null);
     }
 
-    orderControl(row: CategoryAttributeLink): FormControl<number> {
-        let control = this.orderControls.get(row.attributeId);
-        if (!control) {
-            control = new FormControl(row.displayOrder, { nonNullable: true });
-            control.valueChanges.subscribe((value) => this.patchLink(row.attributeId, { displayOrder: Number(value) || 0 }));
-            this.orderControls.set(row.attributeId, control);
-        }
-        return control;
-    }
-
     close(): void {
         void this.router.navigate(['/catalog/categories']);
     }
@@ -198,55 +174,6 @@ export class CategoryFormPage implements OnInit {
             error: (error) => {
                 this.saving.set(null);
                 this.error.set(catalogErrorMessage(error, 'Could not save the category.'));
-            }
-        });
-    }
-
-    onAttributeSearch(value: string): void {
-        this.search.set(value);
-        this.searchAttributes();
-    }
-
-    searchAttributes(): void {
-        this.attributes.list(this.search(), 1, 20).subscribe({
-            next: (page) => this.searchResults.set(page.items ?? []),
-            error: (error) => this.error.set(catalogErrorMessage(error, 'Could not search attributes.'))
-        });
-    }
-
-    addAttribute(attribute: CatalogAttribute): void {
-        this.links.update((rows) => {
-            if (rows.some((row) => row.attributeId === attribute.id)) {
-                return rows;
-            }
-            const displayOrder = rows.reduce((max, row) => Math.max(max, row.displayOrder), 0) + 1;
-            return [...rows, { attributeId: attribute.id, attributeName: attribute.displayName || attribute.name, isRequired: true, displayOrder }];
-        });
-    }
-
-    patchLink(attributeId: string, partial: Partial<CategoryAttributeLink>): void {
-        this.links.update((rows) => rows.map((row) => (row.attributeId === attributeId ? { ...row, ...partial } : row)));
-    }
-
-    removeLink(attributeId: string): void {
-        this.links.update((rows) => rows.filter((row) => row.attributeId !== attributeId));
-    }
-
-    saveAttributes(): void {
-        const id = this.categoryId();
-        if (!id) {
-            return;
-        }
-        this.saving.set('attributes');
-        this.categories.saveAttributes(id, this.links()).subscribe({
-            next: (detail) => {
-                this.applyRelated(detail);
-                this.notice.set('Category attributes saved.');
-                this.saving.set(null);
-            },
-            error: (error) => {
-                this.saving.set(null);
-                this.error.set(catalogErrorMessage(error, 'Could not save attributes.'));
             }
         });
     }
@@ -307,12 +234,6 @@ export class CategoryFormPage implements OnInit {
             level: detail.level,
             approvalStatus: detail.approvalStatus
         });
-        this.applyRelated(detail);
-    }
-
-    private applyRelated(detail: CategoryDetail): void {
-        this.orderControls.clear();
-        this.links.set([...(detail.attributes ?? [])].sort((a, b) => a.displayOrder - b.displayOrder));
     }
 
     private refreshTree(): void {

@@ -36,7 +36,13 @@ export interface CategoryAttributeLink {
     attributeId: string;
     attributeName: string;
     isRequired: boolean;
+    isVariationOption: boolean;
     displayOrder: number;
+}
+
+export interface CategoryAttributeRow extends CategoryAttributeLink {
+    categoryId: string;
+    categoryName: string;
 }
 
 export interface CategoryReturnPolicy {
@@ -45,10 +51,20 @@ export interface CategoryReturnPolicy {
     notes: string | null;
 }
 
+export interface CategoryReturnPolicyRow extends CategoryReturnPolicy {
+    categoryId: string;
+    categoryName: string;
+}
+
 export interface CategoryWarrantyRule {
     warrantyRequired: boolean;
     minDurationMonths: number;
     serialOrImeiRequired: boolean;
+}
+
+export interface CategoryWarrantyRow extends CategoryWarrantyRule {
+    categoryId: string;
+    categoryName: string;
 }
 
 export interface CategoryCommission {

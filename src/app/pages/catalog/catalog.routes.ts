@@ -30,8 +30,8 @@ export default [
         loadComponent: () => import('./categories/category-form').then((m) => m.CategoryFormPage)
     },
     {
-        path: 'categories/commission/new',
-        loadComponent: () => import('./categories/category-commission-form').then((m) => m.CategoryCommissionFormPage)
+        path: 'categories/attributes',
+        loadComponent: () => import('./categories/category-attributes').then((m) => m.CategoryAttributesPage)
     },
     {
         path: 'categories/commission',

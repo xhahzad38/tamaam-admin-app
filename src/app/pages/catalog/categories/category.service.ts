@@ -4,7 +4,7 @@ import { Observable, map } from 'rxjs';
 import { environment } from '@/environments/environment';
 import { ApiResponse, PageResult } from '@/app/shared/models/api.types';
 import { catalogErrors } from '../catalog.util';
-import { CategoryAttributeLink, CategoryCommission, CategoryDetail, CategoryListItem, CategoryNode, CategoryReturnPolicy, CategoryWarrantyRule, CategoryWrite } from './category.models';
+import { CategoryAttributeLink, CategoryAttributeRow, CategoryCommission, CategoryDetail, CategoryListItem, CategoryNode, CategoryReturnPolicy, CategoryReturnPolicyRow, CategoryWarrantyRow, CategoryWarrantyRule, CategoryWrite } from './category.models';
 
 @Injectable({ providedIn: 'root' })
 export class CategoryService {
@@ -58,6 +58,25 @@ export class CategoryService {
             .pipe(map((response) => response.data));
     }
 
+    attributes(search: string, categoryId: string | null, pageNo: number, pageSize: number): Observable<PageResult<CategoryAttributeRow>> {
+        return this.http.get<PageResult<CategoryAttributeRow>>(`${this.baseUrl}/attributes`, {
+            params: this.listParams(search, categoryId, pageNo, pageSize),
+            context: catalogErrors
+        });
+    }
+
+    saveAttribute(body: {
+        categoryId: string;
+        attributeId: string;
+        isRequired: boolean;
+        isVariationOption: boolean;
+        displayOrder: number;
+    }): Observable<string> {
+        return this.http
+            .post<ApiResponse<string>>(`${this.baseUrl}/attribute`, body, { context: catalogErrors })
+            .pipe(map((response) => response.data));
+    }
+
     saveAttributes(id: string, attributes: CategoryAttributeLink[]): Observable<CategoryDetail> {
         return this.http
             .put<ApiResponse<CategoryDetail>>(
@@ -66,6 +85,7 @@ export class CategoryService {
                     attributes: attributes.map((row) => ({
                         attributeId: row.attributeId,
                         isRequired: row.isRequired,
+                        isVariationOption: row.isVariationOption,
                         displayOrder: row.displayOrder
                     }))
                 },
@@ -74,10 +94,24 @@ export class CategoryService {
             .pipe(map((response) => response.data));
     }
 
+    returnPolicies(search: string, categoryId: string | null, pageNo: number, pageSize: number): Observable<PageResult<CategoryReturnPolicyRow>> {
+        return this.http.get<PageResult<CategoryReturnPolicyRow>>(`${this.baseUrl}/return-policies`, {
+            params: this.listParams(search, categoryId, pageNo, pageSize),
+            context: catalogErrors
+        });
+    }
+
     saveReturnPolicy(id: string, policy: CategoryReturnPolicy): Observable<CategoryDetail> {
         return this.http
             .put<ApiResponse<CategoryDetail>>(`${this.baseUrl}/${id}/return-policy`, policy, { context: catalogErrors })
             .pipe(map((response) => response.data));
+    }
+
+    warranties(search: string, categoryId: string | null, pageNo: number, pageSize: number): Observable<PageResult<CategoryWarrantyRow>> {
+        return this.http.get<PageResult<CategoryWarrantyRow>>(`${this.baseUrl}/warranties`, {
+            params: this.listParams(search, categoryId, pageNo, pageSize),
+            context: catalogErrors
+        });
     }
 
     saveWarranty(id: string, rule: CategoryWarrantyRule): Observable<CategoryDetail> {
@@ -87,14 +121,10 @@ export class CategoryService {
     }
 
     commissions(search: string, categoryId: string | null, pageNo: number, pageSize: number): Observable<PageResult<CategoryCommission>> {
-        let params = new HttpParams().set('pageNo', pageNo).set('pageSize', pageSize);
-        if (search.trim()) {
-            params = params.set('searchText', search.trim());
-        }
-        if (categoryId) {
-            params = params.set('categoryId', categoryId);
-        }
-        return this.http.get<PageResult<CategoryCommission>>(`${this.baseUrl}/commissions`, { params, context: catalogErrors });
+        return this.http.get<PageResult<CategoryCommission>>(`${this.baseUrl}/commissions`, {
+            params: this.listParams(search, categoryId, pageNo, pageSize),
+            context: catalogErrors
+        });
     }
 
     saveCommission(body: {
@@ -109,5 +139,16 @@ export class CategoryService {
         return this.http
             .post<ApiResponse<string>>(`${this.baseUrl}/commission`, body, { context: catalogErrors })
             .pipe(map((response) => response.data));
+    }
+
+    private listParams(search: string, categoryId: string | null, pageNo: number, pageSize: number): HttpParams {
+        let params = new HttpParams().set('pageNo', pageNo).set('pageSize', pageSize);
+        if (search.trim()) {
+            params = params.set('searchText', search.trim());
+        }
+        if (categoryId) {
+            params = params.set('categoryId', categoryId);
+        }
+        return params;
     }
 }
