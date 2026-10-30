@@ -2,7 +2,10 @@
 
 <div class="card">
     <h1 class="m-0 text-2xl font-semibold">Product review</h1>
-    <p class="m-0 mt-1 text-sm text-muted-color">Products sellers have submitted for the catalog.</p>
+    <p class="m-0 mt-1 text-sm text-muted-color">
+        New listings waiting to go live. Edits to live products are in
+        <a routerLink="/catalog/change-requests">Product change requests</a>.
+    </p>
 
     <div class="my-4 flex flex-wrap gap-2">
         @for (option of queues; track option.id) {
@@ -39,7 +42,7 @@
             </tr>
         </ng-template>
         <ng-template #emptymessage>
-            <tr><td colspan="7">Nothing in this queue.</td></tr>
+            <tr><td colspan="7">Nothing in this queue. Live product edits appear under Product change requests.</td></tr>
         </ng-template>
     </p-table>
     <p-paginator [first]="first()" [rows]="rows()" [totalRecords]="totalRecords()" [rowsPerPageOptions]="[10, 20, 50]" (onPageChange)="pageChange($event)" />

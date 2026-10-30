@@ -6,7 +6,14 @@ import { ButtonModule } from 'primeng/button';
 import { BreadCrumbComponent } from '@/app/shared-components/bread-crumb/bread-crumb.component';
 import { InputControlComponent } from '@/app/shared-components/input-control/input-control.component';
 import { catalogErrorMessage, catalogMediaUrl } from '../catalog.util';
-import { CATALOG_STATUS_LABEL, CatalogProductDetail, STRUCTURE_LABEL } from './catalog-review.models';
+import {
+    CATALOG_STATUS_LABEL,
+    CatalogProductDetail,
+    STRUCTURE_LABEL,
+    catalogContentBullets,
+    catalogContentDescription,
+    catalogContentName
+} from './catalog-review.models';
 import { CatalogReviewService } from './catalog-review.service';
 
 @Component({
@@ -27,6 +34,9 @@ export class ProductReviewDetailPage implements OnInit {
     readonly notice = signal<string | null>(null);
     readonly note = new FormControl('', { nonNullable: true });
     readonly mediaUrl = catalogMediaUrl;
+    readonly contentName = catalogContentName;
+    readonly contentDescription = catalogContentDescription;
+    readonly contentBullets = catalogContentBullets;
     readonly statusLabel = (value: number) => CATALOG_STATUS_LABEL[value] ?? 'Draft';
     readonly structureLabel = (value: number) => STRUCTURE_LABEL[value] ?? 'Simple';
 
@@ -86,7 +96,10 @@ export class ProductReviewDetailPage implements OnInit {
         this.reviews.product(id).subscribe({
             next: (product) => {
                 this.product.set(product);
-                this.crumbs.set([{ label: 'Product review', routerLink: '/catalog/product-reviews' }, { label: product.name }]);
+                this.crumbs.set([
+                    { label: 'Product review', routerLink: '/catalog/product-reviews' },
+                    { label: catalogContentName(product) || 'Product' }
+                ]);
                 this.loading.set(false);
             },
             error: (error) => {

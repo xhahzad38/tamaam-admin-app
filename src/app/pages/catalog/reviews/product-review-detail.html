@@ -6,14 +6,23 @@
     } @else if (product(); as item) {
         <div class="mb-5 flex flex-wrap items-start justify-between gap-3">
             <div>
-                <h1 class="m-0 text-2xl font-semibold">{{ item.name }}</h1>
+                <h1 class="m-0 text-2xl font-semibold">{{ contentName(item) || 'Product' }}</h1>
                 <p class="m-0 mt-1 text-sm text-muted-color">{{ item.storeName || 'Store' }} · {{ item.brandName }} · {{ item.categoryName || 'No category' }} · {{ structureLabel(item.structure) }}</p>
+                @if (item.psku) {
+                    <p class="m-0 mt-1 text-sm text-muted-color">PSKU {{ item.psku }}</p>
+                }
             </div>
             <span class="rounded-full bg-surface-100 px-3 py-1 text-sm font-medium">{{ statusLabel(item.status) }}</span>
         </div>
 
-        <p class="m-0 whitespace-pre-wrap text-sm">{{ item.description }}</p>
-        <p class="mt-2 text-sm text-muted-color">/{{ item.slug }}</p>
+        <p class="m-0 whitespace-pre-wrap text-sm">{{ contentDescription(item) || 'No description.' }}</p>
+        @if (contentBullets(item).length) {
+            <ul class="mt-3 pl-5 text-sm">
+                @for (bullet of contentBullets(item); track bullet) {
+                    <li>{{ bullet }}</li>
+                }
+            </ul>
+        }
         @if (item.rejectionReason) {
             <p class="mt-3 text-sm text-red-700">Rejection note: {{ item.rejectionReason }}</p>
         }

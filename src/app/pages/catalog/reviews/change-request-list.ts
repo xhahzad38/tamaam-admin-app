@@ -30,7 +30,7 @@ export class ChangeRequestListPage implements OnInit {
         { id: 'rejected', label: 'Rejected' },
         { id: 'all', label: 'All' }
     ];
-    readonly crumbs: MenuItem[] = [{ label: 'Catalog changes' }];
+    readonly crumbs: MenuItem[] = [{ label: 'Product change requests' }];
     readonly queue = signal('pending');
     readonly search = signal('');
     readonly first = signal(0);

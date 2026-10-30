@@ -1,7 +1,7 @@
 export interface CatalogProductListItem {
     id: string;
     name: string;
-    slug: string;
+    psku: string;
     categoryName: string | null;
     brandName: string;
     storeName: string | null;
@@ -10,6 +10,12 @@ export interface CatalogProductListItem {
     rejectionReason: string | null;
     primaryImageUrl: string | null;
     createdAt: string;
+}
+
+export interface CatalogProductContent {
+    name: string;
+    description: string;
+    bulletPoints: string[];
 }
 
 export interface CatalogVariant {
@@ -47,9 +53,8 @@ export interface CatalogAttributeValue {
 
 export interface CatalogProductDetail {
     id: string;
-    name: string;
-    description: string;
-    slug: string;
+    psku: string;
+    content: CatalogProductContent;
     categoryName: string | null;
     brandName: string;
     storeName: string | null;
@@ -59,6 +64,14 @@ export interface CatalogProductDetail {
     variants: CatalogVariant[];
     media: CatalogMedia[];
     bundleItems: CatalogBundleItem[];
+    attributeValues: CatalogAttributeValue[];
+}
+
+export interface CatalogChangeProposal {
+    content: CatalogProductContent;
+    variants: CatalogVariant[];
+    bundleItems: CatalogBundleItem[];
+    media: CatalogMedia[];
     attributeValues: CatalogAttributeValue[];
 }
 
@@ -80,15 +93,19 @@ export interface CatalogChangeDetail {
     reviewNote: string | null;
     createdAt: string;
     current: CatalogProductDetail;
-    proposed: {
-        name: string;
-        description: string;
-        slug: string;
-        variants: CatalogVariant[];
-        bundleItems: CatalogBundleItem[];
-        media: CatalogMedia[];
-        attributeValues: CatalogAttributeValue[];
-    };
+    proposed: CatalogChangeProposal;
+}
+
+export function catalogContentName(value: { content?: CatalogProductContent | null } | null | undefined): string {
+    return value?.content?.name?.trim() || '';
+}
+
+export function catalogContentDescription(value: { content?: CatalogProductContent | null } | null | undefined): string {
+    return value?.content?.description?.trim() || '';
+}
+
+export function catalogContentBullets(value: { content?: CatalogProductContent | null } | null | undefined): string[] {
+    return value?.content?.bulletPoints ?? [];
 }
 
 export const CATALOG_STATUS_LABEL: Record<number, string> = {

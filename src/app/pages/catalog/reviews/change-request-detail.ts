@@ -6,7 +6,12 @@ import { ButtonModule } from 'primeng/button';
 import { BreadCrumbComponent } from '@/app/shared-components/bread-crumb/bread-crumb.component';
 import { InputControlComponent } from '@/app/shared-components/input-control/input-control.component';
 import { catalogErrorMessage, catalogMediaUrl } from '../catalog.util';
-import { CatalogChangeDetail } from './catalog-review.models';
+import {
+    CatalogChangeDetail,
+    catalogContentBullets,
+    catalogContentDescription,
+    catalogContentName
+} from './catalog-review.models';
 import { CatalogReviewService } from './catalog-review.service';
 
 @Component({
@@ -19,7 +24,7 @@ export class ChangeRequestDetailPage implements OnInit {
     private readonly reviews = inject(CatalogReviewService);
     private readonly route = inject(ActivatedRoute);
 
-    readonly crumbs = signal<MenuItem[]>([{ label: 'Catalog changes', routerLink: '/catalog/change-requests' }, { label: 'Request' }]);
+    readonly crumbs = signal<MenuItem[]>([{ label: 'Product change requests', routerLink: '/catalog/change-requests' }, { label: 'Request' }]);
     readonly request = signal<CatalogChangeDetail | null>(null);
     readonly loading = signal(true);
     readonly saving = signal(false);
@@ -27,6 +32,9 @@ export class ChangeRequestDetailPage implements OnInit {
     readonly notice = signal<string | null>(null);
     readonly note = new FormControl('', { nonNullable: true });
     readonly mediaUrl = catalogMediaUrl;
+    readonly contentName = catalogContentName;
+    readonly contentDescription = catalogContentDescription;
+    readonly contentBullets = catalogContentBullets;
 
     ngOnInit(): void {
         const id = this.route.snapshot.paramMap.get('id');
@@ -36,7 +44,10 @@ export class ChangeRequestDetailPage implements OnInit {
         this.reviews.change(id).subscribe({
             next: (request) => {
                 this.request.set(request);
-                this.crumbs.set([{ label: 'Catalog changes', routerLink: '/catalog/change-requests' }, { label: request.current.name }]);
+                this.crumbs.set([
+                    { label: 'Product change requests', routerLink: '/catalog/change-requests' },
+                    { label: catalogContentName(request.current) || 'Request' }
+                ]);
                 this.loading.set(false);
             },
             error: (error) => {
