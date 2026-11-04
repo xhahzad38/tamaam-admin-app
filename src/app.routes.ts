@@ -7,6 +7,8 @@ import { AuthGuard } from './app/_helpers';
 
 const reviewerRoles = ['SuperAdmin', 'AdminReviewer'];
 const catalogRoles = ['SuperAdmin', 'CatalogAdmin'];
+// Offers are visible to catalog and logistics admins; warehouses and inbound need logistics (checked by the API).
+const fulfillmentRoles = ['SuperAdmin', 'LogisticsAdmin', 'CatalogAdmin'];
 
 export const appRoutes: Routes = [
     {
@@ -32,6 +34,12 @@ export const appRoutes: Routes = [
                 canActivate: [AuthGuard],
                 data: { roles: catalogRoles },
                 loadChildren: () => import('./app/pages/catalog/catalog.routes')
+            },
+            {
+                path: 'fulfillment',
+                canActivate: [AuthGuard],
+                data: { roles: fulfillmentRoles },
+                loadChildren: () => import('./app/pages/fulfillment/fulfillment.routes')
             },
             { path: 'uikit', loadChildren: () => import('./app/pages/uikit/uikit.routes') },
             { path: 'documentation', component: Documentation },

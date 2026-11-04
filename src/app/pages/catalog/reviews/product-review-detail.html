@@ -9,7 +9,16 @@
                 <h1 class="m-0 text-2xl font-semibold">{{ contentName(item) || 'Product' }}</h1>
                 <p class="m-0 mt-1 text-sm text-muted-color">{{ item.storeName || 'Store' }} · {{ item.brandName }} · {{ item.categoryName || 'No category' }} · {{ structureLabel(item.structure) }}</p>
                 @if (item.psku) {
-                    <p class="m-0 mt-1 text-sm text-muted-color">PSKU {{ item.psku }}</p>
+                    <p class="m-0 mt-1 font-mono text-sm text-muted-color">PSKU {{ item.psku }}</p>
+                }
+                <p class="m-0 mt-1 text-sm text-muted-color">
+                    Made in {{ item.countryOfOriginName || 'an unknown country' }}
+                    @if (item.offerCount) {
+                        · <a [routerLink]="['/fulfillment/offers']" [queryParams]="{ productId: item.id }">{{ item.offerCount }} offer(s)</a>
+                    }
+                </p>
+                @if (item.categoryRequiresExtraApproval) {
+                    <p class="m-0 mt-2 rounded-border border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">This category needs extra checks before listings go live.</p>
                 }
             </div>
             <span class="rounded-full bg-surface-100 px-3 py-1 text-sm font-medium">{{ statusLabel(item.status) }}</span>
@@ -51,6 +60,7 @@
                 <thead>
                     <tr class="text-left">
                         <th class="py-2 pr-3">SKU</th>
+                        <th class="py-2 pr-3">Name</th>
                         <th class="py-2 pr-3">Options</th>
                         <th class="py-2 pr-3">Barcode</th>
                         <th class="py-2 pr-3">GTIN</th>
@@ -59,7 +69,8 @@
                 <tbody>
                     @for (variant of item.variants; track variant.id) {
                         <tr>
-                            <td class="py-2 pr-3">{{ variant.sku }}</td>
+                            <td class="py-2 pr-3 font-mono">{{ variant.sku }}</td>
+                            <td class="py-2 pr-3">{{ variant.name || '—' }}</td>
                             <td class="py-2 pr-3">{{ variant.attributeCombination || (variant.isDefault ? 'Default' : '—') }}</td>
                             <td class="py-2 pr-3">{{ variant.barcode || '—' }}</td>
                             <td class="py-2 pr-3">{{ variant.gtin || '—' }}</td>
@@ -79,12 +90,15 @@
         }
 
         <h2 class="mb-3 mt-6 text-lg font-semibold">Attributes</h2>
-        @if (!item.attributeValues.length) {
+        @if (!item.attributeValues.length && !item.attributeTexts.length) {
             <p class="text-sm text-muted-color">No attribute values.</p>
         } @else {
             <ul class="m-0 pl-5 text-sm">
                 @for (value of item.attributeValues; track value.attributeValueId) {
                     <li>{{ value.attributeName }}: {{ value.valueName }}</li>
+                }
+                @for (text of item.attributeTexts; track text.attributeId) {
+                    <li>{{ text.attributeName }}: {{ textValue(text) }}</li>
                 }
             </ul>
         }

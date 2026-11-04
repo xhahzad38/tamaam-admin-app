@@ -1,0 +1,206 @@
+// Labels are sized in millimetres so they line up with real label stock when printed at 100%.
+
+.label-print-area {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6mm;
+    margin-top: 1rem;
+    color: #000;
+}
+
+// A4 sheet with 3 × 8 labels of 70 × 37 mm, the common "24 per sheet" stock.
+.unit-sheet {
+    display: grid;
+    grid-template-columns: repeat(3, 70mm);
+    grid-auto-rows: 37mm;
+    width: 210mm;
+    padding: 0;
+    background: #fff;
+}
+
+.unit-label {
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    overflow: hidden;
+    padding: 2mm 4mm;
+    border: 1px dashed #d4d4d8;
+    background: #fff;
+    font-family: Arial, Helvetica, sans-serif;
+
+    app-barcode {
+        width: 100%;
+        font-size: 10pt;
+        font-weight: 700;
+    }
+}
+
+.unit-label__title,
+.unit-label__meta {
+    margin: 0.6mm 0 0;
+    overflow: hidden;
+    font-size: 7pt;
+    line-height: 1.2;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.unit-label__meta {
+    color: #333;
+}
+
+// Thermal printers usually take 50 × 25 mm unit labels and 100 × 150 mm carton labels, one per page.
+.label-print-area--roll {
+    .unit-sheet {
+        display: flex;
+        flex-direction: column;
+        gap: 2mm;
+        width: 50mm;
+    }
+
+    .unit-label {
+        width: 50mm;
+        height: 25mm;
+        padding: 1.5mm 2.5mm;
+    }
+}
+
+.carton-label {
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 2.5mm;
+    width: 100mm;
+    height: 150mm;
+    padding: 4mm;
+    border: 1.5px solid #000;
+    background: #fff;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 8pt;
+    line-height: 1.25;
+
+    p {
+        margin: 0;
+    }
+}
+
+.carton-label__top {
+    display: flex;
+    justify-content: space-between;
+    gap: 3mm;
+    padding-bottom: 2mm;
+    border-bottom: 1px solid #000;
+}
+
+.carton-label__kicker {
+    font-size: 6.5pt;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+}
+
+.carton-label__name {
+    font-size: 10pt;
+    font-weight: 700;
+
+    span {
+        font-weight: 400;
+    }
+}
+
+.carton-label__count {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 24mm;
+    border: 1.5px solid #000;
+    font-size: 7pt;
+
+    strong {
+        font-size: 16pt;
+    }
+}
+
+.carton-label__from {
+    padding-bottom: 2mm;
+    border-bottom: 1px solid #000;
+}
+
+.carton-label__barcode app-barcode {
+    width: 100%;
+    font-size: 10pt;
+    font-weight: 700;
+}
+
+.carton-label__facts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1mm 4mm;
+    font-size: 8pt;
+}
+
+.carton-label__contents {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 7pt;
+
+    th,
+    td {
+        padding: 0.6mm 1mm;
+        border-bottom: 0.5px solid #999;
+        text-align: left;
+    }
+
+    td:first-child {
+        font-family: ui-monospace, Menlo, Consolas, monospace;
+    }
+}
+
+.carton-label__courier {
+    margin-top: auto !important;
+    font-size: 8pt;
+    font-weight: 700;
+}
+
+@media print {
+    @page {
+        margin: 0;
+    }
+
+    // Only the labels print; the app shell and toolbar stay on screen.
+    body * {
+        visibility: hidden;
+    }
+
+    .label-print-area,
+    .label-print-area * {
+        visibility: visible;
+    }
+
+    .label-print-area {
+        position: absolute;
+        top: 0;
+        left: 0;
+        gap: 0;
+        margin: 0;
+    }
+
+    .unit-label {
+        border-color: transparent;
+    }
+
+    .label-print-area--roll .unit-sheet {
+        gap: 0;
+    }
+
+    .label-print-area--roll .unit-label,
+    .carton-label {
+        break-after: page;
+    }
+
+    .unit-sheet {
+        break-after: page;
+    }
+}

@@ -67,7 +67,16 @@ export class AppMenu {
                     { label: 'Lookups', icon: 'pi pi-fw pi-tags', routerLink: ['/catalog/lookups'] },
                     { label: 'Product review', icon: 'pi pi-fw pi-check-circle', routerLink: ['/catalog/product-reviews'] },
                     { label: 'Product change requests', icon: 'pi pi-fw pi-pencil', routerLink: ['/catalog/change-requests'] },
-                    { label: 'Authorization review', icon: 'pi pi-fw pi-verified', routerLink: ['/catalog/brand-authorization-reviews'] }
+                    { label: 'Authorization review', icon: 'pi pi-fw pi-verified', routerLink: ['/catalog/brand-authorization-reviews'] },
+                    { label: 'Offers', icon: 'pi pi-fw pi-tags', routerLink: ['/fulfillment/offers'] }
+                ]
+            },
+            {
+                label: 'Fulfillment',
+                items: [
+                    { label: 'Inbound receiving', icon: 'pi pi-fw pi-inbox', routerLink: ['/fulfillment/inbound'] },
+                    { label: 'Warehouses', icon: 'pi pi-fw pi-building', routerLink: ['/fulfillment/warehouses'] },
+                    { label: 'Add fulfillment center', icon: 'pi pi-fw pi-plus', routerLink: ['/fulfillment/warehouses/new'] }
                 ]
             },
         ];

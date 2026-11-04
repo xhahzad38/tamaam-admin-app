@@ -10,6 +10,7 @@ import {
     CATALOG_STATUS_LABEL,
     CatalogProductDetail,
     STRUCTURE_LABEL,
+    attributeTextValue,
     catalogContentBullets,
     catalogContentDescription,
     catalogContentName
@@ -37,6 +38,7 @@ export class ProductReviewDetailPage implements OnInit {
     readonly contentName = catalogContentName;
     readonly contentDescription = catalogContentDescription;
     readonly contentBullets = catalogContentBullets;
+    readonly textValue = attributeTextValue;
     readonly statusLabel = (value: number) => CATALOG_STATUS_LABEL[value] ?? 'Draft';
     readonly structureLabel = (value: number) => STRUCTURE_LABEL[value] ?? 'Simple';
 

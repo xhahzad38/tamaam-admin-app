@@ -1,0 +1,148 @@
+<app-bread-crumb [items]="crumbs" />
+
+<div class="card">
+    @if (shipment(); as item) {
+        <div class="mb-5 flex flex-wrap items-start justify-between gap-3">
+            <div>
+                <h1 class="m-0 font-mono text-2xl font-semibold">{{ item.asnNumber }}</h1>
+                <p class="m-0 mt-1 text-sm text-muted-color">
+                    {{ item.storeName }} → {{ item.warehouseName }} ({{ item.warehouseCode }}) · {{ item.unitCount }} units in {{ item.cartonCount }} carton(s)
+                </p>
+                <p class="m-0 mt-1 text-sm text-muted-color">
+                    @if (item.shippedAt) {
+                        Shipped {{ item.shippedAt | date: 'medium' }} with {{ item.courierName }}@if (item.trackingNumber) { · <span class="font-mono">{{ item.trackingNumber }}</span>}
+                    } @else {
+                        Not shipped yet
+                    }
+                    @if (item.expectedAt) {
+                        · expected {{ item.expectedAt | date: 'mediumDate' }}
+                    }
+                </p>
+                @if (item.notes) {
+                    <p class="m-0 mt-2 text-sm">Seller note: {{ item.notes }}</p>
+                }
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+                <p-tag [value]="statusLabel(item.status)" [severity]="severity(item.status)" />
+                @if (item.canPrintLabels) {
+                    <p-button label="Reprint carton labels" icon="pi pi-print" size="small" [outlined]="true" [routerLink]="['/fulfillment/labels/inbound', item.id]" />
+                }
+            </div>
+        </div>
+
+        @if (item.canReceive) {
+            <section class="mb-6 rounded-border border border-surface p-4">
+                <h2 class="m-0 text-lg font-semibold">Scan units</h2>
+                <p class="m-0 mt-1 text-sm text-muted-color">Scan each unit's FNSKU label. Each scan counts one unit. Switch to damaged for units that cannot be sold.</p>
+                <form class="mt-3 flex flex-wrap items-center gap-3" (ngSubmit)="onScan()">
+                    <label for="scan" class="sr-only">Scan FNSKU</label>
+                    <input #scanInput pInputText id="scan" class="w-72 font-mono" autocomplete="off" [formControl]="scan" placeholder="Scan FNSKU or carton number" />
+                    <p-button type="submit" label="Count" size="small" />
+                    <label class="flex items-center gap-2 text-sm">
+                        <input type="checkbox" [checked]="scanDamaged()" (change)="scanDamaged.set(!scanDamaged())" />
+                        Count scans as damaged
+                    </label>
+                </form>
+                @if (lastScan(); as scanResult) {
+                    <p class="m-0 mt-2 text-sm" [class.text-green-700]="scanResult.ok" [class.text-red-700]="!scanResult.ok" role="status">{{ scanResult.text }}</p>
+                }
+            </section>
+        }
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="border-b border-surface text-left">
+                        <th scope="col" class="py-2">Product</th>
+                        <th scope="col" class="py-2">FNSKU</th>
+                        <th scope="col" class="py-2">Seller SKU / PSKU</th>
+                        <th scope="col" class="py-2">Expected</th>
+                        <th scope="col" class="py-2">Received so far</th>
+                        @if (item.canReceive) {
+                            <th scope="col" class="py-2">Count now: sellable</th>
+                            <th scope="col" class="py-2">Count now: damaged</th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (row of item.items; track row.id) {
+                        <tr class="border-b border-surface">
+                            <td class="py-2">
+                                <span class="flex items-center gap-3">
+                                    @if (mediaUrl(row.imageUrl); as photo) {
+                                        <img [src]="photo" alt="" class="h-10 w-10 rounded object-cover" />
+                                    }
+                                    <span>
+                                        {{ row.productName }}
+                                        <span class="block text-xs text-muted-color">{{ row.attributeCombination || 'Single version' }} · {{ conditionLabel(row.condition) }}</span>
+                                    </span>
+                                </span>
+                            </td>
+                            <td class="py-2 font-mono font-semibold">{{ row.fnsku }}</td>
+                            <td class="py-2 font-mono text-xs">{{ row.sellerSku }}<span class="block text-muted-color">{{ row.psku }}</span></td>
+                            <td class="py-2">{{ row.expectedQty }}</td>
+                            <td class="py-2">
+                                {{ row.receivedGoodQty }} sellable
+                                @if (row.receivedUnsellableQty) {
+                                    · <span class="text-amber-700">{{ row.receivedUnsellableQty }} damaged</span>
+                                }
+                                @if (row.remainingQty) {
+                                    <span class="block text-xs text-muted-color">{{ row.remainingQty }} still expected</span>
+                                }
+                            </td>
+                            @if (item.canReceive) {
+                                <td class="py-2"><input pInputText type="number" min="0" class="w-20" [attr.aria-label]="'Sellable units of ' + row.fnsku" [value]="count(row.id).good" (input)="setCount(row, 'good', $any($event.target).value)" /></td>
+                                <td class="py-2"><input pInputText type="number" min="0" class="w-20" [attr.aria-label]="'Damaged units of ' + row.fnsku" [value]="count(row.id).damaged" (input)="setCount(row, 'damaged', $any($event.target).value)" /></td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        @if (item.canReceive) {
+            <div class="mt-5 flex flex-col gap-3">
+                <div class="flex max-w-xl flex-col gap-2">
+                    <label for="receipt-notes" class="text-sm font-medium">Notes</label>
+                    <input pInputText id="receipt-notes" maxlength="1000" [formControl]="notes" placeholder="Damaged carton, extra units, missing labels…" />
+                </div>
+                <p class="m-0 text-sm">{{ counted() }} unit(s) counted now · {{ remaining() }} still expected.</p>
+                <div class="flex flex-wrap gap-2">
+                    <p-button label="Save receipt" [outlined]="true" [loading]="saving()" (onClick)="save(false)" />
+                    <p-button label="Save and close shipment" icon="pi pi-check" [loading]="saving()" (onClick)="save(true)" />
+                </div>
+            </div>
+        } @else if (item.status === 1) {
+            <p class="mt-4 text-sm text-muted-color">The seller has sealed this shipment but not shipped it yet.</p>
+        }
+
+        <h2 class="mb-2 mt-6 text-lg font-semibold">Cartons</h2>
+        <ul class="m-0 pl-5 text-sm">
+            @for (carton of item.cartons; track carton.id) {
+                <li><span class="font-mono">{{ carton.cartonNumber }}</span> · {{ carton.unitCount }} units · {{ carton.weightKg }} kg · {{ carton.lengthCm }} × {{ carton.widthCm }} × {{ carton.heightCm }} cm</li>
+            }
+        </ul>
+
+        @if (item.receivings.length) {
+            <h2 class="mb-2 mt-6 text-lg font-semibold">Receipts</h2>
+            <ul class="m-0 pl-5 text-sm">
+                @for (receipt of item.receivings; track receipt.id) {
+                    <li>
+                        <span class="font-mono">{{ receipt.receivingNumber }}</span> · {{ receipt.completedAt | date: 'medium' }} · {{ receipt.goodQty }} sellable, {{ receipt.unsellableQty }} damaged
+                        @if (receipt.status === 4) {
+                            · <span class="text-amber-700">closed with a shortfall</span>
+                        }
+                        @if (receipt.notes) {
+                            · {{ receipt.notes }}
+                        }
+                    </li>
+                }
+            </ul>
+        }
+    }
+
+    @if (error()) {
+        <p class="mt-4 rounded-border border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">{{ error() }}</p>
+    }
+    <a class="mt-4 inline-block text-sm" routerLink="/fulfillment/inbound">Back to inbound receiving</a>
+</div>

@@ -66,6 +66,9 @@
                     @for (value of item.proposed.attributeValues; track value.attributeValueId) {
                         <li>{{ value.attributeName }}: {{ value.valueName }}</li>
                     }
+                    @for (text of item.proposed.attributeTexts; track text.attributeId) {
+                        <li>{{ text.attributeName }}: {{ text.value === 'true' ? 'Yes' : text.value === 'false' ? 'No' : text.value }}</li>
+                    }
                 </ul>
             </section>
         </div>

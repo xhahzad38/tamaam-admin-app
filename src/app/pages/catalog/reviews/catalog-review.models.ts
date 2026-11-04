@@ -21,6 +21,7 @@ export interface CatalogProductContent {
 export interface CatalogVariant {
     id: string;
     sku: string;
+    name: string;
     barcode: string | null;
     gtin: string | null;
     attributeCombination: string;
@@ -51,6 +52,21 @@ export interface CatalogAttributeValue {
     valueName: string;
 }
 
+export interface CatalogAttributeText {
+    attributeId: string;
+    attributeName: string;
+    displayType: number;
+    value: string;
+}
+
+/** Shows a typed specification the way a shopper reads it. Display type 4 is yes/no. */
+export function attributeTextValue(text: CatalogAttributeText): string {
+    if (text.displayType === 4) {
+        return text.value === 'true' ? 'Yes' : text.value === 'false' ? 'No' : text.value;
+    }
+    return text.value;
+}
+
 export interface CatalogProductDetail {
     id: string;
     psku: string;
@@ -65,6 +81,10 @@ export interface CatalogProductDetail {
     media: CatalogMedia[];
     bundleItems: CatalogBundleItem[];
     attributeValues: CatalogAttributeValue[];
+    attributeTexts: CatalogAttributeText[];
+    countryOfOriginName: string | null;
+    categoryRequiresExtraApproval: boolean;
+    offerCount: number;
 }
 
 export interface CatalogChangeProposal {
@@ -73,6 +93,7 @@ export interface CatalogChangeProposal {
     bundleItems: CatalogBundleItem[];
     media: CatalogMedia[];
     attributeValues: CatalogAttributeValue[];
+    attributeTexts: CatalogAttributeText[];
 }
 
 export interface CatalogChangeListItem {
