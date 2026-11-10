@@ -1,0 +1,216 @@
+// Layout building blocks shared by every screen in both apps.
+body {
+    font-family: var(--tm-font-sans);
+}
+
+// A screen: <app-page-header>, then stacked cards.
+.page {
+    display: flex;
+    flex-direction: column;
+    gap: var(--tm-space-5);
+}
+
+.card {
+    box-shadow: var(--tm-shadow-card);
+}
+
+.page > .card {
+    margin-bottom: 0;
+}
+
+.section-title {
+    margin: 0 0 var(--tm-space-3);
+    font-size: var(--tm-text-lg);
+    font-weight: 600;
+    color: var(--tm-text);
+}
+
+.section-subtitle {
+    margin: 0 0 var(--tm-space-4);
+    font-size: var(--tm-text-sm);
+    color: var(--tm-text-muted);
+}
+
+// Above a table: search on the left, filters/actions on the right.
+.table-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--tm-space-3);
+    margin-bottom: var(--tm-space-4);
+}
+
+// Text-style actions in table rows.
+.row-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: var(--tm-space-1) var(--tm-space-4);
+    white-space: nowrap;
+}
+
+.link-button {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    font: inherit;
+    font-weight: 500;
+    color: var(--tm-primary);
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+        text-decoration: underline;
+    }
+    &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    &--danger {
+        color: var(--tm-danger);
+    }
+}
+
+// Fields flow into as many columns as fit.
+.form-grid {
+    display: grid;
+    gap: var(--tm-space-4);
+    grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+
+    > .form-grid__full {
+        grid-column: 1 / -1;
+    }
+}
+
+.form-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: var(--tm-space-2);
+    margin-top: var(--tm-space-6);
+}
+
+// Key/value pairs on detail screens.
+.detail-list {
+    display: grid;
+    gap: var(--tm-space-3) var(--tm-space-6);
+    grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+    margin: 0;
+
+    dt {
+        font-size: var(--tm-text-xs);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--tm-text-muted);
+    }
+    dd {
+        margin: var(--tm-space-1) 0 0;
+        color: var(--tm-text);
+    }
+}
+
+.detail-list--stacked {
+    grid-template-columns: 1fr;
+}
+
+// Main form + narrow side panel (settings, previews). Stacks on small screens.
+.settings-grid {
+    display: grid;
+    gap: var(--tm-space-5);
+    grid-template-columns: minmax(0, 1fr) minmax(16rem, 22rem);
+    align-items: start;
+
+    > .card {
+        margin-bottom: 0;
+    }
+
+    @media (max-width: 991px) {
+        grid-template-columns: 1fr;
+    }
+}
+
+// A value the user can see but not edit here (e.g. login email).
+.readonly-field {
+    display: flex;
+    align-items: center;
+    gap: var(--tm-space-2);
+    min-height: 2.5rem;
+    padding: var(--tm-space-2) var(--tm-space-3);
+    border: 1px dashed var(--tm-border);
+    border-radius: var(--tm-radius-md);
+    background: var(--tm-surface-muted);
+    color: var(--tm-text);
+}
+
+.text-danger {
+    color: var(--tm-danger);
+}
+.text-success {
+    color: var(--tm-success);
+}
+.text-warning {
+    color: var(--tm-warning);
+}
+
+.p-paginator {
+    justify-content: flex-end;
+}
+
+// Coloured table headers everywhere. Overriding PrimeNG's own variables on .p-datatable
+// (more specific than its :root values) keeps sort, hover and focus states consistent.
+.p-datatable {
+    --p-datatable-header-cell-background: var(--tm-table-header-bg);
+    --p-datatable-header-cell-color: var(--tm-table-header-text);
+    --p-datatable-header-cell-border-color: var(--tm-table-header-border);
+    --p-datatable-header-cell-hover-background: var(--tm-table-header-hover-bg);
+    --p-datatable-header-cell-hover-color: var(--tm-table-header-text);
+    --p-datatable-header-cell-selected-background: var(--tm-table-header-hover-bg);
+    --p-datatable-header-cell-selected-color: var(--tm-table-header-text);
+    --p-datatable-sort-icon-color: var(--tm-table-header-icon);
+    --p-datatable-sort-icon-hover-color: var(--tm-table-header-text);
+}
+
+.p-datatable .p-datatable-thead > tr > th {
+    font-size: var(--tm-text-sm);
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+// Plain HTML tables that should look like the PrimeNG ones: <table class="app-table">.
+.app-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+
+    thead th {
+        padding: var(--tm-space-2) var(--tm-space-3);
+        background: var(--tm-table-header-bg);
+        color: var(--tm-table-header-text);
+        border-bottom: 1px solid var(--tm-table-header-border);
+        font-size: var(--tm-text-sm);
+        font-weight: 600;
+        text-align: left;
+        white-space: nowrap;
+
+        &:first-child {
+            border-top-left-radius: var(--tm-radius-md);
+        }
+        &:last-child {
+            border-top-right-radius: var(--tm-radius-md);
+        }
+    }
+
+    tbody td {
+        padding: var(--tm-space-2) var(--tm-space-3);
+        border-bottom: 1px solid var(--tm-border);
+    }
+}
+
+// Round the top corners of the header row so the tint sits neatly inside the card.
+.p-datatable .p-datatable-thead > tr:first-child > th:first-child {
+    border-top-left-radius: var(--tm-radius-md);
+}
+.p-datatable .p-datatable-thead > tr:first-child > th:last-child {
+    border-top-right-radius: var(--tm-radius-md);
+}

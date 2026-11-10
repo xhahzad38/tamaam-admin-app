@@ -1,0 +1,11 @@
+// Matches the breadcrumb inside <app-page-header>, for detail pages whose title lives in the record summary.
+:host {
+    display: block;
+    margin-bottom: var(--tm-space-4);
+}
+
+:host ::ng-deep .p-breadcrumb {
+    padding: 0;
+    background: transparent;
+    font-size: var(--tm-text-sm);
+}

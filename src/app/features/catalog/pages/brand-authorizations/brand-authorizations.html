@@ -1,0 +1,64 @@
+<div class="page">
+    <app-page-header title="Brand authorization List" subtitle="Which seller store may sell a brand, and which document proves it." [crumbs]="crumbs">
+        <p-button label="Add authorization" icon="pi pi-plus" (onClick)="openForm()" />
+    </app-page-header>
+
+    <div class="card">
+        @if (error(); as message) {
+            <app-error-state [message]="message" [retryable]="false" />
+        }
+
+        <div class="mb-4 flex flex-col gap-3 md:flex-row md:items-end">
+            <div class="min-w-0 flex-1">
+                <app-search-control (searchChange)="onSearch($event)" />
+            </div>
+            <div class="w-full md:w-72">
+                <label class="mb-1 block text-sm font-medium" for="authorization-brand-filter">Brand</label>
+                <app-select-control inputId="authorization-brand-filter" label="Brand" [control]="brandFilter" [options]="brandOptions()" optionLabel="name" optionValue="id" placeholder="All brands" appendTo="body" [flowError]="true" />
+            </div>
+        </div>
+
+        <p-table [value]="pageRows()" [loading]="loading()">
+            <ng-template #header>
+                <tr>
+                    <th>Brand</th>
+                    <th>Store</th>
+                    <th>Type</th>
+                    <th>Status</th>
+                    <th>Valid</th>
+                    <th></th>
+                </tr>
+            </ng-template>
+            <ng-template #body let-row>
+                <tr>
+                    <td class="font-medium">{{ row.brandName }}</td>
+                    <td>{{ row.storeName }}</td>
+                    <td>{{ row.authorizationType }}</td>
+                    <td>{{ statusLabel(row.approvalStatus) }}</td>
+                    <td>{{ row.validFrom || '—' }} – {{ row.validTo || '—' }}</td>
+                    <td class="whitespace-nowrap text-right">
+                        <button type="button" class="link-button mr-3" (click)="openForm(row)">Edit</button>
+                        <button type="button" class="link-button link-button--danger" (click)="remove(row)">Delete</button>
+                    </td>
+                </tr>
+            </ng-template>
+            <ng-template #emptymessage>
+                <tr>
+                    <td [attr.colspan]="6"><app-empty-state title="No store is authorized yet" /></td>
+                </tr>
+            </ng-template>
+        </p-table>
+
+        <div class="mt-3 flex justify-end">
+            <p-paginator
+                (onPageChange)="pageChange($event)"
+                [first]="first()"
+                [rows]="rows()"
+                [totalRecords]="totalRecords()"
+                [rowsPerPageOptions]="[10, 20, 30]"
+                [showCurrentPageReport]="true"
+                currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
+            />
+        </div>
+    </div>
+</div>

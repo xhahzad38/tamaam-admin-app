@@ -1,41 +1,29 @@
-import { HTTP_INTERCEPTORS, provideHttpClient, withFetch, withInterceptors, withInterceptorsFromDi } from '@angular/common/http';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { ApplicationConfig, provideZonelessChangeDetection } from '@angular/core';
 import { provideRouter, withEnabledBlockingInitialNavigation, withInMemoryScrolling } from '@angular/router';
-import Aura from '@primeuix/themes/aura';
+import { ConfirmationService, MessageService } from 'primeng/api';
 import { providePrimeNG } from 'primeng/config';
+import { APP_SHELL_CONFIG } from '@/app/core/config/app-shell.config';
+import { errorInterceptor, jwtInterceptor, loadingInterceptor } from '@/app/core/http';
+import { TamaamPreset } from '@/app/shared/theme/tamaam.preset';
 import { appRoutes } from './app.routes';
-import { jwtInterceptor, errorInterceptor, loadingInterceptor } from './app/_helpers';
-import { MessageService } from 'primeng/api';
+import { ADMIN_SHELL } from './app.shell';
 
 export const appConfig: ApplicationConfig = {
     providers: [
+        { provide: APP_SHELL_CONFIG, useValue: ADMIN_SHELL },
         MessageService,
+        ConfirmationService,
+        provideZonelessChangeDetection(),
         provideRouter(
             appRoutes,
-            withInMemoryScrolling({
-                anchorScrolling: 'enabled',
-                scrollPositionRestoration: 'enabled'
-            }),
+            withInMemoryScrolling({ anchorScrolling: 'enabled', scrollPositionRestoration: 'enabled' }),
             withEnabledBlockingInitialNavigation()
         ),
-
-        provideZonelessChangeDetection(),
-
         providePrimeNG({
-            theme: {
-                preset: Aura,
-                options: {
-                    darkModeSelector: '.app-dark'
-                }
-            }
+            theme: { preset: TamaamPreset, options: { darkModeSelector: '.app-dark' } }
         }),
-
-        provideHttpClient(
-            withInterceptors([
-                jwtInterceptor,
-                errorInterceptor,
-                loadingInterceptor
-            ])
-        )
+        // Order matters: errorInterceptor is outermost so jwtInterceptor can refresh on a 401 before it becomes a sign-out.
+        provideHttpClient(withInterceptors([errorInterceptor, jwtInterceptor, loadingInterceptor]))
     ]
 };

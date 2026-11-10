@@ -1,0 +1,89 @@
+<div class="page">
+    <app-page-header title="Return policy" subtitle="Return window for each category. The default is 14 days. Turning returns off sets the window to 0." [crumbs]="crumbs">
+        <p-button label="Add return policy" icon="pi pi-plus" (onClick)="openCreate()" />
+    </app-page-header>
+
+    <div class="card">
+        @if (error() && !dialogOpen()) {
+            <p class="mb-4 text-red-600" role="alert">{{ error() }}</p>
+        }
+
+        <div class="mb-4 flex flex-col gap-3 md:flex-row md:items-end">
+            <div class="min-w-0 flex-1">
+                <app-search-control (searchChange)="onSearch($event)" />
+            </div>
+            <div class="w-full md:w-72">
+                <label class="mb-1 block text-sm font-medium" for="return-category-filter">Category</label>
+                <app-select-control inputId="return-category-filter" label="Category" [control]="categoryFilter" [options]="categoryOptions()" optionLabel="label" optionValue="id" placeholder="All categories" appendTo="body" [flowError]="true" />
+            </div>
+        </div>
+
+        <p-table [value]="items()" [loading]="loading()">
+            <ng-template #header>
+                <tr>
+                    <th>Category</th>
+                    <th>Returns allowed</th>
+                    <th>Window (days)</th>
+                    <th>Notes</th>
+                    <th></th>
+                </tr>
+            </ng-template>
+            <ng-template #body let-row>
+                <tr>
+                    <td class="font-medium">{{ row.categoryName }}</td>
+                    <td>{{ row.returnsAllowed ? 'Yes' : 'No' }}</td>
+                    <td>{{ row.returnWindowDays }}</td>
+                    <td>{{ row.notes || '—' }}</td>
+                    <td class="text-right">
+                        <button type="button" class="link-button" (click)="openEdit(row)">Edit</button>
+                    </td>
+                </tr>
+            </ng-template>
+            <ng-template #emptymessage>
+                <tr>
+                    <td [attr.colspan]="5"><app-empty-state title="No return policies yet" /></td>
+                </tr>
+            </ng-template>
+        </p-table>
+
+        <div class="mt-3 flex justify-end">
+            <p-paginator
+                (onPageChange)="pageChange($event)"
+                [first]="first()"
+                [rows]="rows()"
+                [totalRecords]="totalRecords()"
+                [rowsPerPageOptions]="[10, 20, 30]"
+                [showCurrentPageReport]="true"
+                currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
+            />
+        </div>
+    </div>
+
+    <p-dialog header="Return policy" [visible]="dialogOpen()" (visibleChange)="dialogOpen.set($event)" [modal]="true" [style]="{ width: '32rem' }">
+        <div class="flex flex-col gap-4">
+            @if (error(); as message) {
+                <app-error-state [message]="message" [retryable]="false" />
+            }
+            <div class="flex flex-col gap-1">
+                <label class="text-sm font-medium" for="return-category">Category</label>
+                <app-select-control inputId="return-category" label="Category" [control]="categoryId" [options]="categoryOptions()" optionLabel="label" optionValue="id" placeholder="Choose a category" [showClear]="false" appendTo="body" [flowError]="true" />
+            </div>
+            <label class="inline-flex items-center gap-2">
+                <p-checkbox [binary]="true" [ngModel]="returns().returnsAllowed" (ngModelChange)="patch({ returnsAllowed: $event })" />
+                <span>Returns allowed</span>
+            </label>
+            <div class="flex flex-col gap-1">
+                <label class="text-sm font-medium" for="return-days">Window (days)</label>
+                <app-input-control inputId="return-days" label="Window" type="number" [control]="fields.controls.returnWindowDays" [readonly]="!returns().returnsAllowed" [showCount]="false" [flowError]="true" />
+            </div>
+            <div class="flex flex-col gap-1">
+                <label class="text-sm font-medium" for="return-notes">Notes</label>
+                <app-input-control inputId="return-notes" label="Notes" type="textarea" [control]="fields.controls.notes" [maxLength]="1000" [showCount]="false" [flowError]="true" />
+            </div>
+        </div>
+        <ng-template #footer>
+            <p-button label="Close" [outlined]="true" (onClick)="dialogOpen.set(false)" />
+            <p-button label="Save" icon="pi pi-check" [loading]="saving()" (onClick)="save()" />
+        </ng-template>
+    </p-dialog>
+</div>

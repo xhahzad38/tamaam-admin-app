@@ -1,0 +1,77 @@
+// Tamaam design tokens. Built on PrimeNG's CSS variables, so dark mode and the brand
+// palette (app/shared/theme/tamaam.preset.ts) flow through automatically.
+// Use these in component styles instead of hex values.
+:root {
+    --tm-font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+    // spacing (4px grid)
+    --tm-space-1: 0.25rem;
+    --tm-space-2: 0.5rem;
+    --tm-space-3: 0.75rem;
+    --tm-space-4: 1rem;
+    --tm-space-5: 1.25rem;
+    --tm-space-6: 1.5rem;
+    --tm-space-8: 2rem;
+
+    // type scale
+    --tm-text-xs: 0.75rem;
+    --tm-text-sm: 0.875rem;
+    --tm-text-md: 1rem;
+    --tm-text-lg: 1.125rem;
+    --tm-text-xl: 1.375rem;
+    --tm-text-2xl: 1.625rem;
+
+    --tm-radius-sm: 6px;
+    --tm-radius-md: 8px;
+    --tm-radius-lg: 12px;
+    --tm-shadow-card: 0 1px 2px rgb(15 23 42 / 0.06), 0 1px 3px rgb(15 23 42 / 0.04);
+
+    // neutrals
+    --tm-text: var(--p-text-color);
+    --tm-text-muted: var(--p-text-muted-color);
+    --tm-border: var(--p-content-border-color);
+    --tm-surface: var(--p-content-background);
+    --tm-surface-muted: var(--p-surface-50);
+    --tm-surface-sunken: var(--p-surface-100);
+
+    // brand + status: plain = text/icons/borders, -soft = backgrounds
+    --tm-primary: var(--p-primary-color);
+    --tm-primary-contrast: var(--p-primary-contrast-color);
+    --tm-primary-soft: var(--p-primary-50);
+    --tm-success: var(--p-green-700);
+    --tm-success-soft: var(--p-green-50);
+    --tm-warning: var(--p-amber-700);
+    --tm-warning-soft: var(--p-amber-50);
+    --tm-danger: var(--p-red-600);
+    --tm-danger-soft: var(--p-red-50);
+    --tm-info: var(--p-sky-700);
+    --tm-info-soft: var(--p-sky-50);
+
+    // table header (brand tint)
+    --tm-table-header-bg: var(--p-primary-50);
+    --tm-table-header-text: var(--p-primary-900);
+    --tm-table-header-border: var(--p-primary-100);
+    --tm-table-header-hover-bg: var(--p-primary-100);
+    --tm-table-header-icon: var(--p-primary-700);
+}
+
+.app-dark {
+    --tm-shadow-card: none;
+    --tm-surface-muted: var(--p-surface-800);
+    --tm-surface-sunken: var(--p-surface-900);
+    --tm-primary-soft: color-mix(in srgb, var(--p-primary-400) 16%, transparent);
+    --tm-success: var(--p-green-400);
+    --tm-success-soft: color-mix(in srgb, var(--p-green-500) 16%, transparent);
+    --tm-warning: var(--p-amber-400);
+    --tm-warning-soft: color-mix(in srgb, var(--p-amber-500) 16%, transparent);
+    --tm-danger: var(--p-red-400);
+    --tm-danger-soft: color-mix(in srgb, var(--p-red-500) 16%, transparent);
+    --tm-info: var(--p-sky-400);
+    --tm-info-soft: color-mix(in srgb, var(--p-sky-500) 16%, transparent);
+
+    --tm-table-header-bg: color-mix(in srgb, var(--p-primary-400) 14%, transparent);
+    --tm-table-header-text: var(--p-primary-100);
+    --tm-table-header-border: color-mix(in srgb, var(--p-primary-400) 28%, transparent);
+    --tm-table-header-hover-bg: color-mix(in srgb, var(--p-primary-400) 22%, transparent);
+    --tm-table-header-icon: var(--p-primary-300);
+}

@@ -1,0 +1,28 @@
+<div class="page">
+    <app-page-header [title]="detail()?.name || 'Category'" subtitle="{{ detail()?.slug }}" [crumbs]="crumbs()">
+        @if (detail(); as category) {
+            <a [routerLink]="['/catalog/categories', category.id, 'edit']">
+                <p-button label="Edit category" icon="pi pi-pencil" />
+            </a>
+        }
+    </app-page-header>
+
+    <div class="card">
+        @if (error(); as message) {
+            <app-error-state [message]="message" [retryable]="false" />
+        }
+        @if (loading()) {
+            <app-loading-state />
+        }
+
+        @if (detail(); as category) {
+            <p class="mb-4 text-sm text-muted-color">Attributes, commission, return policy, and warranty are under Categories in the menu.</p>
+            <div class="flex flex-wrap gap-3">
+                <a [routerLink]="['/catalog/categories/attributes']" [queryParams]="{ category: category.id }" class="font-medium text-primary no-underline hover:underline">Category attributes</a>
+                <a [routerLink]="['/catalog/categories/commission']" [queryParams]="{ category: category.id }" class="font-medium text-primary no-underline hover:underline">Commission</a>
+                <a [routerLink]="['/catalog/categories/return-policy']" [queryParams]="{ category: category.id }" class="font-medium text-primary no-underline hover:underline">Return policy</a>
+                <a [routerLink]="['/catalog/categories/warranty']" [queryParams]="{ category: category.id }" class="font-medium text-primary no-underline hover:underline">Warranty</a>
+            </div>
+        }
+    </div>
+</div>

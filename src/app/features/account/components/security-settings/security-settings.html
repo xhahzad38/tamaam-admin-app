@@ -1,0 +1,105 @@
+<div class="security-grid">
+    <section class="card">
+        <form [formGroup]="form" (ngSubmit)="savePassword()" novalidate>
+            <h2 class="section-title">Change password</h2>
+            <div class="flex flex-col gap-3">
+                <app-input-control inputId="sec-current" label="Current password" type="password" placeholder="Current password" [control]="form.controls.currentPassword" autocomplete="current-password" [showCount]="false" [flowError]="true" />
+                <app-input-control inputId="sec-new" label="New password" type="password" placeholder="New password (8+ characters, 1 number)" [control]="form.controls.newPassword" autocomplete="new-password" [showCount]="false" [flowError]="true" />
+                <app-input-control inputId="sec-confirm" label="Repeat new password" type="password" placeholder="Repeat new password" [control]="form.controls.confirmPassword" autocomplete="new-password" [showCount]="false" [flowError]="true" />
+                @if (form.hasError('passwordMismatch') && form.controls.confirmPassword.touched) {
+                    <small class="text-danger">The passwords don't match.</small>
+                }
+            </div>
+            @if (passwordError(); as message) {
+                <div class="mt-3"><app-error-state [message]="message" [retryable]="false" /></div>
+            }
+            @if (passwordNotice(); as message) {
+                <div class="mt-3"><app-notice [message]="message" /></div>
+            }
+            <p-button label="Update password" type="submit" class="mt-3 inline-block" [loading]="savingPassword()" />
+        </form>
+
+        <hr class="divider" />
+
+        <div class="twofa">
+            <div class="twofa__head">
+                <div>
+                    <h2 class="section-title m-0">Two-factor authentication</h2>
+                    <p class="m-0 text-sm text-muted-color">OTP by SMS / authenticator app on every login</p>
+                </div>
+                @if (twoFactor(); as tf) {
+                    <p-toggleswitch [ngModel]="switchOn()" (ngModelChange)="onToggle($event)" ariaLabel="Two-factor authentication" />
+                }
+            </div>
+            @if (twoFactor(); as tf) {
+                <div class="twofa__method">
+                    <span class="text-sm text-muted-color">
+                        @if (tf.recommended && !tf.enabled) {
+                            <p-tag value="Recommended for store owners" severity="warn" class="mr-1" />
+                        } @else if (tf.recommended) {
+                            Required for store owners.
+                        }
+                        Choose method:
+                    </span>
+                    <p-select [options]="methodOptions" optionLabel="label" optionValue="value" [ngModel]="chosenMethod()" (ngModelChange)="onMethodChange($event)" styleClass="w-56" appendTo="body" />
+                </div>
+                @if (tf.enabled) {
+                    <p class="m-0 mt-2 text-sm text-success"><i class="pi pi-check-circle"></i> On — {{ tf.method === 'sms' ? 'codes are texted to ' + tf.maskedPhone : 'using your authenticator app' }}.</p>
+                } @else if (!tf.hasPhone) {
+                    <p class="m-0 mt-2 text-sm text-muted-color">SMS needs a mobile number on <a routerLink="/settings/profile">My profile</a>.</p>
+                }
+            }
+            @if (twoFactorError(); as message) {
+                <div class="mt-3"><app-error-state [message]="message" [retryable]="false" /></div>
+            }
+            @if (twoFactorNotice(); as message) {
+                <div class="mt-3"><app-notice [message]="message" /></div>
+            }
+        </div>
+    </section>
+
+    <section class="card sessions">
+        <div class="sessions__head">
+            <h2 class="section-title m-0">Active sessions</h2>
+            <p-button icon="pi pi-refresh" [text]="true" [rounded]="true" severity="secondary" size="small" ariaLabel="Refresh sessions" (onClick)="loadSessions()" />
+        </div>
+        @if (sessionsLoading()) {
+            <div class="p-4"><app-loading-state [rows]="3" height="3rem" /></div>
+        } @else if (sessionsError(); as message) {
+            <div class="p-4"><app-error-state [message]="message" (retry)="loadSessions()" /></div>
+        } @else {
+            <ul class="sessions__list">
+                @for (s of sessions(); track s.id) {
+                    <li class="session">
+                        <i [class]="deviceIcon(s)" class="session__icon"></i>
+                        <div class="session__text">
+                            <span class="session__title"><strong>{{ s.browser }} · {{ s.os }}</strong>@if (s.isCurrent) { — this device }</span>
+                            <span class="session__meta">{{ s.ipAddress || 'Unknown IP' }} · {{ s.isCurrent ? 'now' : ago(s.lastActiveAt) }}</span>
+                        </div>
+                        @if (!s.isCurrent) {
+                            <p-button label="Sign out" severity="danger" [outlined]="true" size="small" [loading]="busySession() === s.id" (onClick)="signOutSession(s)" />
+                        }
+                    </li>
+                } @empty {
+                    <li class="session session--empty">No active sessions.</li>
+                }
+            </ul>
+            @if (others() > 0) {
+                <div class="sessions__foot">
+                    <p-button label="Sign out all other sessions" severity="danger" [outlined]="true" [loading]="busySession() === 'others'" (onClick)="signOutOthers()" />
+                </div>
+            }
+        }
+    </section>
+</div>
+
+<app-two-factor-dialog [(visible)]="setupOpen" [method]="chosenMethod()" (enabled)="onEnabled($event)" />
+
+<p-dialog header="Turn off two-factor sign-in" [visible]="disableOpen()" (visibleChange)="disableOpen.set($event)" [modal]="true" [draggable]="false" [style]="{ width: 'min(26rem, 94vw)' }">
+    <p class="mt-0 text-sm text-muted-color">Your account will be protected by your password only. Enter it to confirm.</p>
+    <app-input-control inputId="sec-disable" label="Password" type="password" placeholder="Password" [control]="disablePassword" autocomplete="current-password" [showCount]="false" [flowError]="true" />
+    <ng-template #footer>
+        <p-button label="Keep it on" severity="secondary" [outlined]="true" (onClick)="disableOpen.set(false)" />
+        <p-button label="Turn off" severity="danger" [loading]="disabling()" (onClick)="disableTwoFactor()" />
+    </ng-template>
+</p-dialog>

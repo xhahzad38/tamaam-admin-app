@@ -1,0 +1,46 @@
+<div class="page">
+    <app-page-header title="Product change requests" [crumbs]="crumbs">
+        <p pageSubtitle>
+            Edits sellers submitted for products that are already live. New listings are in
+            <a routerLink="/catalog/product-reviews">Product review</a>.
+        </p>
+    </app-page-header>
+
+    <div class="card">
+        <div class="my-4 flex flex-wrap gap-2">
+            @for (option of queues; track option.id) {
+                <p-button [label]="option.label" [outlined]="queue() !== option.id" size="small" (onClick)="selectQueue(option.id)" />
+            }
+        </div>
+        <div class="mb-4">
+            <app-search-control (searchChange)="onSearch($event)" />
+        </div>
+        @if (error(); as message) {
+            <app-error-state [message]="message" [retryable]="false" />
+        }
+        <p-table [value]="items()" [loading]="loading()" responsiveLayout="scroll">
+            <ng-template #header>
+                <tr>
+                    <th>Product</th>
+                    <th>Store</th>
+                    <th>Requested</th>
+                    <th>Status</th>
+                    <th></th>
+                </tr>
+            </ng-template>
+            <ng-template #body let-item>
+                <tr>
+                    <td>{{ item.productName }}</td>
+                    <td>{{ item.storeName || '—' }}</td>
+                    <td>{{ item.createdAt | date: 'mediumDate' }}</td>
+                    <td>{{ item.statusName }}</td>
+                    <td><a [routerLink]="['/catalog/change-requests', item.id]">Open</a></td>
+                </tr>
+            </ng-template>
+            <ng-template #emptymessage>
+                <tr><td colspan="5">No product change requests in this queue.</td></tr>
+            </ng-template>
+        </p-table>
+        <p-paginator [first]="first()" [rows]="rows()" [totalRecords]="totalRecords()" [rowsPerPageOptions]="[10, 20, 50]" (onPageChange)="pageChange($event)" />
+    </div>
+</div>

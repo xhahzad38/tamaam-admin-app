@@ -1,0 +1,64 @@
+<div class="page">
+    <app-page-header title="Brands" subtitle="Name, slug, logo, enforcement, and an optional seller organization as the brand owner." [crumbs]="crumbs">
+        <p-button label="Add brand" icon="pi pi-plus" (onClick)="openForm()" />
+    </app-page-header>
+
+    <div class="card">
+        <div class="mb-4">
+            <app-search-control placeholder="Search brands" (searchChange)="list.search($event)" />
+        </div>
+
+        @if (list.error(); as message) {
+            <app-error-state [message]="message" (retry)="list.reload()" />
+        }
+
+        <p-table [value]="list.items()" [loading]="list.loading()" responsiveLayout="scroll">
+            <ng-template #header>
+                <tr>
+                    <th>Brand</th>
+                    <th>Slug</th>
+                    <th>Enforcement</th>
+                    <th>Owner</th>
+                    <th>Sort</th>
+                    <th></th>
+                </tr>
+            </ng-template>
+            <ng-template #body let-brand>
+                <tr>
+                    <td>
+                        <div class="flex items-center gap-3">
+                            @if (mediaUrl(brand.logoUrl); as src) {
+                                <img [src]="src" [alt]="brand.name" class="h-10 w-10 rounded object-contain" />
+                            }
+                            <div>
+                                <div class="font-medium">{{ brand.name }}</div>
+                                @if (!brand.isActive) {
+                                    <p-tag value="Inactive" severity="secondary" />
+                                }
+                            </div>
+                        </div>
+                    </td>
+                    <td>{{ brand.slug }}</td>
+                    <td>{{ brand.enforcementName }}</td>
+                    <td>{{ brand.ownerOrganizationName || '—' }}</td>
+                    <td>{{ brand.sortOrder }}</td>
+                    <td>
+                        <div class="row-actions">
+                            <button type="button" class="link-button" (click)="openForm(brand.id)">Edit</button>
+                            <button type="button" class="link-button" (click)="openDocuments(brand.id)">Documents</button>
+                            <button type="button" class="link-button" (click)="openAuthorizations(brand.id)">Authorizations</button>
+                            <button type="button" class="link-button link-button--danger" (click)="remove(brand)">Delete</button>
+                        </div>
+                    </td>
+                </tr>
+            </ng-template>
+            <ng-template #emptymessage>
+                <tr>
+                    <td [attr.colspan]="6"><app-empty-state icon="pi pi-bookmark" title="No brands yet" message="Add a brand so sellers can list products under it." /></td>
+                </tr>
+            </ng-template>
+        </p-table>
+
+        <app-table-paginator [first]="list.first()" [rows]="list.rows()" [total]="list.total()" (pageChange)="list.page($event)" />
+    </div>
+</div>

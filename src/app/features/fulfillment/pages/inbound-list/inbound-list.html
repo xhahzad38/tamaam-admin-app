@@ -1,0 +1,62 @@
+<div class="page">
+    <app-page-header title="Inbound receiving" subtitle="Seller shipments to Tamaam fulfillment centers. Scan an ASN, carton number, FNSKU, or tracking number to find one." [crumbs]="crumbs" />
+
+    <div class="card">
+        <div class="mb-4 flex flex-wrap gap-2">
+            @for (option of statuses; track option.label) {
+                <p-button [label]="option.label" size="small" [outlined]="status() !== option.value" (onClick)="setStatus(option.value)" />
+            }
+        </div>
+        <div class="mb-4">
+            <app-search-control (searchChange)="onSearch($event)" />
+        </div>
+
+        @if (error(); as message) {
+            <app-error-state [message]="message" [retryable]="false" />
+        }
+
+        <p-table [value]="items()" [loading]="loading()" responsiveLayout="scroll">
+            <ng-template #header>
+                <tr>
+                    <th scope="col">ASN</th>
+                    <th scope="col">Store</th>
+                    <th scope="col">Fulfillment center</th>
+                    <th scope="col">Units</th>
+                    <th scope="col">Cartons</th>
+                    <th scope="col">Courier</th>
+                    <th scope="col">Shipped</th>
+                    <th scope="col">Status</th>
+                </tr>
+            </ng-template>
+            <ng-template #body let-item>
+                <tr>
+                    <td><a class="font-mono font-medium" [routerLink]="['/fulfillment/inbound', item.id]">{{ item.asnNumber }}</a></td>
+                    <td class="text-sm">{{ item.storeName }}</td>
+                    <td class="text-sm">{{ item.warehouseName }} <span class="font-mono text-xs text-muted-color">{{ item.warehouseCode }}</span></td>
+                    <td>
+                        {{ item.unitCount }}
+                        @if (item.receivedUnits) {
+                            <span class="block text-xs text-muted-color">{{ item.receivedUnits }} counted</span>
+                        }
+                    </td>
+                    <td>{{ item.cartonCount }}</td>
+                    <td class="text-sm">
+                        {{ item.courierName || '—' }}
+                        @if (item.trackingNumber) {
+                            <span class="block font-mono text-xs text-muted-color">{{ item.trackingNumber }}</span>
+                        }
+                    </td>
+                    <td class="text-sm">{{ item.shippedAt ? (item.shippedAt | date: 'mediumDate') : '—' }}</td>
+                    <td><p-tag [value]="statusLabel(item.status)" [severity]="severity(item.status)" /></td>
+                </tr>
+            </ng-template>
+            <ng-template #emptymessage>
+                <tr>
+                    <td colspan="8">No inbound shipments match.</td>
+                </tr>
+            </ng-template>
+        </p-table>
+
+        <p-paginator [first]="first()" [rows]="rows()" [totalRecords]="totalRecords()" [rowsPerPageOptions]="[20, 50]" (onPageChange)="pageChange($event)" />
+    </div>
+</div>

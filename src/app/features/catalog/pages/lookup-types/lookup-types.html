@@ -1,0 +1,87 @@
+<div class="page">
+    <app-page-header title="Lookup types" [crumbs]="crumbs">
+        <p pageSubtitle>The lists behind dropdowns across the marketplace. Edit a list's values under <a routerLink="/catalog/lookups">Lookups</a>.</p>
+        <p-button label="Add lookup type" icon="pi pi-plus" (onClick)="open()" />
+    </app-page-header>
+
+    <div class="card">
+        <div class="table-toolbar">
+            <app-search-control placeholder="Search lookup types" (searchChange)="list.search($event)" />
+        </div>
+
+        @if (list.error(); as message) {
+            <app-error-state [message]="message" (retry)="list.reload()" />
+        }
+
+        <p-table [value]="list.items()" [loading]="list.loading()" responsiveLayout="scroll">
+            <ng-template #header>
+                <tr>
+                    <th>Name</th>
+                    <th>Description</th>
+                    <th class="w-24">Sort</th>
+                    <th class="w-28">Status</th>
+                    <th></th>
+                </tr>
+            </ng-template>
+            <ng-template #body let-row>
+                <tr>
+                    <td>
+                        <span class="font-mono font-medium">{{ row.name }}</span>
+                        @if (row.isBuiltIn) {
+                            <p-tag value="Built-in" severity="info" class="ml-2" />
+                        }
+                    </td>
+                    <td class="text-sm">{{ row.description || '—' }}</td>
+                    <td>{{ row.sortOrder }}</td>
+                    <td><p-tag [value]="row.isActive ? 'Active' : 'Inactive'" [severity]="row.isActive ? 'success' : 'secondary'" /></td>
+                    <td>
+                        <div class="row-actions">
+                            <button type="button" class="link-button" (click)="open(row)">Edit</button>
+                            @if (!row.isBuiltIn) {
+                                <button type="button" class="link-button link-button--danger" (click)="remove(row)">Delete</button>
+                            }
+                        </div>
+                    </td>
+                </tr>
+            </ng-template>
+            <ng-template #emptymessage>
+                <tr>
+                    <td colspan="5"><app-empty-state icon="pi pi-tags" title="No lookup types found" /></td>
+                </tr>
+            </ng-template>
+        </p-table>
+
+        <app-table-paginator [first]="list.first()" [rows]="list.rows()" [total]="list.total()" (pageChange)="list.page($event)" />
+    </div>
+</div>
+
+<p-dialog [header]="editing() === 'new' ? 'Add lookup type' : 'Edit lookup type'" [visible]="!!editing()" (visibleChange)="!$event && close()" [modal]="true" [style]="{ width: 'min(32rem, 94vw)' }" [draggable]="false">
+    <form [formGroup]="form" class="flex flex-col gap-4" (ngSubmit)="save()" id="lookup-type-form">
+        <div class="flex flex-col gap-1">
+            <label for="lt-name" class="text-sm font-medium">Name</label>
+            <app-input-control inputId="lt-name" label="Name" [control]="form.controls.name" placeholder="e.g. PackagingType" [maxLength]="200" [showCount]="false" [flowError]="true" />
+            <small class="text-muted-color">
+                @if (form.controls.name.disabled) {
+                    Built-in types are referenced by name in code and can't be renamed.
+                } @else {
+                    Letters and numbers only, starting with a letter. Code refers to the list by this name.
+                }
+            </small>
+        </div>
+        <div class="flex flex-col gap-1">
+            <label for="lt-description" class="text-sm font-medium">Description</label>
+            <textarea id="lt-description" pTextarea formControlName="description" rows="3" maxlength="500"></textarea>
+        </div>
+        <div class="flex flex-col gap-1">
+            <label for="lt-sort" class="text-sm font-medium">Sort order</label>
+            <p-inputnumber inputId="lt-sort" formControlName="sortOrder" [min]="0" fluid />
+        </div>
+        @if (formError(); as message) {
+            <app-error-state [message]="message" [retryable]="false" />
+        }
+    </form>
+    <ng-template #footer>
+        <p-button label="Cancel" severity="secondary" [outlined]="true" (onClick)="close()" />
+        <p-button label="Save" icon="pi pi-check" type="submit" form="lookup-type-form" [loading]="saving()" />
+    </ng-template>
+</p-dialog>

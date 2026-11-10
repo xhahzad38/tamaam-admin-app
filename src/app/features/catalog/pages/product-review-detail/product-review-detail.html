@@ -1,0 +1,200 @@
+<div class="page">
+    <app-page-header [title]="title()" [crumbs]="crumbs()" backLink="/catalog/product-reviews" backLabel="Back to the review queue">
+        <!-- projected elements must sit at the top level (not inside @if) to reach their slot -->
+        <p pageSubtitle>
+            @if (product(); as item) {
+                {{ item.storeName || 'Store' }} · {{ item.brandName }} · {{ item.categoryName || 'No category' }}
+                @if (item.psku) {
+                    · <span class="font-mono">{{ item.psku }}</span>
+                }
+            }
+        </p>
+        @if (product()) {
+            <p-tag [value]="status().label" [severity]="status().severity" class="self-center" />
+        }
+    </app-page-header>
+
+    @if (loading()) {
+        <div class="card"><app-loading-state [rows]="8" /></div>
+    } @else if (loadError(); as message) {
+        <app-error-state [message]="message" (retry)="load()" />
+    } @else if (product(); as item) {
+        <div class="review-layout">
+            <!-- main column -->
+            <div class="flex min-w-0 flex-col gap-5">
+                @if (item.categoryRequiresExtraApproval) {
+                    <div class="review-banner"><i class="pi pi-exclamation-triangle"></i> This category needs extra checks (authenticity, licences) before listings go live.</div>
+                }
+                @if (item.rejectionReason && !isPending()) {
+                    <div class="review-banner review-banner--danger"><i class="pi pi-times-circle"></i> Last rejection note: {{ item.rejectionReason }}</div>
+                }
+
+                <section class="card">
+                    <h2 class="section-title">Photos <span class="section-count">{{ photos().length }}</span></h2>
+                    @if (current(); as media) {
+                        <div class="gallery">
+                            <div class="gallery__stage">
+                                @if (media.mediaType === 1) {
+                                    <img [src]="mediaUrl(media.url)" [alt]="media.altText || media.fileName" />
+                                } @else {
+                                    <span class="gallery__video"><i class="pi pi-video"></i> {{ media.fileName }}</span>
+                                }
+                                @if (media.isPrimary) {
+                                    <p-tag value="Main photo" severity="success" class="gallery__badge" />
+                                }
+                            </div>
+                            <div class="gallery__thumbs" role="listbox" aria-label="Photos">
+                                @for (m of photos(); track m.id; let i = $index) {
+                                    <button type="button" class="gallery__thumb" [class.is-active]="i === selectedMedia()" role="option" [attr.aria-selected]="i === selectedMedia()" (click)="selectedMedia.set(i)">
+                                        @if (m.mediaType === 1) {
+                                            <img [src]="mediaUrl(m.url)" [alt]="'Photo ' + (i + 1)" />
+                                        } @else {
+                                            <i class="pi pi-video"></i>
+                                        }
+                                    </button>
+                                }
+                            </div>
+                        </div>
+                    } @else {
+                        <app-empty-state icon="pi pi-image" title="No photos" message="The seller hasn't uploaded any photos." />
+                    }
+                </section>
+
+                <section class="card">
+                    <h2 class="section-title">Content</h2>
+                    <p class="review-description">{{ contentDescription(item) || 'No description.' }}</p>
+                    @if (contentBullets(item).length) {
+                        <h3 class="review-subhead">Key features</h3>
+                        <ul class="review-bullets">
+                            @for (bullet of contentBullets(item); track bullet) {
+                                <li>{{ bullet }}</li>
+                            }
+                        </ul>
+                    }
+                </section>
+
+                <section class="card">
+                    <h2 class="section-title">Variants <span class="section-count">{{ item.variants.length }}</span></h2>
+                    <div class="overflow-x-auto">
+                        <table class="app-table text-sm">
+                            <thead>
+                                <tr>
+                                    <th>SKU</th>
+                                    <th>Name</th>
+                                    <th>Options</th>
+                                    <th>Barcode</th>
+                                    <th>GTIN</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @for (variant of item.variants; track variant.id) {
+                                    <tr>
+                                        <td class="font-mono">{{ variant.sku }}</td>
+                                        <td>{{ variant.name || '—' }}</td>
+                                        <td>{{ variant.attributeCombination || (variant.isDefault ? 'Default' : '—') }}</td>
+                                        <td [class.text-danger]="!variant.barcode && !variant.gtin">{{ variant.barcode || '—' }}</td>
+                                        <td [class.text-danger]="!variant.barcode && !variant.gtin">{{ variant.gtin || '—' }}</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                    @if (item.bundleItems.length) {
+                        <h3 class="review-subhead">Bundle contents</h3>
+                        <ul class="review-bullets">
+                            @for (line of item.bundleItems; track line.componentVariantId) {
+                                <li>{{ line.quantity }} × {{ line.productName }} <span class="font-mono text-muted-color">({{ line.sku }})</span></li>
+                            }
+                        </ul>
+                    }
+                </section>
+
+                <section class="card">
+                    <h2 class="section-title">Attributes</h2>
+                    @if (!item.attributeValues.length && !item.attributeTexts.length) {
+                        <p class="text-sm text-muted-color">No attribute values.</p>
+                    } @else {
+                        <dl class="detail-list">
+                            @for (value of item.attributeValues; track value.attributeValueId) {
+                                <div><dt>{{ value.attributeName }}</dt><dd>{{ value.valueName }}</dd></div>
+                            }
+                            @for (text of item.attributeTexts; track text.attributeId) {
+                                <div><dt>{{ text.attributeName }}</dt><dd>{{ textValue(text) }}</dd></div>
+                            }
+                        </dl>
+                    }
+                </section>
+            </div>
+
+            <!-- decision panel -->
+            <aside class="review-side">
+                <section class="card">
+                    <div class="flex items-center justify-between">
+                        <h2 class="section-title m-0">Quality checks</h2>
+                        <span class="check-score" [class.check-score--bad]="blockers() > 0">{{ passed() }}/{{ checks().length }}</span>
+                    </div>
+                    <ul class="checks">
+                        @for (check of checks(); track check.label) {
+                            <li class="check" [class.check--ok]="check.ok" [class.check--blocker]="!check.ok && check.required">
+                                <i class="pi" [class.pi-check-circle]="check.ok" [class.pi-times-circle]="!check.ok && check.required" [class.pi-exclamation-circle]="!check.ok && !check.required"></i>
+                                <span>
+                                    {{ check.label }}
+                                    @if (!check.ok) {
+                                        <small>{{ check.hint }}</small>
+                                    }
+                                </span>
+                            </li>
+                        }
+                    </ul>
+                </section>
+
+                @if (isPending()) {
+                    <section class="card">
+                        <h2 class="section-title">Decision</h2>
+                        <label for="reject-note" class="text-sm font-medium">Note to the seller</label>
+                        <textarea id="reject-note" pTextarea [formControl]="note" rows="5" class="mt-1 w-full" placeholder="Required to reject. Explain what to fix." maxlength="1000"></textarea>
+                        <p class="mt-2 mb-1 text-xs font-semibold uppercase text-muted-color">Common reasons</p>
+                        <div class="reasons">
+                            @for (reason of reasons; track reason) {
+                                <button type="button" class="reason" (click)="addReason(reason)" [title]="reason">{{ reason }}</button>
+                            }
+                        </div>
+                        @if (error(); as message) {
+                            <div class="mt-3"><app-error-state [message]="message" [retryable]="false" /></div>
+                        }
+                        <div class="decision-actions">
+                            <p-button label="Reject" icon="pi pi-times" severity="danger" [outlined]="true" [loading]="saving() === 'reject'" [disabled]="!!saving()" (onClick)="reject()" />
+                            <p-button label="Approve" icon="pi pi-check" [loading]="saving() === 'approve'" [disabled]="!!saving()" (onClick)="approve()" />
+                        </div>
+                    </section>
+                } @else if (decided(); as message) {
+                    <section class="card">
+                        <app-notice [message]="message" />
+                        <p-button label="Next in queue" icon="pi pi-arrow-right" iconPos="right" class="mt-3 block" routerLink="/catalog/product-reviews" />
+                    </section>
+                }
+
+                <section class="card">
+                    <h2 class="section-title">Listing details</h2>
+                    <dl class="detail-list detail-list--stacked">
+                        <div><dt>Store</dt><dd>{{ item.storeName || '—' }}</dd></div>
+                        <div><dt>Brand</dt><dd>{{ item.brandName }}</dd></div>
+                        <div><dt>Category</dt><dd>{{ item.categoryName || '—' }}</dd></div>
+                        <div><dt>Type</dt><dd>{{ structureLabel(item.structure) }}</dd></div>
+                        <div><dt>Country of origin</dt><dd>{{ item.countryOfOriginName || '—' }}</dd></div>
+                        <div>
+                            <dt>Offers</dt>
+                            <dd>
+                                @if (item.offerCount) {
+                                    <a [routerLink]="['/fulfillment/offers']" [queryParams]="{ productId: item.id }">{{ item.offerCount }} offer(s)</a>
+                                } @else {
+                                    None yet
+                                }
+                            </dd>
+                        </div>
+                    </dl>
+                </section>
+            </aside>
+        </div>
+    }
+</div>

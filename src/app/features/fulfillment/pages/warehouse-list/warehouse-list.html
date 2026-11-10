@@ -1,0 +1,61 @@
+<div class="page">
+    <app-page-header title="Warehouses" subtitle="Tamaam fulfillment centers receive FBT stock. Seller warehouses are where couriers collect FBM orders." [crumbs]="crumbs">
+        <p-button label="Add fulfillment center" icon="pi pi-plus" routerLink="/fulfillment/warehouses/new" />
+    </app-page-header>
+
+    <div class="card">
+        <div class="mb-4 flex flex-wrap gap-2">
+            @for (option of owners; track option.label) {
+                <p-button [label]="option.label" size="small" [outlined]="owner() !== option.value" (onClick)="setOwner(option.value)" />
+            }
+        </div>
+        <div class="mb-4">
+            <app-search-control (searchChange)="onSearch($event)" />
+        </div>
+
+        @if (error(); as message) {
+            <app-error-state [message]="message" [retryable]="false" />
+        }
+
+        <p-table [value]="items()" [loading]="loading()" responsiveLayout="scroll">
+            <ng-template #header>
+                <tr>
+                    <th scope="col">Warehouse</th>
+                    <th scope="col">Code</th>
+                    <th scope="col">Owner</th>
+                    <th scope="col">City</th>
+                    <th scope="col">Use</th>
+                    <th scope="col">Offers</th>
+                    <th scope="col">Status</th>
+                </tr>
+            </ng-template>
+            <ng-template #body let-item>
+                <tr>
+                    <td>
+                        @if (item.ownerType === WarehouseOwnerType.Platform) {
+                            <a class="font-medium" [routerLink]="['/fulfillment/warehouses', item.id]">{{ item.name }}</a>
+                        } @else {
+                            <span class="font-medium">{{ item.name }}</span>
+                        }
+                        @if (item.isDefault) {
+                            <p-tag class="ml-2" value="Default" severity="info" />
+                        }
+                    </td>
+                    <td class="font-mono text-sm">{{ item.code }}</td>
+                    <td class="text-sm">{{ item.ownerType === WarehouseOwnerType.Platform ? 'Tamaam' : item.storeName }}</td>
+                    <td class="text-sm">{{ item.cityName }}</td>
+                    <td class="text-sm">{{ kindLabel(item.kind) }}</td>
+                    <td>{{ item.offerCount }}</td>
+                    <td><p-tag [value]="item.isActive ? 'Active' : 'Off'" [severity]="item.isActive ? 'success' : 'secondary'" /></td>
+                </tr>
+            </ng-template>
+            <ng-template #emptymessage>
+                <tr>
+                    <td colspan="7">No warehouses match.</td>
+                </tr>
+            </ng-template>
+        </p-table>
+
+        <p-paginator [first]="first()" [rows]="rows()" [totalRecords]="totalRecords()" [rowsPerPageOptions]="[20, 50]" (onPageChange)="pageChange($event)" />
+    </div>
+</div>

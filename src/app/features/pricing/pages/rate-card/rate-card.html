@@ -1,0 +1,71 @@
+<div class="page">
+    <app-page-header title="Fee rate card" subtitle="Fulfillment fees, storage rates and price safeguards. Sellers see these in their fee calculator." [crumbs]="crumbs">
+        @if (card()) {
+            @if (dirty()) {
+                <p-tag value="Unsaved changes" severity="warn" class="self-center" />
+                <p-button label="Discard" severity="secondary" [outlined]="true" [disabled]="saving()" (onClick)="discard()" />
+            }
+            <p-button label="Save rate card" icon="pi pi-check" [loading]="saving()" [disabled]="!dirty()" (onClick)="save()" />
+        }
+    </app-page-header>
+
+    @if (error(); as message) {
+        <app-error-state [message]="message" [retryable]="!card()" (retry)="load()" />
+    }
+    @if (notice(); as message) {
+        <app-notice [message]="message" />
+    }
+
+    @if (loading()) {
+        <div class="card"><app-loading-state [rows]="6" /></div>
+    } @else if (card(); as rateCard) {
+        <div class="card">
+            <h2 class="section-title">General settings</h2>
+            <app-fee-settings-form [settings]="rateCard.settings" (changed)="markDirty()" />
+        </div>
+
+        <div class="card">
+            <h2 class="section-title">Size tiers</h2>
+            <p class="section-subtitle">A product falls into the first tier (by sort order) whose size and weight limits it fits. Each tier has its own weight-band fees.</p>
+
+            <p-tabs [value]="activeType()" (valueChange)="activeType.set($any($event))">
+                <p-tablist>
+                    @for (type of types; track type.value) {
+                        <p-tab [value]="type.value">{{ type.label }}</p-tab>
+                    }
+                </p-tablist>
+                <p-tabpanels>
+                    @for (type of types; track type.value) {
+                        <p-tabpanel [value]="type.value">
+                            @if (tiersFor()(type.value); as tiers) {
+                                @if (tiers.length) {
+                                    <p-accordion [multiple]="true">
+                                        @for (tier of tiers; track $index) {
+                                            <p-accordion-panel [value]="$index">
+                                                <p-accordion-header>
+                                                    <span class="flex flex-wrap items-center gap-3">
+                                                        <span class="font-semibold">{{ tier.name || 'Unnamed tier' }}</span>
+                                                        <span class="font-mono text-sm text-muted-color">{{ tier.code || '—' }}</span>
+                                                        <span class="text-sm text-muted-color">{{ dimensions(tier) }} · {{ tier.slabs.length }} fee band(s)</span>
+                                                    </span>
+                                                </p-accordion-header>
+                                                <p-accordion-content>
+                                                    <app-size-tier-editor [tier]="tier" [currency]="rateCard.settings.currencyCode" (changed)="markDirty()" (remove)="removeTier(tier)" />
+                                                </p-accordion-content>
+                                            </p-accordion-panel>
+                                        }
+                                    </p-accordion>
+                                } @else {
+                                    <app-empty-state icon="pi pi-box" title="No size tiers" message="Products can't be charged fulfillment fees for this model until you add a tier." />
+                                }
+                            }
+                            <div class="mt-4">
+                                <p-button label="Add size tier" icon="pi pi-plus" [outlined]="true" (onClick)="addTier(type.value)" />
+                            </div>
+                        </p-tabpanel>
+                    }
+                </p-tabpanels>
+            </p-tabs>
+        </div>
+    }
+</div>

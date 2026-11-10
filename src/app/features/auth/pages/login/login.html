@@ -1,0 +1,104 @@
+<app-auth-shell
+    [kicker]="productName"
+    [title]="isSellerApp ? 'Welcome back, partner' : 'Run the marketplace'"
+    [lead]="isSellerApp ? 'Sign in to manage your store.' : 'Sign in to the Tamaam back office.'"
+    [tag]="isSellerApp ? 'partners' : 'admin'"
+    [steps]="steps"
+>
+    @if (challenge(); as c) {
+        <form class="partner-form" (ngSubmit)="verify()" novalidate>
+            <div class="partner-copy">
+                <h1>Verify it's you</h1>
+                <p>
+                    @if (c.method === 'sms') {
+                        Enter the 6-digit code we texted to {{ c.destination }}.
+                    } @else {
+                        Enter the 6-digit code from your authenticator app.
+                    }
+                </p>
+            </div>
+
+            <div class="flex justify-center">
+                <p-inputotp [formControl]="code" [length]="6" [integerOnly]="true" ariaLabel="Verification code" (keydown.enter)="verify()" />
+            </div>
+
+            <button type="submit" class="partner-btn partner-btn--primary" [disabled]="busy() || code.invalid">
+                @if (busy()) {
+                    <i class="pi pi-spin pi-spinner"></i>
+                }
+                Verify and sign in
+            </button>
+
+            @if (errorMessage()) {
+                <p class="partner-error" role="alert">{{ errorMessage() }}</p>
+            } @else if (info()) {
+                <p class="m-0 text-center text-sm text-muted-color" role="status">{{ info() }}</p>
+            }
+
+            <div class="flex items-center justify-between text-sm">
+                <button type="button" class="link-button" (click)="back()"><i class="pi pi-arrow-left text-xs"></i> Use another account</button>
+                @if (c.method === 'sms') {
+                    <button type="button" class="link-button" [disabled]="resendIn() > 0" (click)="resend()">{{ resendIn() > 0 ? 'Resend in ' + resendIn() + 's' : 'Resend code' }}</button>
+                }
+            </div>
+        </form>
+    } @else {
+    <form [formGroup]="form" class="partner-form" (ngSubmit)="submit()" novalidate>
+        <div class="partner-copy">
+            <h1>Log in</h1>
+            <p>{{ productName }}</p>
+        </div>
+
+        <p-fluid class="flex flex-col gap-4">
+            <div class="flex flex-col gap-2">
+                <label for="email">Email<span class="partner-req" aria-hidden="true">*</span></label>
+                <app-input-control
+                    inputId="email"
+                    label="Email"
+                    [control]="form.controls.email"
+                    type="email"
+                    placeholder="Enter your email address"
+                    autocomplete="email"
+                    [maxLength]="256"
+                    [showCount]="false"
+                />
+            </div>
+
+            <div class="flex flex-col gap-2">
+                <label for="password">Password<span class="partner-req" aria-hidden="true">*</span></label>
+                <app-input-control
+                    inputId="password"
+                    label="Password"
+                    [control]="form.controls.password"
+                    type="password"
+                    placeholder="Enter your password"
+                    autocomplete="current-password"
+                    [showCount]="false"
+                />
+            </div>
+        </p-fluid>
+
+        <div class="flex items-center gap-2">
+            <p-checkbox inputId="rememberMe" formControlName="rememberMe" [binary]="true" />
+            <label for="rememberMe" class="cursor-pointer">Remember me</label>
+        </div>
+
+        <button type="submit" class="partner-btn partner-btn--primary" [disabled]="!canSubmit()">
+            @if (busy()) {
+                <i class="pi pi-spin pi-spinner"></i>
+            }
+            Log in
+        </button>
+
+        @if (errorMessage()) {
+            <p class="partner-error" role="alert">{{ errorMessage() }}</p>
+        }
+    </form>
+    }
+
+    @if (isSellerApp && !challenge()) {
+        <div class="partner-card-footer">
+            <p>New to Tamaam? <a routerLink="/auth/register">Create a partner account</a></p>
+        </div>
+    }
+</app-auth-shell>

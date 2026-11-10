@@ -1,30 +1,19 @@
-import { AfterContentChecked, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
-import { RouterModule } from '@angular/router';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { RouterOutlet } from '@angular/router';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ToastModule } from 'primeng/toast';
-import { LoadingBarComponent } from './app/shared-components/loading-bar/loading-bar.component';
+import { LoadingBarComponent } from '@/app/shared/ui/loading-bar/loading-bar.component';
 
 @Component({
     selector: 'app-root',
     standalone: true,
-    imports: [RouterModule, ToastModule, LoadingBarComponent],
-    template: `<app-loading-bar />
-    <p-toast />
-    <router-outlet></router-outlet>`
+    imports: [RouterOutlet, ToastModule, ConfirmDialogModule, LoadingBarComponent],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    template: `
+        <app-loading-bar />
+        <p-toast position="top-right" />
+        <p-confirmdialog [style]="{ width: 'min(28rem, 92vw)' }" />
+        <router-outlet />
+    `
 })
-export class AppComponent  implements OnInit, OnDestroy, AfterContentChecked {
-
-    constructor(
-    private changeDetector: ChangeDetectorRef
-  ) { }
-
-    ngOnInit(): void {
-        
-    }
-    ngOnDestroy(): void {
-        
-    }
-
-    ngAfterContentChecked(): void {
-        this.changeDetector.detectChanges();
-    }
-}
+export class AppComponent {}

@@ -1,56 +1,80 @@
 import { Routes } from '@angular/router';
-import { AppLayout } from './app/layout/component/app.layout';
-import { Dashboard } from './app/pages/dashboard/dashboard';
-import { Documentation } from './app/pages/documentation/documentation';
-import { Notfound } from './app/pages/notfound/notfound';
-import { AuthGuard } from './app/_helpers';
+import { authGuard } from '@/app/core/auth/auth.guard';
+import { RoleGroups } from '@/app/core/auth/roles';
+import { AppLayout } from '@/app/layout/components/app.layout';
+import { unsavedChangesGuard } from '@/app/shared/data/unsaved-changes.guard';
+import { DASHBOARD_ROLES } from './app.shell';
 
-const reviewerRoles = ['SuperAdmin', 'AdminReviewer'];
-const catalogRoles = ['SuperAdmin', 'CatalogAdmin'];
-// Offers are visible to catalog and logistics admins; warehouses and inbound need logistics (checked by the API).
-const fulfillmentRoles = ['SuperAdmin', 'LogisticsAdmin', 'CatalogAdmin'];
-
+// Route roles mirror the API's [Authorize(Roles = ...)] so users never open a screen whose calls return 403.
 export const appRoutes: Routes = [
     {
         path: '',
         component: AppLayout,
-        canActivate: [AuthGuard],
+        canActivate: [authGuard],
         children: [
-            { path: '', component: Dashboard, canActivate: [AuthGuard], data: { roles: reviewerRoles } },
+            {
+                path: '',
+                pathMatch: 'full',
+                canActivate: [authGuard],
+                data: { roles: DASHBOARD_ROLES },
+                loadComponent: () => import('@/app/features/dashboard/pages/dashboard/dashboard').then((m) => m.Dashboard)
+            },
+            { path: 'account', redirectTo: 'settings/profile' },
+            { path: 'settings', pathMatch: 'full', redirectTo: 'settings/profile' },
+            {
+                path: 'settings/:tab',
+                loadComponent: () => import('@/app/features/account/pages/settings/settings').then((m) => m.SettingsPage)
+            },
+            {
+                path: 'notifications',
+                loadComponent: () => import('@/app/features/account/pages/notifications/notifications').then((m) => m.NotificationsPage)
+            },
             {
                 path: 'sellers',
-                canActivate: [AuthGuard],
-                data: { roles: reviewerRoles },
-                loadComponent: () => import('./app/pages/seller-reviews/seller-directory').then((m) => m.SellerDirectoryPage)
+                canActivate: [authGuard],
+                data: { roles: RoleGroups.reviewers },
+                loadComponent: () => import('@/app/features/sellers/pages/seller-directory/seller-directory').then((m) => m.SellerDirectoryPage)
+            },
+            {
+                path: 'sellers/profile-changes',
+                canActivate: [authGuard],
+                data: { roles: RoleGroups.reviewers },
+                loadComponent: () => import('@/app/features/sellers/pages/profile-changes/profile-changes').then((m) => m.ProfileChangesPage)
             },
             {
                 path: 'seller-reviews',
-                canActivate: [AuthGuard],
-                data: { roles: reviewerRoles },
-                loadChildren: () => import('./app/pages/seller-reviews/seller-review.routes')
+                canActivate: [authGuard],
+                data: { roles: RoleGroups.reviewers },
+                loadChildren: () => import('@/app/features/sellers/sellers.routes')
             },
             {
                 path: 'catalog',
-                canActivate: [AuthGuard],
-                data: { roles: catalogRoles },
-                loadChildren: () => import('./app/pages/catalog/catalog.routes')
+                canActivate: [authGuard],
+                data: { roles: RoleGroups.catalog },
+                loadChildren: () => import('@/app/features/catalog/catalog.routes')
             },
             {
                 path: 'fulfillment',
-                canActivate: [AuthGuard],
-                data: { roles: fulfillmentRoles },
-                loadChildren: () => import('./app/pages/fulfillment/fulfillment.routes')
+                canActivate: [authGuard],
+                data: { roles: RoleGroups.offers },
+                loadChildren: () => import('@/app/features/fulfillment/fulfillment.routes')
             },
-            { path: 'uikit', loadChildren: () => import('./app/pages/uikit/uikit.routes') },
-            { path: 'documentation', component: Documentation },
             {
-                path: 'pages',
-                loadChildren: () => import('./app/pages/pages.routes')
+                path: 'pricing/rate-card',
+                canActivate: [authGuard],
+                canDeactivate: [unsavedChangesGuard],
+                data: { roles: RoleGroups.offers },
+                loadComponent: () => import('@/app/features/pricing/pages/rate-card/rate-card').then((m) => m.RateCardPage)
+            },
+            {
+                path: 'activity',
+                canActivate: [authGuard],
+                data: { roles: RoleGroups.auditors },
+                loadComponent: () => import('@/app/features/activity/pages/activity-log/activity-log').then((m) => m.ActivityLogPage)
             }
         ]
     },
-    { path: 'notfound', component: Notfound },
-    { path: 'auth', loadChildren: () => import('./app/pages/auth/auth.routes') },
+    { path: 'auth', loadChildren: () => import('@/app/features/auth/auth.routes') },
+    { path: 'notfound', loadComponent: () => import('@/app/features/system/pages/not-found/not-found').then((m) => m.NotFoundPage) },
     { path: '**', redirectTo: '/notfound' }
 ];
-

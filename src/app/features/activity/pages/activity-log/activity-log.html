@@ -1,0 +1,75 @@
+<div class="page">
+    <app-page-header title="Activity log" subtitle="Who changed what across the marketplace, newest first. Expand a row for the device and record details." [crumbs]="crumbs" />
+
+    <div class="card">
+        <div class="table-toolbar">
+            <app-search-control placeholder="Search action, description or IP" (searchChange)="list.search($event)" />
+            <div class="flex flex-wrap gap-2">
+                <p-select [options]="areas" [ngModel]="area()" (ngModelChange)="setArea($event)" optionLabel="label" optionValue="value" placeholder="All areas" [showClear]="true" styleClass="w-52" />
+                <p-datepicker [ngModel]="range()" (ngModelChange)="setRange($event)" selectionMode="range" [readonlyInput]="true" placeholder="Any date" [showButtonBar]="true" [maxDate]="today" dateFormat="d M yy" styleClass="w-56" />
+            </div>
+        </div>
+
+        @if (list.error(); as message) {
+            <app-error-state [message]="message" (retry)="list.reload()" />
+        }
+
+        <p-table [value]="list.items()" [loading]="list.loading()" dataKey="id" responsiveLayout="scroll">
+            <ng-template #header>
+                <tr>
+                    <th class="w-44">When</th>
+                    <th>Who</th>
+                    <th>Action</th>
+                    <th>Details</th>
+                    <th class="w-12"></th>
+                </tr>
+            </ng-template>
+            <ng-template #body let-row>
+                <tr>
+                    <td class="whitespace-nowrap" [pTooltip]="(row.createdAt | date: 'full') ?? ''">{{ row.createdAt | date: 'd MMM y, HH:mm' }}</td>
+                    <td>
+                        <div class="font-medium">{{ row.userName }}</div>
+                        @if (row.email && row.email !== row.userName) {
+                            <div class="text-sm text-muted-color">{{ row.email }}</div>
+                        }
+                    </td>
+                    <td><p-tag [value]="row.action" [severity]="severity(row.action)" /></td>
+                    <td class="text-sm">{{ row.description || '—' }}</td>
+                    <td>
+                        <p-button
+                            [icon]="expanded() === row.id ? 'pi pi-chevron-up' : 'pi pi-chevron-down'"
+                            [text]="true"
+                            [rounded]="true"
+                            severity="secondary"
+                            size="small"
+                            [ariaLabel]="expanded() === row.id ? 'Hide details' : 'Show details'"
+                            (onClick)="toggle(row)"
+                        />
+                    </td>
+                </tr>
+                @if (expanded() === row.id) {
+                    <tr>
+                        <td colspan="5" class="bg-surface-50 dark:bg-surface-800">
+                            <dl class="detail-list">
+                                <div><dt>Record</dt><dd>{{ row.entityType || '—' }} <span class="font-mono text-sm">{{ row.entityId || '' }}</span></dd></div>
+                                <div><dt>IP address</dt><dd class="font-mono">{{ row.ipAddress || '—' }}</dd></div>
+                                <div class="form-grid__full"><dt>Device</dt><dd class="text-sm">{{ row.userAgent || '—' }}</dd></div>
+                            </dl>
+                        </td>
+                    </tr>
+                }
+            </ng-template>
+            <ng-template #emptymessage>
+                <tr>
+                    <td colspan="5">
+                        <app-empty-state icon="pi pi-history" title="No activity found" message="Nothing matches these filters. Try a wider date range or another area.">
+                            <p-button label="Clear filters" [outlined]="true" size="small" (onClick)="clearFilters()" />
+                        </app-empty-state>
+                    </td>
+                </tr>
+            </ng-template>
+        </p-table>
+
+        <app-table-paginator [first]="list.first()" [rows]="list.rows()" [total]="list.total()" (pageChange)="list.page($event)" />
+    </div>
+</div>
