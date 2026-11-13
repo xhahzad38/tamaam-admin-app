@@ -44,6 +44,14 @@ export class SellerReviewService {
         return this.http.get<PageResult<ReviewListItem>>(this.baseUrl, { params, context: this.inlineErrors });
     }
 
+    /** Applications per tab (`pending`, `actionRequired`, `approved`, `all`), after the same search as the list. */
+    queueCounts(search: string): Observable<Record<string, number>> {
+        const params = search.trim() ? new HttpParams().set('searchText', search.trim()) : new HttpParams();
+        return this.http
+            .get<ApiResponse<Record<string, number>>>(`${this.baseUrl}/counts`, { params, context: this.inlineErrors })
+            .pipe(map((response) => response.data ?? {}));
+    }
+
     get(organizationId: string): Observable<SellerReview> {
         return this.http
             .get<ApiResponse<SellerReview>>(`${this.baseUrl}/${organizationId}`, { context: this.inlineErrors })

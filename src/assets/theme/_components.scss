@@ -32,13 +32,60 @@ body {
 }
 
 // Above a table: search on the left, filters/actions on the right.
+// List toolbar: search on the left, labelled filters on the right, one row on wide screens.
+//   <div class="table-toolbar">
+//       <div class="table-toolbar__search"><app-search-control /></div>
+//       <div class="table-toolbar__filters"><app-table-filter ... /></div>
+//   </div>
 .table-toolbar {
     display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
+    flex-direction: column;
     gap: var(--tm-space-3);
     margin-bottom: var(--tm-space-4);
+
+    @media (min-width: 768px) {
+        flex-direction: row;
+        align-items: flex-end;
+        justify-content: space-between;
+    }
+}
+
+.table-toolbar__search {
+    min-width: 0;
+    width: 100%;
+
+    @media (min-width: 768px) {
+        flex: 0 1 25rem;
+    }
+}
+
+.table-toolbar__filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: var(--tm-space-3);
+
+    @media (min-width: 768px) {
+        justify-content: flex-end;
+        margin-left: auto;
+    }
+}
+
+.table-filter {
+    display: flex;
+    flex-direction: column;
+    gap: var(--tm-space-1);
+    width: 100%;
+
+    @media (min-width: 576px) {
+        width: 14rem;
+    }
+}
+
+.table-filter__label {
+    font-size: var(--tm-text-sm);
+    font-weight: 500;
+    color: var(--tm-text);
 }
 
 // Text-style actions in table rows.
@@ -157,7 +204,7 @@ body {
     justify-content: flex-end;
 }
 
-// Coloured table headers everywhere. Overriding PrimeNG's own variables on .p-datatable
+// Neutral table headers everywhere. Overriding PrimeNG's own variables on .p-datatable
 // (more specific than its :root values) keeps sort, hover and focus states consistent.
 .p-datatable {
     --p-datatable-header-cell-background: var(--tm-table-header-bg);
@@ -172,8 +219,10 @@ body {
 }
 
 .p-datatable .p-datatable-thead > tr > th {
-    font-size: var(--tm-text-sm);
+    font-size: var(--tm-text-xs);
     font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
     white-space: nowrap;
 }
 
@@ -188,8 +237,10 @@ body {
         background: var(--tm-table-header-bg);
         color: var(--tm-table-header-text);
         border-bottom: 1px solid var(--tm-table-header-border);
-        font-size: var(--tm-text-sm);
+        font-size: var(--tm-text-xs);
         font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
         text-align: left;
         white-space: nowrap;
 

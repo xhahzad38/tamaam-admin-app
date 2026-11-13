@@ -1,0 +1,112 @@
+<div class="page">
+    <app-page-header title="Seller applications" subtitle="Review each section a seller submits during onboarding. A seller goes live once every section is approved." [crumbs]="crumbs" />
+
+    <div class="card">
+        <app-status-tabs [tabs]="tabs()" [active]="queue()" (activeChange)="selectQueue($event)" ariaLabel="Application status" />
+
+        <div class="table-toolbar">
+            <div class="table-toolbar__search"><app-search-control placeholder="Search by seller, email or store" (searchChange)="onSearch($event)" /></div>
+        </div>
+
+        @if (list.error(); as message) {
+            <app-error-state [message]="message" (retry)="list.reload()" />
+        }
+
+        <p-table [value]="list.items()" [loading]="list.loading()" responsiveLayout="scroll" styleClass="applications__table" [rowHover]="true">
+            <ng-template #header>
+                <tr>
+                    <th>Seller</th>
+                    <th>Store</th>
+                    <th>Submitted</th>
+                    <th>Review progress</th>
+                    <th>Status</th>
+                    <th><span class="sr-only">Actions</span></th>
+                </tr>
+            </ng-template>
+            <ng-template #body let-item>
+                <tr class="applications__row" (click)="open(item)">
+                    <td>
+                        <div class="seller-cell">
+                            <span class="seller-cell__avatar" aria-hidden="true">{{ initials(sellerName(item)) }}</span>
+                            <div class="min-w-0">
+                                <a class="seller-cell__name" [routerLink]="['/sellers/applications', item.organizationId]" (click)="$event.stopPropagation()">{{ sellerName(item) }}</a>
+                                <div class="seller-cell__meta">
+                                    <span>{{ item.email }}</span>
+                                    <span aria-hidden="true">·</span>
+                                    <span>{{ accountTypeLabel[item.accountType] }}</span>
+                                    @if (item.countryCode) {
+                                        <span aria-hidden="true">·</span>
+                                        <span>{{ item.countryCode }}</span>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        @if (item.storeName) {
+                            <span class="font-medium">{{ item.storeName }}</span>
+                        } @else {
+                            <span class="text-muted-color">Not set up</span>
+                        }
+                    </td>
+                    <td class="whitespace-nowrap">
+                        @if (item.submittedAt) {
+                            <div>{{ item.submittedAt | date: 'mediumDate' }}</div>
+                            @if (daysWaiting(item); as days) {
+                                <div class="waiting" [class.waiting--late]="days >= 3">Waiting {{ days }} {{ days === 1 ? 'day' : 'days' }}</div>
+                            } @else if (daysWaiting(item) === 0) {
+                                <div class="waiting">Today</div>
+                            }
+                        } @else {
+                            <span class="text-muted-color">—</span>
+                        }
+                    </td>
+                    <td>
+                        @if (totalSections(item) > 0) {
+                            <div class="progress" role="img" [attr.aria-label]="item.approvedSections + ' approved, ' + item.pendingSections + ' pending, ' + item.rejectedSections + ' rejected'">
+                                <div class="progress__bar">
+                                    <span class="progress__seg progress__seg--approved" [style.width.%]="share(item.approvedSections, item)"></span>
+                                    <span class="progress__seg progress__seg--pending" [style.width.%]="share(item.pendingSections, item)"></span>
+                                    <span class="progress__seg progress__seg--rejected" [style.width.%]="share(item.rejectedSections, item)"></span>
+                                </div>
+                                <div class="progress__text">
+                                    <strong>{{ item.approvedSections }}/{{ totalSections(item) }}</strong> approved
+                                    @if (item.pendingSections) {
+                                        · {{ item.pendingSections }} to review
+                                    }
+                                    @if (item.rejectedSections) {
+                                        · <span class="progress__rejected">{{ item.rejectedSections }} rejected</span>
+                                    }
+                                </div>
+                            </div>
+                        } @else {
+                            <span class="text-muted-color">—</span>
+                        }
+                    </td>
+                    <td>
+                        <p-tag [value]="statusLabel(item.status)" [severity]="statusSeverity(item.status)" />
+                    </td>
+                    <td class="text-right">
+                        <a class="review-link" [routerLink]="['/sellers/applications', item.organizationId]" (click)="$event.stopPropagation()">
+                            {{ item.pendingSections ? 'Review' : 'View' }}
+                            <i class="pi pi-chevron-right" aria-hidden="true"></i>
+                        </a>
+                    </td>
+                </tr>
+            </ng-template>
+            <ng-template #emptymessage>
+                <tr>
+                    <td [attr.colspan]="6">
+                        @if (list.query()) {
+                            <app-empty-state icon="pi pi-search" title="No matching applications" message="Try a different name, email or store." />
+                        } @else {
+                            <app-empty-state icon="pi pi-inbox" [title]="activeQueue().emptyTitle" [message]="activeQueue().emptyMessage" />
+                        }
+                    </td>
+                </tr>
+            </ng-template>
+        </p-table>
+
+        <app-table-paginator [first]="list.first()" [rows]="list.rows()" [total]="list.total()" (pageChange)="list.page($event)" />
+    </div>
+</div>

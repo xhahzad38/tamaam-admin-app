@@ -1,0 +1,125 @@
+:host {
+    display: block;
+}
+
+// rows
+.applications__row {
+    cursor: pointer;
+}
+
+.seller-cell {
+    display: flex;
+    align-items: center;
+    gap: var(--tm-space-3);
+    min-width: 15rem;
+}
+
+.seller-cell__avatar {
+    flex: none;
+    display: inline-grid;
+    place-items: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 50%;
+    font-size: var(--tm-text-xs);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: var(--tm-primary);
+    background: var(--tm-primary-soft);
+}
+
+.seller-cell__name {
+    display: block;
+    font-weight: 600;
+    color: var(--tm-text);
+    text-decoration: none;
+
+    &:hover {
+        color: var(--tm-primary);
+    }
+}
+
+.seller-cell__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 var(--tm-space-1);
+    margin-top: 0.1rem;
+    font-size: var(--tm-text-xs);
+    color: var(--tm-text-muted);
+}
+
+.waiting {
+    margin-top: 0.1rem;
+    font-size: var(--tm-text-xs);
+    color: var(--tm-text-muted);
+}
+
+.waiting--late {
+    font-weight: 600;
+    color: var(--tm-warning);
+}
+
+// segmented review progress
+.progress {
+    min-width: 11rem;
+}
+
+.progress__bar {
+    display: flex;
+    height: 0.4rem;
+    overflow: hidden;
+    border-radius: 999px;
+    background: var(--tm-surface-sunken);
+}
+
+.progress__seg {
+    display: block;
+    height: 100%;
+}
+
+.progress__seg--approved {
+    background: var(--p-primary-500);
+}
+
+.progress__seg--pending {
+    background: var(--p-sky-400);
+}
+
+.progress__seg--rejected {
+    background: var(--p-red-400);
+}
+
+.progress__text {
+    margin-top: var(--tm-space-1);
+    font-size: var(--tm-text-xs);
+    color: var(--tm-text-muted);
+
+    strong {
+        color: var(--tm-text);
+        font-weight: 600;
+    }
+}
+
+.progress__rejected {
+    color: var(--tm-danger);
+}
+
+.review-link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--tm-space-1);
+    font-size: var(--tm-text-sm);
+    font-weight: 600;
+    white-space: nowrap;
+    color: var(--tm-primary);
+    text-decoration: none;
+
+    .pi {
+        font-size: 0.7rem;
+    }
+
+    &:hover {
+        text-decoration: underline;
+        text-underline-offset: 3px;
+    }
+}

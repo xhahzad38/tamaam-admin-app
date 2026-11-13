@@ -33,20 +33,11 @@ export const appRoutes: Routes = [
                 path: 'sellers',
                 canActivate: [authGuard],
                 data: { roles: RoleGroups.reviewers },
-                loadComponent: () => import('@/app/features/sellers/pages/seller-directory/seller-directory').then((m) => m.SellerDirectoryPage)
-            },
-            {
-                path: 'sellers/profile-changes',
-                canActivate: [authGuard],
-                data: { roles: RoleGroups.reviewers },
-                loadComponent: () => import('@/app/features/sellers/pages/profile-changes/profile-changes').then((m) => m.ProfileChangesPage)
-            },
-            {
-                path: 'seller-reviews',
-                canActivate: [authGuard],
-                data: { roles: RoleGroups.reviewers },
                 loadChildren: () => import('@/app/features/sellers/sellers.routes')
             },
+            // Old links (bookmarks, notifications sent before the rename).
+            { path: 'seller-reviews', redirectTo: 'sellers/applications', pathMatch: 'full' },
+            { path: 'seller-reviews/:organizationId', redirectTo: 'sellers/applications/:organizationId' },
             {
                 path: 'catalog',
                 canActivate: [authGuard],

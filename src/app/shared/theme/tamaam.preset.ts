@@ -17,24 +17,24 @@ const slateSurface = {
 };
 
 /**
- * Tamaam design system on top of PrimeNG Aura: brand green (#1f8a4c = primary.600)
+ * Tamaam design system on top of PrimeNG Aura: brand emerald (#059669 = primary.600)
  * with slate surfaces. To rebrand, change the `primary` scale below; every PrimeNG
  * component and every `--tm-*` token in assets/theme follows automatically.
  */
 export const TamaamPreset = definePreset(Aura, {
     semantic: {
         primary: {
-            50: '#eefbf3',
-            100: '#d6f5e1',
-            200: '#afe9c6',
-            300: '#7bd6a3',
-            400: '#45bb7b',
-            500: '#23a05e',
-            600: '#1f8a4c',
-            700: '#196d3e',
-            800: '#175734',
-            900: '#13472c',
-            950: '#082817'
+            50: '#ecfdf5',
+            100: '#d1fae5',
+            200: '#a7f3d0',
+            300: '#6ee7b7',
+            400: '#34d399',
+            500: '#10b981',
+            600: '#059669',
+            700: '#047857',
+            800: '#065f46',
+            900: '#064e3b',
+            950: '#022c22'
         },
         colorScheme: {
             light: {

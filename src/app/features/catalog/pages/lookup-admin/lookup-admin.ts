@@ -8,6 +8,7 @@ import { TableModule } from 'primeng/table';
 import { LookupTypeValue } from '@/app/core/services/lookup.service';
 import { InputControlComponent } from '@/app/shared/ui/input-control/input-control.component';
 import { SearchControlComponent } from '@/app/shared/ui/search-control/search-control.component';
+import { TableFilterComponent } from '@/app/shared/ui/table-filter/table-filter.component';
 
 import { LookupValueWrite, MARKETPLACE_LOOKUP_TYPES, LookupAdminService } from '@/app/features/catalog/data-access/lookup-admin.service';
 
@@ -18,7 +19,7 @@ import { ConfirmService } from '@/app/shared/ui/confirm/confirm.service';
 @Component({
     selector: 'app-lookup-admin',
     standalone: true,
-    imports: [ReactiveFormsModule, SearchControlComponent, InputControlComponent, ButtonModule, DialogModule, PaginatorModule, TableModule, PageHeaderComponent, ErrorStateComponent, EmptyStateComponent],
+    imports: [ReactiveFormsModule, SearchControlComponent, TableFilterComponent, InputControlComponent, ButtonModule, DialogModule, PaginatorModule, TableModule, PageHeaderComponent, ErrorStateComponent, EmptyStateComponent],
     templateUrl: './lookup-admin.html'
 })
 export class LookupAdminPage implements OnInit {

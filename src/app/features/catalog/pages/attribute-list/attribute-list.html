@@ -4,8 +4,8 @@
     </app-page-header>
 
     <div class="card">
-        <div class="mb-4">
-            <app-search-control (searchChange)="onSearch($event)" />
+        <div class="table-toolbar">
+            <div class="table-toolbar__search"><app-search-control (searchChange)="onSearch($event)" /></div>
         </div>
 
         @if (error() && !attributeDialog() && !valueDialog()) {
@@ -66,8 +66,8 @@
                 </div>
                 <p-button label="Add value" icon="pi pi-plus" (onClick)="openCreateValue()" />
             </div>
-            <div class="mb-4">
-                <app-search-control (searchChange)="onValueSearch($event)" />
+            <div class="table-toolbar">
+                <div class="table-toolbar__search"><app-search-control (searchChange)="onValueSearch($event)" /></div>
             </div>
             <p-table [value]="values()" [loading]="valuesLoading()">
                 <ng-template #header>

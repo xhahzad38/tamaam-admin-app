@@ -47,6 +47,44 @@ export const APPROVAL_STATUS_LABEL: Record<number, string> = {
     [ApprovalStatus.Suspended]: 'Suspended'
 };
 
+export type StatusSeverity = 'success' | 'info' | 'warn' | 'danger' | 'secondary';
+
+export function approvalStatusLabel(status: ApprovalStatus): string {
+    return APPROVAL_STATUS_LABEL[status] ?? 'Draft';
+}
+
+/** Tag colour for an application or section status, shared by the list and detail screens. */
+export function approvalStatusSeverity(status: ApprovalStatus): StatusSeverity {
+    switch (status) {
+        case ApprovalStatus.Approved:
+            return 'success';
+        case ApprovalStatus.Submitted:
+        case ApprovalStatus.UnderReview:
+            return 'info';
+        case ApprovalStatus.ActionRequired:
+            return 'warn';
+        case ApprovalStatus.Rejected:
+        case ApprovalStatus.Suspended:
+            return 'danger';
+        default:
+            return 'secondary';
+    }
+}
+
+export const ACCOUNT_TYPE_LABEL: Record<number, string> = {
+    [AccountType.Individual]: 'Individual',
+    [AccountType.Business]: 'Business'
+};
+
+/** Two-letter initials for a seller avatar. */
+export function initials(name: string | null | undefined): string {
+    const words = (name ?? '').trim().split(/\s+/).filter(Boolean);
+    if (words.length === 0) {
+        return '?';
+    }
+    return (words[0][0] + (words.length > 1 ? words[words.length - 1][0] : '')).toUpperCase();
+}
+
 export interface ReviewListItem {
     organizationId: string;
     legalName: string;

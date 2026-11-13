@@ -6,6 +6,7 @@ import { PaginatorModule, PaginatorState } from 'primeng/paginator';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { SearchControlComponent } from '@/app/shared/ui/search-control/search-control.component';
+import { TableFilterComponent } from '@/app/shared/ui/table-filter/table-filter.component';
 
 import { AdminFulfillmentService } from '@/app/features/fulfillment/data-access/fulfillment.service';
 import { Warehouse, WarehouseKind, WarehouseOwnerType } from '@/app/features/fulfillment/data-access/fulfillment.models';
@@ -16,7 +17,7 @@ import { ErrorStateComponent } from '@/app/shared/ui/state/state.components';
 @Component({
     selector: 'app-admin-warehouse-list',
     standalone: true,
-    imports: [RouterLink, SearchControlComponent, ButtonModule, PaginatorModule, TableModule, TagModule, PageHeaderComponent, ErrorStateComponent],
+    imports: [RouterLink, SearchControlComponent, TableFilterComponent, ButtonModule, PaginatorModule, TableModule, TagModule, PageHeaderComponent, ErrorStateComponent],
     templateUrl: './warehouse-list.html'
 })
 export class AdminWarehouseListPage implements OnInit {

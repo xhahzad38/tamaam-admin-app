@@ -7,44 +7,82 @@
     </app-page-header>
 
     <div class="card">
-        <div class="my-4 flex flex-wrap gap-2">
-            @for (option of queues; track option.id) {
-                <p-button [label]="option.label" [outlined]="queue() !== option.id" size="small" (onClick)="selectQueue(option.id)" />
-            }
+        <app-status-tabs [tabs]="tabs()" [active]="queue()" (activeChange)="selectQueue($event)" ariaLabel="Product status" />
+
+        <div class="table-toolbar">
+            <div class="table-toolbar__search"><app-search-control placeholder="Search product, PSKU, brand or store" (searchChange)="onSearch($event)" /></div>
         </div>
-        <div class="mb-4">
-            <app-search-control (searchChange)="onSearch($event)" />
-        </div>
-        @if (error(); as message) {
-            <app-error-state [message]="message" [retryable]="false" />
+
+        @if (list.error(); as message) {
+            <app-error-state [message]="message" (retry)="list.reload()" />
         }
-        <p-table [value]="items()" [loading]="loading()" responsiveLayout="scroll">
+
+        <p-table [value]="list.items()" [loading]="list.loading()" responsiveLayout="scroll" [rowHover]="true">
             <ng-template #header>
                 <tr>
                     <th>Product</th>
-                    <th>Store</th>
+                    <th>Seller store</th>
                     <th>Brand</th>
                     <th>Structure</th>
                     <th>Submitted</th>
                     <th>Status</th>
-                    <th></th>
+                    <th><span class="sr-only">Actions</span></th>
                 </tr>
             </ng-template>
             <ng-template #body let-item>
-                <tr>
-                    <td>{{ item.name }}</td>
-                    <td>{{ item.storeName || '—' }}</td>
+                <tr class="queue-row" (click)="open(item)">
+                    <td>
+                        <div class="product-cell">
+                            @if (mediaUrl(item.primaryImageUrl); as image) {
+                                <img [src]="image" alt="" class="product-cell__image" />
+                            } @else {
+                                <span class="product-cell__image product-cell__image--empty" aria-hidden="true"><i class="pi pi-image"></i></span>
+                            }
+                            <div class="min-w-0">
+                                <div class="product-cell__name">{{ item.name }}</div>
+                                <div class="sub">
+                                    {{ item.psku }}
+                                    @if (item.categoryName) {
+                                        · {{ item.categoryName }}
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="font-medium">{{ item.storeName || '—' }}</td>
                     <td>{{ item.brandName }}</td>
                     <td>{{ structureLabel(item.structure) }}</td>
-                    <td>{{ item.createdAt | date: 'mediumDate' }}</td>
-                    <td>{{ statusLabel(item.status) }}</td>
-                    <td><a [routerLink]="['/catalog/product-reviews', item.id]">Open</a></td>
+                    <td class="whitespace-nowrap">
+                        <div>{{ item.createdAt | date: 'mediumDate' }}</div>
+                        @if (daysWaiting(item); as days) {
+                            <div class="sub" [class.sub--late]="days >= 3">Waiting {{ days }} {{ days === 1 ? 'day' : 'days' }}</div>
+                        } @else if (daysWaiting(item) === 0) {
+                            <div class="sub">Today</div>
+                        }
+                    </td>
+                    <td><p-tag [value]="statusLabel(item.status)" [severity]="statusSeverity(item.status)" /></td>
+                    <td class="text-right">
+                        @if (isPending(item)) {
+                            <p-button label="Review" size="small" (onClick)="open(item); $event.stopPropagation()" />
+                        } @else {
+                            <a class="link-button" [routerLink]="['/catalog/product-reviews', item.id]" (click)="$event.stopPropagation()">View</a>
+                        }
+                    </td>
                 </tr>
             </ng-template>
             <ng-template #emptymessage>
-                <tr><td colspan="7">Nothing in this queue. Live product edits appear under Product change requests.</td></tr>
+                <tr>
+                    <td colspan="7">
+                        @if (list.query()) {
+                            <app-empty-state icon="pi pi-search" title="No matching products" message="Try a different name, PSKU, brand or store." />
+                        } @else {
+                            <app-empty-state icon="pi pi-box" [title]="activeQueue().emptyTitle" [message]="activeQueue().emptyMessage" />
+                        }
+                    </td>
+                </tr>
             </ng-template>
         </p-table>
-        <p-paginator [first]="first()" [rows]="rows()" [totalRecords]="totalRecords()" [rowsPerPageOptions]="[10, 20, 50]" (onPageChange)="pageChange($event)" />
+
+        <app-table-paginator [first]="list.first()" [rows]="list.rows()" [total]="list.total()" (pageChange)="list.page($event)" />
     </div>
 </div>

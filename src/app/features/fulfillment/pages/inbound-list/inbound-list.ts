@@ -7,6 +7,7 @@ import { PaginatorModule, PaginatorState } from 'primeng/paginator';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { SearchControlComponent } from '@/app/shared/ui/search-control/search-control.component';
+import { TableFilterComponent } from '@/app/shared/ui/table-filter/table-filter.component';
 
 import { AdminFulfillmentService } from '@/app/features/fulfillment/data-access/fulfillment.service';
 import { INBOUND_STATUS_LABEL, InboundShipmentListItem, InboundStatus, inboundSeverity } from '@/app/features/fulfillment/data-access/fulfillment.models';
@@ -17,7 +18,7 @@ import { ErrorStateComponent } from '@/app/shared/ui/state/state.components';
 @Component({
     selector: 'app-admin-inbound-list',
     standalone: true,
-    imports: [DatePipe, RouterLink, SearchControlComponent, ButtonModule, PaginatorModule, TableModule, TagModule, PageHeaderComponent, ErrorStateComponent],
+    imports: [DatePipe, RouterLink, SearchControlComponent, TableFilterComponent, ButtonModule, PaginatorModule, TableModule, TagModule, PageHeaderComponent, ErrorStateComponent],
     templateUrl: './inbound-list.html'
 })
 export class AdminInboundListPage implements OnInit {

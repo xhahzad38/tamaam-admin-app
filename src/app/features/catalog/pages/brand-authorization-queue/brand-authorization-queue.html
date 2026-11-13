@@ -1,81 +1,162 @@
 <div class="page">
-    <app-page-header title="Brand authorization review" subtitle="Sellers waiting for the right to sell a restricted brand." [crumbs]="crumbs" />
+    <app-page-header title="Brand authorization review" subtitle="Sellers asking to sell a restricted brand. Check the authorization letter, then approve with validity dates or reject with a note." [crumbs]="crumbs" />
 
     <div class="card">
-        <div class="my-4 flex flex-wrap gap-2">
-            @for (option of queues; track option.id) {
-                <p-button [label]="option.label" [outlined]="queue() !== option.id" size="small" (onClick)="selectQueue(option.id)" />
-            }
+        <app-status-tabs [tabs]="tabs()" [active]="queue()" (activeChange)="selectQueue($event)" ariaLabel="Authorization status" />
+
+        <div class="table-toolbar">
+            <div class="table-toolbar__search"><app-search-control placeholder="Search brand or store" (searchChange)="onSearch($event)" /></div>
         </div>
-        <div class="mb-4">
-            <app-search-control (searchChange)="onSearch($event)" />
-        </div>
-        @if (error(); as message) {
-            <app-error-state [message]="message" [retryable]="false" />
+
+        @if (list.error(); as message) {
+            <app-error-state [message]="message" (retry)="list.reload()" />
         }
-        @if (notice()) {
-            <p class="text-sm text-green-700">{{ notice() }}</p>
-        }
-        <p-table [value]="items()" [loading]="loading()" responsiveLayout="scroll">
+
+        <p-table [value]="list.items()" [loading]="list.loading()" responsiveLayout="scroll" [rowHover]="true">
             <ng-template #header>
                 <tr>
                     <th>Brand</th>
-                    <th>Store</th>
-                    <th>Letter</th>
-                    <th>Submitted</th>
+                    <th>Seller store</th>
+                    <th>Validity</th>
+                    <th>Requested</th>
                     <th>Status</th>
-                    <th></th>
+                    <th><span class="sr-only">Actions</span></th>
                 </tr>
             </ng-template>
             <ng-template #body let-item>
-                <tr>
-                    <td>{{ item.brandName }}</td>
-                    <td>{{ item.storeName }}</td>
+                <tr class="queue-row" (click)="open(item)">
                     <td>
-                        @if (mediaUrl(item.documentUrl); as url) {
-                            <a [href]="url" target="_blank" rel="noopener">{{ item.documentFileName || 'Letter' }}</a>
+                        <div class="brand-cell">
+                            @if (mediaUrl(item.brandLogoUrl); as logo) {
+                                <img [src]="logo" alt="" class="brand-cell__logo" />
+                            } @else {
+                                <span class="brand-cell__logo brand-cell__logo--initial" aria-hidden="true">{{ brandInitial(item.brandName) }}</span>
+                            }
+                            <div class="min-w-0">
+                                <div class="brand-cell__name">{{ item.brandName }}</div>
+                                <div class="brand-cell__type">{{ typeLabel(item.authorizationType) }}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="font-medium">{{ item.storeName }}</td>
+                    <td class="whitespace-nowrap">
+                        @if (item.validFrom && item.validTo) {
+                            <div>{{ item.validFrom | date: 'mediumDate' }}</div>
+                            <div class="sub">to {{ item.validTo | date: 'mediumDate' }}</div>
                         } @else {
-                            —
+                            <span class="muted">Set on approval</span>
                         }
                     </td>
-                    <td>{{ item.createdAt | date: 'mediumDate' }}</td>
-                    <td>{{ statusLabel(item.approvalStatus) }}</td>
-                    <td><button type="button" class="text-sm" (click)="open(item)">Review</button></td>
+                    <td class="whitespace-nowrap">
+                        <div>{{ item.createdAt | date: 'mediumDate' }}</div>
+                        @if (daysWaiting(item); as days) {
+                            <div class="sub" [class.sub--late]="days >= 3">Waiting {{ days }} {{ days === 1 ? 'day' : 'days' }}</div>
+                        } @else if (daysWaiting(item) === 0) {
+                            <div class="sub">Today</div>
+                        }
+                    </td>
+                    <td><p-tag [value]="statusLabel(item.approvalStatus)" [severity]="statusSeverity(item.approvalStatus)" /></td>
+                    <td class="text-right">
+                        @if (isPending(item)) {
+                            <p-button label="Review" size="small" (onClick)="open(item); $event.stopPropagation()" />
+                        } @else {
+                            <button type="button" class="link-button" (click)="open(item); $event.stopPropagation()">View</button>
+                        }
+                    </td>
                 </tr>
             </ng-template>
             <ng-template #emptymessage>
-                <tr><td colspan="6">Nothing in this queue.</td></tr>
+                <tr>
+                    <td colspan="6">
+                        @if (list.query()) {
+                            <app-empty-state icon="pi pi-search" title="No matching requests" message="Try a different brand, store or file name." />
+                        } @else {
+                            <app-empty-state icon="pi pi-verified" [title]="activeQueue().emptyTitle" [message]="activeQueue().emptyMessage" />
+                        }
+                    </td>
+                </tr>
             </ng-template>
         </p-table>
-        <p-paginator [first]="first()" [rows]="rows()" [totalRecords]="totalRecords()" [rowsPerPageOptions]="[10, 20, 50]" (onPageChange)="pageChange($event)" />
 
-        @if (selected(); as row) {
-            <form class="mt-6 max-w-xl border-t border-surface pt-4" [formGroup]="dates">
-                <h2 class="m-0 text-lg font-semibold">{{ row.storeName }} · {{ row.brandName }}</h2>
-                @if (row.reviewNote) {
-                    <p class="mt-2 text-sm">Previous note: {{ row.reviewNote }}</p>
-                }
-                <div class="mt-4 grid gap-4 md:grid-cols-2">
-                    <div class="flex flex-col gap-2">
-                        <label class="text-sm font-semibold" for="valid-from">Valid from</label>
-                        <app-input-control inputId="valid-from" label="Valid from" type="date" [control]="dates.controls.validFrom" [flowError]="true" [showCount]="false" />
-                        <p class="m-0 text-xs text-muted-color">First day the seller may list this brand.</p>
-                    </div>
-                    <div class="flex flex-col gap-2">
-                        <label class="text-sm font-semibold" for="valid-to">Valid to</label>
-                        <app-input-control inputId="valid-to" label="Valid to" type="date" [control]="dates.controls.validTo" [flowError]="true" [showCount]="false" />
-                        <p class="m-0 text-xs text-muted-color">Last day the authorization is valid.</p>
-                    </div>
-                </div>
-                <div class="mt-4 flex flex-col gap-2">
-                    <label class="text-sm font-semibold" for="auth-note">Note</label>
-                    <app-input-control inputId="auth-note" label="Note" type="textarea" [control]="dates.controls.note" [flowError]="true" [showCount]="false" placeholder="Required if you reject." />
-                </div>
-                <div class="mt-3 flex gap-2">
-                    <p-button label="Approve" [loading]="saving()" (onClick)="decide(true)" />
-                    <p-button label="Reject" severity="danger" [outlined]="true" [loading]="saving()" (onClick)="decide(false)" />
-                </div>
-            </form>
-        }
+        <app-table-paginator [first]="list.first()" [rows]="list.rows()" [total]="list.total()" (pageChange)="list.page($event)" />
     </div>
 </div>
+
+<p-dialog [visible]="!!selected()" (visibleChange)="!$event && close()" [modal]="true" [draggable]="false" [resizable]="false" [style]="{ width: 'min(36rem, 96vw)' }" header="Review brand authorization">
+    @if (selected(); as item) {
+        <div class="review">
+            <div class="review__summary">
+                @if (mediaUrl(item.brandLogoUrl); as logo) {
+                    <img [src]="logo" alt="" class="brand-cell__logo brand-cell__logo--lg" />
+                } @else {
+                    <span class="brand-cell__logo brand-cell__logo--lg brand-cell__logo--initial" aria-hidden="true">{{ brandInitial(item.brandName) }}</span>
+                }
+                <div class="min-w-0 flex-1">
+                    <div class="review__title">{{ item.brandName }}</div>
+                    <div class="review__meta">{{ item.storeName }} · {{ typeLabel(item.authorizationType) }}</div>
+                </div>
+                <p-tag [value]="statusLabel(item.approvalStatus)" [severity]="statusSeverity(item.approvalStatus)" />
+            </div>
+
+            <dl class="review__facts">
+                <div>
+                    <dt>Requested</dt>
+                    <dd>{{ item.createdAt | date: 'medium' }}</dd>
+                </div>
+                <div>
+                    <dt>Authorization letter</dt>
+                    <dd>
+                        @if (mediaUrl(item.documentUrl); as url) {
+                            <a class="file-chip" [href]="url" target="_blank" rel="noopener">
+                                <i class="pi pi-file-pdf" aria-hidden="true"></i>
+                                <span>{{ item.documentFileName || 'Open letter' }}</span>
+                                <i class="pi pi-external-link text-xs" aria-hidden="true"></i>
+                            </a>
+                        } @else {
+                            <span class="muted">Not uploaded</span>
+                        }
+                    </dd>
+                </div>
+            </dl>
+
+            @if (item.reviewNote) {
+                <div class="review__note">
+                    <i class="pi pi-comment" aria-hidden="true"></i>
+                    <div>
+                        <strong>Previous note</strong>
+                        <p>{{ item.reviewNote }}</p>
+                    </div>
+                </div>
+            }
+
+            <form [formGroup]="review" class="review__form" (ngSubmit)="decide(true)">
+                <div class="grid gap-4 sm:grid-cols-2">
+                    <div class="review__field">
+                        <label for="valid-from">Valid from</label>
+                        <app-input-control inputId="valid-from" label="Valid from" type="date" [control]="review.controls.validFrom" [flowError]="true" [showCount]="false" />
+                        <small>First day the seller may list this brand.</small>
+                    </div>
+                    <div class="review__field">
+                        <label for="valid-to">Valid to</label>
+                        <app-input-control inputId="valid-to" label="Valid to" type="date" [control]="review.controls.validTo" [flowError]="true" [showCount]="false" />
+                        <small>Last day the authorization is valid.</small>
+                    </div>
+                </div>
+                <div class="review__field">
+                    <label for="auth-note">Note to seller <span class="review__optional">Required to reject</span></label>
+                    <app-input-control inputId="auth-note" label="Note" type="textarea" [control]="review.controls.note" [flowError]="true" [showCount]="false" placeholder="e.g. The letter has expired. Upload one signed this year." />
+                </div>
+
+                @if (formError(); as message) {
+                    <p class="review__error" role="alert"><i class="pi pi-exclamation-circle" aria-hidden="true"></i> {{ message }}</p>
+                }
+            </form>
+        </div>
+    }
+
+    <ng-template #footer>
+        <p-button label="Cancel" [text]="true" severity="secondary" [disabled]="!!saving()" (onClick)="close()" />
+        <p-button label="Reject" icon="pi pi-times" severity="danger" [outlined]="true" [loading]="saving() === 'reject'" [disabled]="!!saving()" (onClick)="decide(false)" />
+        <p-button label="Approve" icon="pi pi-check" [loading]="saving() === 'approve'" [disabled]="!!saving()" (onClick)="decide(true)" />
+    </ng-template>
+</p-dialog>

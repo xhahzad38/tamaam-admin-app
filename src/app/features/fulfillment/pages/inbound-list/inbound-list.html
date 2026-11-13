@@ -2,13 +2,11 @@
     <app-page-header title="Inbound receiving" subtitle="Seller shipments to Tamaam fulfillment centers. Scan an ASN, carton number, FNSKU, or tracking number to find one." [crumbs]="crumbs" />
 
     <div class="card">
-        <div class="mb-4 flex flex-wrap gap-2">
-            @for (option of statuses; track option.label) {
-                <p-button [label]="option.label" size="small" [outlined]="status() !== option.value" (onClick)="setStatus(option.value)" />
-            }
-        </div>
-        <div class="mb-4">
-            <app-search-control (searchChange)="onSearch($event)" />
+        <div class="table-toolbar">
+            <div class="table-toolbar__search"><app-search-control (searchChange)="onSearch($event)" /></div>
+            <div class="table-toolbar__filters">
+                <app-table-filter inputId="inbound-status" label="Status" [options]="statuses" [value]="status()" (valueChange)="setStatus($event)" />
+            </div>
         </div>
 
         @if (error(); as message) {

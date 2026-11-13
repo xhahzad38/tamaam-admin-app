@@ -1,0 +1,46 @@
+:host {
+    display: block;
+}
+
+.queue-row {
+    cursor: pointer;
+}
+
+.product-cell {
+    display: flex;
+    align-items: center;
+    gap: var(--tm-space-3);
+    min-width: 16rem;
+}
+
+.product-cell__image {
+    flex: none;
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: var(--tm-radius-md);
+    border: 1px solid var(--tm-border);
+    object-fit: cover;
+    background: var(--tm-surface);
+}
+
+.product-cell__image--empty {
+    display: inline-grid;
+    place-items: center;
+    color: var(--tm-text-muted);
+    background: var(--tm-surface-sunken);
+    border-color: transparent;
+}
+
+.product-cell__name {
+    font-weight: 600;
+}
+
+.sub {
+    font-size: var(--tm-text-xs);
+    color: var(--tm-text-muted);
+}
+
+.sub--late {
+    font-weight: 600;
+    color: var(--tm-warning);
+}

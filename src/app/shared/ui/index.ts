@@ -9,3 +9,5 @@ export * from './stat-card/stat-card.component';
 export * from './state/state.components';
 export * from './table-paginator/table-paginator.component';
 export * from './theme-toggle/theme-toggle.component';
+export * from './table-filter/table-filter.component';
+export * from './status-tabs/status-tabs.component';

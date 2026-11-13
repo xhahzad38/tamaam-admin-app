@@ -1,11 +1,10 @@
 import { DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { MenuItem, MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
-import { SelectButtonModule } from 'primeng/selectbutton';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { TextareaModule } from 'primeng/textarea';
@@ -15,6 +14,7 @@ import { createPagedList } from '@/app/shared/data/paged-list';
 import { ConfirmService } from '@/app/shared/ui/confirm/confirm.service';
 import { PageHeaderComponent } from '@/app/shared/ui/page-header/page-header.component';
 import { SearchControlComponent } from '@/app/shared/ui/search-control/search-control.component';
+import { StatusTab, StatusTabsComponent } from '@/app/shared/ui/status-tabs/status-tabs.component';
 import { EmptyStateComponent, ErrorStateComponent } from '@/app/shared/ui/state/state.components';
 import { TablePaginatorComponent } from '@/app/shared/ui/table-paginator/table-paginator.component';
 
@@ -24,7 +24,7 @@ type Severity = 'success' | 'info' | 'warn' | 'danger' | 'secondary';
 @Component({
     selector: 'app-profile-changes',
     standalone: true,
-    imports: [DatePipe, FormsModule, ReactiveFormsModule, RouterLink, ButtonModule, DialogModule, SelectButtonModule, TableModule, TagModule, TextareaModule, PageHeaderComponent, SearchControlComponent, TablePaginatorComponent, EmptyStateComponent, ErrorStateComponent],
+    imports: [DatePipe, FormsModule, ReactiveFormsModule, RouterLink, ButtonModule, DialogModule, TableModule, TagModule, TextareaModule, PageHeaderComponent, SearchControlComponent, StatusTabsComponent, TablePaginatorComponent, EmptyStateComponent, ErrorStateComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
     templateUrl: './profile-changes.html'
 })
@@ -34,13 +34,20 @@ export class ProfileChangesPage {
     private readonly messages = inject(MessageService);
 
     readonly crumbs: MenuItem[] = [{ label: 'Sellers' }, { label: 'KYC change requests' }];
-    readonly statuses = [
-        { label: 'In review', value: ProfileChangeStatus.Pending },
-        { label: 'Approved', value: ProfileChangeStatus.Approved },
-        { label: 'Rejected', value: ProfileChangeStatus.Rejected },
-        { label: 'All', value: null }
+    /** Tab id (also the key in the counts response) to the API status filter; null = every status. */
+    private readonly statusTabs: { id: string; label: string; value: ProfileChangeStatus | null; tone: StatusTab['tone'] }[] = [
+        { id: 'pending', label: 'In review', value: ProfileChangeStatus.Pending, tone: 'info' },
+        { id: 'approved', label: 'Approved', value: ProfileChangeStatus.Approved, tone: 'neutral' },
+        { id: 'rejected', label: 'Rejected', value: ProfileChangeStatus.Rejected, tone: 'neutral' },
+        { id: 'all', label: 'All', value: null, tone: 'neutral' }
     ];
     readonly status = signal<ProfileChangeStatus | null>(ProfileChangeStatus.Pending);
+    readonly counts = signal<Record<string, number> | null>(null);
+    readonly tabs = computed<StatusTab[]>(() => {
+        const counts = this.counts();
+        return this.statusTabs.map((tab) => ({ id: tab.id, label: tab.label, tone: tab.tone, count: counts?.[tab.id] ?? null }));
+    });
+    readonly activeTab = computed(() => this.statusTabs.find((tab) => tab.value === this.status())?.id ?? 'all');
     readonly list = createPagedList<ProfileChange>((req) => this.changes.list(this.status(), req.search, req.pageNo, req.pageSize), { pageSize: 20, errorMessage: 'Could not load change requests.' });
 
     readonly rejecting = signal<ProfileChange | null>(null);
@@ -48,9 +55,28 @@ export class ProfileChangesPage {
     readonly busy = signal<string | null>(null);
     readonly dialogError = signal<string | null>(null);
 
-    setStatus(status: ProfileChangeStatus | null): void {
-        this.status.set(status);
-        this.list.reset();
+    constructor() {
+        this.loadCounts();
+    }
+
+    selectTab(id: string): void {
+        const tab = this.statusTabs.find((item) => item.id === id);
+        if (tab) {
+            this.status.set(tab.value);
+            this.list.reset();
+        }
+    }
+
+    onSearch(text: string): void {
+        this.list.search(text);
+        this.loadCounts();
+    }
+
+    private loadCounts(): void {
+        this.changes.counts(this.list.query()).subscribe({
+            next: (counts) => this.counts.set(counts),
+            error: () => this.counts.set(null)
+        });
     }
 
     severity(status: ProfileChangeStatus): Severity {
@@ -92,6 +118,7 @@ export class ProfileChangesPage {
                 this.rejecting.set(null);
                 this.messages.add({ severity: 'success', summary: approve ? 'Approved' : 'Rejected', detail: response.message || 'Saved.', life: 3500 });
                 this.list.reload();
+                this.loadCounts();
             },
             error: (err) => {
                 this.busy.set(null);

@@ -1,16 +1,14 @@
 <div class="page">
-    <app-page-header title="Lookups" subtitle="Values the rest of the marketplace uses: return reasons, fees, campaigns, inventory transactions, and couriers." [crumbs]="crumbs" />
+    <app-page-header title="Lookups" subtitle="Values the rest of the marketplace uses: return reasons, fees, campaigns, inventory transactions, and couriers." [crumbs]="crumbs">
+        <p-button label="Add value" icon="pi pi-plus" [disabled]="!typeId()" (onClick)="openCreate()" />
+    </app-page-header>
 
     <div class="card">
-        <div class="mb-4 flex flex-wrap gap-2">
-            @for (type of types; track type.name) {
-                <p-button [label]="type.label" size="small" [outlined]="typeName() !== type.name" (onClick)="selectType(type.name)" />
-            }
-        </div>
-
-        <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
-            <app-search-control (searchChange)="onSearch($event)" />
-            <p-button label="Add value" icon="pi pi-plus" [disabled]="!typeId()" (onClick)="openCreate()" />
+        <div class="table-toolbar">
+            <div class="table-toolbar__search"><app-search-control (searchChange)="onSearch($event)" /></div>
+            <div class="table-toolbar__filters">
+                <app-table-filter inputId="lookup-type" label="Lookup type" [options]="types" optionValue="name" [value]="typeName()" (valueChange)="selectType($event)" />
+            </div>
         </div>
 
         @if (error() && !dialogOpen()) {

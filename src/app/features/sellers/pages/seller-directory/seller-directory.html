@@ -1,14 +1,15 @@
 <div class="page">
-    <app-page-header title="All sellers" subtitle="Every seller account, including approved and suspended stores." [crumbs]="crumbs">
-        <div class="w-56">
-            <label class="mb-1 block text-sm font-medium" for="seller-status">Status</label>
-            <app-select-control inputId="seller-status" label="Status" [control]="statusControl" [options]="statuses" optionLabel="label" optionValue="value" [showClear]="false" [filter]="false" appendTo="body" [flowError]="true" />
-        </div>
-    </app-page-header>
+    <app-page-header title="All sellers" subtitle="Every seller account, including approved and suspended stores." [crumbs]="crumbs" />
 
     <div class="card">
-        <div class="mb-4">
-            <app-search-control (searchChange)="onSearch($event)" />
+        <div class="table-toolbar">
+            <div class="table-toolbar__search"><app-search-control (searchChange)="onSearch($event)" /></div>
+            <div class="table-toolbar__filters">
+                <div class="table-filter">
+                    <label class="table-filter__label" for="seller-status">Status</label>
+                    <app-select-control inputId="seller-status" label="Status" [control]="statusControl" [options]="statuses" optionLabel="label" optionValue="value" [showClear]="false" [filter]="false" appendTo="body" [flowError]="true" />
+                </div>
+            </div>
         </div>
 
         @if (error(); as message) {
@@ -39,7 +40,7 @@
                     <td>{{ item.isPublished ? 'Published' : 'Not published' }}</td>
                     <td><p-tag [value]="statusLabel(item.status)" [severity]="statusSeverity(item.status)" /></td>
                     <td class="text-right">
-                        <a [routerLink]="['/seller-reviews', item.organizationId]" class="font-medium text-primary no-underline hover:underline">Open</a>
+                        <a [routerLink]="['/sellers/applications', item.organizationId]" class="font-medium text-primary no-underline hover:underline">Open</a>
                     </td>
                 </tr>
             </ng-template>

@@ -7,40 +7,66 @@
     </app-page-header>
 
     <div class="card">
-        <div class="my-4 flex flex-wrap gap-2">
-            @for (option of queues; track option.id) {
-                <p-button [label]="option.label" [outlined]="queue() !== option.id" size="small" (onClick)="selectQueue(option.id)" />
-            }
+        <app-status-tabs [tabs]="tabs()" [active]="queue()" (activeChange)="selectQueue($event)" ariaLabel="Change request status" />
+
+        <div class="table-toolbar">
+            <div class="table-toolbar__search"><app-search-control placeholder="Search product, PSKU or store" (searchChange)="onSearch($event)" /></div>
         </div>
-        <div class="mb-4">
-            <app-search-control (searchChange)="onSearch($event)" />
-        </div>
-        @if (error(); as message) {
-            <app-error-state [message]="message" [retryable]="false" />
+
+        @if (list.error(); as message) {
+            <app-error-state [message]="message" (retry)="list.reload()" />
         }
-        <p-table [value]="items()" [loading]="loading()" responsiveLayout="scroll">
+
+        <p-table [value]="list.items()" [loading]="list.loading()" responsiveLayout="scroll" [rowHover]="true">
             <ng-template #header>
                 <tr>
                     <th>Product</th>
-                    <th>Store</th>
+                    <th>Seller store</th>
                     <th>Requested</th>
                     <th>Status</th>
-                    <th></th>
+                    <th><span class="sr-only">Actions</span></th>
                 </tr>
             </ng-template>
             <ng-template #body let-item>
-                <tr>
-                    <td>{{ item.productName }}</td>
-                    <td>{{ item.storeName || '—' }}</td>
-                    <td>{{ item.createdAt | date: 'mediumDate' }}</td>
-                    <td>{{ item.statusName }}</td>
-                    <td><a [routerLink]="['/catalog/change-requests', item.id]">Open</a></td>
+                <tr class="queue-row" (click)="open(item)">
+                    <td>
+                        <div class="product-cell">
+                            <span class="product-cell__icon" aria-hidden="true"><i class="pi pi-pencil"></i></span>
+                            <span class="product-cell__name">{{ item.productName }}</span>
+                        </div>
+                    </td>
+                    <td class="font-medium">{{ item.storeName || '—' }}</td>
+                    <td class="whitespace-nowrap">
+                        <div>{{ item.createdAt | date: 'mediumDate' }}</div>
+                        @if (daysWaiting(item); as days) {
+                            <div class="sub" [class.sub--late]="days >= 3">Waiting {{ days }} {{ days === 1 ? 'day' : 'days' }}</div>
+                        } @else if (daysWaiting(item) === 0) {
+                            <div class="sub">Today</div>
+                        }
+                    </td>
+                    <td><p-tag [value]="item.statusName" [severity]="statusSeverity(item.statusCode)" /></td>
+                    <td class="text-right">
+                        @if (isPending(item)) {
+                            <p-button label="Review" size="small" (onClick)="open(item); $event.stopPropagation()" />
+                        } @else {
+                            <a class="link-button" [routerLink]="['/catalog/change-requests', item.id]" (click)="$event.stopPropagation()">View</a>
+                        }
+                    </td>
                 </tr>
             </ng-template>
             <ng-template #emptymessage>
-                <tr><td colspan="5">No product change requests in this queue.</td></tr>
+                <tr>
+                    <td colspan="5">
+                        @if (list.query()) {
+                            <app-empty-state icon="pi pi-search" title="No matching change requests" message="Try a different product, PSKU or store." />
+                        } @else {
+                            <app-empty-state icon="pi pi-pencil" [title]="activeQueue().emptyTitle" [message]="activeQueue().emptyMessage" />
+                        }
+                    </td>
+                </tr>
             </ng-template>
         </p-table>
-        <p-paginator [first]="first()" [rows]="rows()" [totalRecords]="totalRecords()" [rowsPerPageOptions]="[10, 20, 50]" (onPageChange)="pageChange($event)" />
+
+        <app-table-paginator [first]="list.first()" [rows]="list.rows()" [total]="list.total()" (pageChange)="list.page($event)" />
     </div>
 </div>

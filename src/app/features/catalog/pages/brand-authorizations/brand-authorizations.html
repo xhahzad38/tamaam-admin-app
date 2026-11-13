@@ -8,13 +8,15 @@
             <app-error-state [message]="message" [retryable]="false" />
         }
 
-        <div class="mb-4 flex flex-col gap-3 md:flex-row md:items-end">
-            <div class="min-w-0 flex-1">
+        <div class="table-toolbar">
+            <div class="table-toolbar__search">
                 <app-search-control (searchChange)="onSearch($event)" />
             </div>
-            <div class="w-full md:w-72">
-                <label class="mb-1 block text-sm font-medium" for="authorization-brand-filter">Brand</label>
-                <app-select-control inputId="authorization-brand-filter" label="Brand" [control]="brandFilter" [options]="brandOptions()" optionLabel="name" optionValue="id" placeholder="All brands" appendTo="body" [flowError]="true" />
+            <div class="table-toolbar__filters">
+                <div class="table-filter">
+                    <label class="table-filter__label" for="authorization-brand-filter">Brand</label>
+                    <app-select-control inputId="authorization-brand-filter" label="Brand" [control]="brandFilter" [options]="brandOptions()" optionLabel="name" optionValue="id" placeholder="All brands" appendTo="body" [flowError]="true" />
+                </div>
             </div>
         </div>
 

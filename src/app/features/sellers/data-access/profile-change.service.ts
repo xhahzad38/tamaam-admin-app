@@ -46,6 +46,12 @@ export class ProfileChangeService {
         return this.http.get<PageResult<ProfileChange>>(this.url, { params, context: inlineErrors });
     }
 
+    /** Requests per tab (`pending`, `approved`, `rejected`, `all`), after the same search as the list. */
+    counts(search: string): Observable<Record<string, number>> {
+        const params = search.trim() ? new HttpParams().set('searchText', search.trim()) : new HttpParams();
+        return this.http.get<ApiResponse<Record<string, number>>>(`${this.url}/counts`, { params, context: inlineErrors }).pipe(map((response) => response.data ?? {}));
+    }
+
     review(id: string, approve: boolean, note: string | null): Observable<ApiResponse<ProfileChange>> {
         return this.http.post<ApiResponse<ProfileChange>>(`${this.url}/${id}/review`, { approve, note }, { context: inlineErrors });
     }

@@ -8,6 +8,7 @@ import { PaginatorModule, PaginatorState } from 'primeng/paginator';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { SearchControlComponent } from '@/app/shared/ui/search-control/search-control.component';
+import { TableFilterComponent } from '@/app/shared/ui/table-filter/table-filter.component';
 
 import { AdminFulfillmentService } from '@/app/features/fulfillment/data-access/fulfillment.service';
 import { CONDITION_LABEL, FulfillmentType, OFFER_STATUS_LABEL, Offer, OfferStatus, offerSeverity } from '@/app/features/fulfillment/data-access/fulfillment.models';
@@ -21,7 +22,7 @@ import { PriceRangeDialogComponent, PriceRangeTarget } from '@/app/features/pric
 @Component({
     selector: 'app-admin-offer-list',
     standalone: true,
-    imports: [DecimalPipe, RouterLink, SearchControlComponent, ButtonModule, PaginatorModule, TableModule, TagModule, PageHeaderComponent, ErrorStateComponent, PriceRangeDialogComponent],
+    imports: [DecimalPipe, RouterLink, SearchControlComponent, TableFilterComponent, ButtonModule, PaginatorModule, TableModule, TagModule, PageHeaderComponent, ErrorStateComponent, PriceRangeDialogComponent],
     templateUrl: './offer-list.html'
 })
 export class AdminOfferListPage implements OnInit {

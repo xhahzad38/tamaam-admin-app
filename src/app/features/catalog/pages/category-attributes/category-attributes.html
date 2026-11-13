@@ -8,13 +8,15 @@
             <p class="mb-4 text-red-600" role="alert">{{ error() }}</p>
         }
 
-        <div class="mb-4 flex flex-col gap-3 md:flex-row md:items-end">
-            <div class="min-w-0 flex-1">
+        <div class="table-toolbar">
+            <div class="table-toolbar__search">
                 <app-search-control (searchChange)="onSearch($event)" />
             </div>
-            <div class="w-full md:w-72">
-                <label class="mb-1 block text-sm font-medium" for="attribute-category-filter">Category</label>
-                <app-select-control inputId="attribute-category-filter" label="Category" [control]="categoryFilter" [options]="categoryOptions()" optionLabel="label" optionValue="id" placeholder="All categories" appendTo="body" [flowError]="true" />
+            <div class="table-toolbar__filters">
+                <div class="table-filter">
+                    <label class="table-filter__label" for="attribute-category-filter">Category</label>
+                    <app-select-control inputId="attribute-category-filter" label="Category" [control]="categoryFilter" [options]="categoryOptions()" optionLabel="label" optionValue="id" placeholder="All categories" appendTo="body" [flowError]="true" />
+                </div>
             </div>
         </div>
 

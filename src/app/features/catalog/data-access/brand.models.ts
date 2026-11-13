@@ -80,8 +80,16 @@ export interface BrandAuthorizationWrite {
 
 export interface BrandAuthorizationQueueItem extends BrandAuthorization {
     brandName: string;
+    brandLogoUrl: string | null;
     documentUrl: string | null;
     createdAt: string;
+}
+
+export interface BrandAuthorizationQueueCounts {
+    submitted: number;
+    approved: number;
+    rejected: number;
+    all: number;
 }
 
 export const BRAND_DOCUMENT_KINDS = [

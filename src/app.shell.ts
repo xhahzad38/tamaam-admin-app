@@ -26,7 +26,7 @@ export const ADMIN_SHELL: AppShellConfig = {
             label: 'Sellers',
             roles: RoleGroups.reviewers,
             items: [
-                { label: 'Onboarding review', icon: 'pi-verified', routerLink: ['/seller-reviews'] },
+                { label: 'Applications', icon: 'pi-verified', routerLink: ['/sellers/applications'] },
                 { label: 'All sellers', icon: 'pi-users', routerLink: ['/sellers'] },
                 { label: 'KYC change requests', icon: 'pi-file-edit', routerLink: ['/sellers/profile-changes'] }
             ]

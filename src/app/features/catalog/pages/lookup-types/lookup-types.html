@@ -6,7 +6,7 @@
 
     <div class="card">
         <div class="table-toolbar">
-            <app-search-control placeholder="Search lookup types" (searchChange)="list.search($event)" />
+            <div class="table-toolbar__search"><app-search-control placeholder="Search lookup types" (searchChange)="list.search($event)" /></div>
         </div>
 
         @if (list.error(); as message) {

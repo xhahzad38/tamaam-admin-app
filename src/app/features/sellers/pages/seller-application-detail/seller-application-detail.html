@@ -1,0 +1,216 @@
+<div class="page">
+    <app-page-header [title]="loading() ? 'Seller application' : sellerName()" [crumbs]="crumbs()">
+        @if (application(); as app) {
+            <p-tag [value]="statusLabel(app.status)" [severity]="statusSeverity(app.status)" styleClass="detail-status" />
+        }
+    </app-page-header>
+
+    @if (loading()) {
+        <div class="card"><app-loading-state [rows]="6" /></div>
+    } @else if (loadError(); as message) {
+        <div class="card"><app-error-state [message]="message" (retry)="load()" /></div>
+    } @else if (application(); as app) {
+        @if (actionError(); as message) {
+            <app-error-state [message]="message" [retryable]="false" />
+        }
+
+        <div class="detail-layout">
+            <!-- sections to review -->
+            <div class="detail-main">
+                @for (view of sections(); track view.review.section) {
+                    <section class="card review-section" [class.review-section--open]="view.canDecide" [attr.aria-labelledby]="'section-' + view.review.section">
+                        <header class="review-section__header">
+                            <span class="review-section__icon" aria-hidden="true"><i [class]="view.icon"></i></span>
+                            <div class="review-section__heading">
+                                <h2 [id]="'section-' + view.review.section">{{ view.title }}</h2>
+                                <p-tag [value]="statusLabel(view.review.status)" [severity]="statusSeverity(view.review.status)" />
+                            </div>
+                            @if (view.canDecide && rejectingSection() !== view.review.section) {
+                                <div class="review-section__actions">
+                                    <p-button label="Reject" icon="pi pi-times" size="small" severity="danger" [outlined]="true" [disabled]="busySection() !== null" (onClick)="startReject(view.review.section)" />
+                                    <p-button label="Approve" icon="pi pi-check" size="small" [loading]="busySection() === view.review.section" [disabled]="busySection() !== null && busySection() !== view.review.section" (onClick)="approve(view.review.section)" />
+                                </div>
+                            }
+                        </header>
+
+                        @if (view.fields.length) {
+                            <dl class="field-grid">
+                                @for (field of view.fields; track field.label) {
+                                    <div class="field-grid__item">
+                                        <dt>{{ field.label }}</dt>
+                                        <dd [class.is-empty]="!field.value">{{ field.value || 'Not provided' }}</dd>
+                                    </div>
+                                }
+                            </dl>
+                        }
+
+                        @if (view.documents.length) {
+                            <div class="doc-list">
+                                <h3 class="doc-list__title">Documents</h3>
+                                <ul>
+                                    @for (doc of view.documents; track doc.label) {
+                                        <li class="doc" [attr.data-state]="doc.state">
+                                            <span class="doc__icon" aria-hidden="true"><i class="pi" [class.pi-file]="doc.state === 'provided'" [class.pi-file-excel]="doc.state !== 'provided'"></i></span>
+                                            <div class="doc__text">
+                                                <span class="doc__label">{{ doc.label }}</span>
+                                                @if (doc.fileName) {
+                                                    <span class="doc__file">{{ doc.fileName }}</span>
+                                                }
+                                            </div>
+                                            @switch (doc.state) {
+                                                @case ('provided') {
+                                                    <button type="button" class="link-button doc__open" (click)="openDocument(doc.documentId!)">View <i class="pi pi-external-link" aria-hidden="true"></i></button>
+                                                }
+                                                @case ('missing') {
+                                                    <p-tag value="Missing" severity="danger" />
+                                                }
+                                                @case ('skipped') {
+                                                    <p-tag value="Skipped" severity="secondary" />
+                                                }
+                                                @default {
+                                                    <p-tag value="Not provided" severity="secondary" />
+                                                }
+                                            }
+                                        </li>
+                                    }
+                                </ul>
+                            </div>
+                        }
+
+                        @if (!view.fields.length && !view.documents.length) {
+                            <p class="review-section__empty">The seller has not filled in this section yet.</p>
+                        }
+
+                        @if (view.review.reviewNote) {
+                            <div class="callout callout--warn">
+                                <i class="pi pi-comment" aria-hidden="true"></i>
+                                <div>
+                                    <strong>Note to seller</strong>
+                                    <p>{{ view.review.reviewNote }}</p>
+                                </div>
+                            </div>
+                        }
+
+                        @if (rejectingSection() === view.review.section) {
+                            <div class="reject-form">
+                                <label class="reject-form__label" [for]="'reject-note-' + view.review.section">Reason for rejection</label>
+                                <p class="reject-form__hint">The seller sees this note and can fix the section before resubmitting.</p>
+                                <app-input-control [inputId]="'reject-note-' + view.review.section" label="Reason for rejection" type="textarea" placeholder="e.g. The CNIC photo is blurry. Upload a clear photo of both sides." [control]="rejectNote" [showCount]="false" [flowError]="true" />
+                                <div class="reject-form__actions">
+                                    <p-button label="Cancel" size="small" [text]="true" severity="secondary" (onClick)="cancelReject()" />
+                                    <p-button label="Reject section" icon="pi pi-times" size="small" severity="danger" [loading]="busySection() === view.review.section" (onClick)="confirmReject(view.review.section)" />
+                                </div>
+                            </div>
+                        }
+                    </section>
+                }
+
+                @if (skippedSectionNames()) {
+                    <p class="detail-footnote"><i class="pi pi-info-circle" aria-hidden="true"></i> Not sent for review: {{ skippedSectionNames() }}.</p>
+                }
+            </div>
+
+            <!-- overview, store images, account actions -->
+            <aside class="detail-aside">
+                <div class="card overview">
+                    <div class="overview__identity">
+                        <span class="overview__avatar" aria-hidden="true">{{ avatar() }}</span>
+                        <div class="min-w-0">
+                            <div class="overview__name">{{ sellerName() }}</div>
+                            <a class="overview__email" [href]="'mailto:' + app.email">{{ app.email }}</a>
+                        </div>
+                    </div>
+
+                    <div class="overview__progress">
+                        <div class="overview__progress-head">
+                            <span>Review progress</span>
+                            <strong>{{ progress().approved }}/{{ progress().total }} approved</strong>
+                        </div>
+                        <div class="progress-bar" role="img" [attr.aria-label]="progress().approved + ' approved, ' + progress().pending + ' to review, ' + progress().rejected + ' rejected'">
+                            <span class="progress-bar__seg progress-bar__seg--approved" [style.width.%]="progress().approvedPct"></span>
+                            <span class="progress-bar__seg progress-bar__seg--pending" [style.width.%]="progress().pendingPct"></span>
+                            <span class="progress-bar__seg progress-bar__seg--rejected" [style.width.%]="progress().rejectedPct"></span>
+                        </div>
+                        <ul class="legend">
+                            <li><span class="legend__dot legend__dot--approved"></span>{{ progress().approved }} approved</li>
+                            <li><span class="legend__dot legend__dot--pending"></span>{{ progress().pending }} to review</li>
+                            <li><span class="legend__dot legend__dot--rejected"></span>{{ progress().rejected }} rejected</li>
+                        </ul>
+                    </div>
+
+                    <dl class="overview__facts">
+                        <div>
+                            <dt>Account type</dt>
+                            <dd>{{ accountTypeLabel() }}</dd>
+                        </div>
+                        <div>
+                            <dt>Submitted</dt>
+                            <dd>{{ app.submittedAt ? (app.submittedAt | date: 'mediumDate') : 'Not submitted' }}</dd>
+                        </div>
+                        @if (app.profile?.registeredName) {
+                            <div>
+                                <dt>Registered name</dt>
+                                <dd>{{ app.profile?.registeredName }}</dd>
+                            </div>
+                        }
+                        <div>
+                            <dt>Other marketplaces</dt>
+                            <dd>
+                                @if (app.hasSoldOnOtherPlatform === true) {
+                                    {{ app.otherPlatforms || 'Yes' }}
+                                } @else if (app.hasSoldOnOtherPlatform === false) {
+                                    None
+                                } @else {
+                                    Not answered
+                                }
+                            </dd>
+                        </div>
+                        @if (app.marketplaceExperience) {
+                            <div>
+                                <dt>Selling experience</dt>
+                                <dd>{{ app.marketplaceExperience }}</dd>
+                            </div>
+                        }
+                    </dl>
+                </div>
+
+                @if (logoUrl() || bannerUrl()) {
+                    <div class="card store-media">
+                        <h2 class="aside-title">Store branding</h2>
+                        @if (bannerUrl(); as banner) {
+                            <img [src]="banner" alt="Store banner" class="store-media__banner" />
+                        }
+                        @if (logoUrl(); as logo) {
+                            <img [src]="logo" alt="Store logo" class="store-media__logo" [class.store-media__logo--overlap]="bannerUrl()" />
+                        }
+                    </div>
+                }
+
+                @if (app.status === ApprovalStatus.Approved || app.status === ApprovalStatus.Suspended) {
+                    <div class="card account-card" [class.account-card--suspended]="app.status === ApprovalStatus.Suspended">
+                        <h2 class="aside-title">Seller account</h2>
+                        @if (app.status === ApprovalStatus.Suspended) {
+                            <p class="account-card__text">
+                                Suspended{{ app.suspendedAt ? ' on ' + (app.suspendedAt | date: 'mediumDate') : '' }}. The seller cannot use the seller center.
+                            </p>
+                            @if (app.suspensionReason) {
+                                <blockquote class="account-card__reason">{{ app.suspensionReason }}</blockquote>
+                            }
+                            <p-button label="Reinstate seller" icon="pi pi-replay" size="small" styleClass="w-full" [loading]="accountBusy()" (onClick)="reinstate()" />
+                        } @else if (!suspendOpen()) {
+                            <p class="account-card__text">This seller is live. Suspending removes their access to the seller center until you reinstate them.</p>
+                            <p-button label="Suspend seller" icon="pi pi-ban" size="small" severity="danger" [outlined]="true" styleClass="w-full" (onClick)="startSuspend()" />
+                        } @else {
+                            <label class="reject-form__label" for="suspend-note">Reason for suspension</label>
+                            <app-input-control inputId="suspend-note" label="Reason for suspension" type="textarea" [control]="suspendNote" [showCount]="false" [flowError]="true" />
+                            <div class="reject-form__actions">
+                                <p-button label="Cancel" size="small" [text]="true" severity="secondary" (onClick)="cancelSuspend()" />
+                                <p-button label="Suspend seller" icon="pi pi-ban" size="small" severity="danger" [loading]="accountBusy()" (onClick)="confirmSuspend()" />
+                            </div>
+                        }
+                    </div>
+                }
+            </aside>
+        </div>
+    }
+</div>

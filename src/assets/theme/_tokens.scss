@@ -47,12 +47,12 @@
     --tm-info: var(--p-sky-700);
     --tm-info-soft: var(--p-sky-50);
 
-    // table header (brand tint)
-    --tm-table-header-bg: var(--p-primary-50);
-    --tm-table-header-text: var(--p-primary-900);
-    --tm-table-header-border: var(--p-primary-100);
-    --tm-table-header-hover-bg: var(--p-primary-100);
-    --tm-table-header-icon: var(--p-primary-700);
+    // table header (neutral)
+    --tm-table-header-bg: var(--p-surface-50);
+    --tm-table-header-text: var(--p-surface-600);
+    --tm-table-header-border: var(--p-surface-200);
+    --tm-table-header-hover-bg: var(--p-surface-100);
+    --tm-table-header-icon: var(--p-surface-400);
 }
 
 .app-dark {
@@ -69,9 +69,9 @@
     --tm-info: var(--p-sky-400);
     --tm-info-soft: color-mix(in srgb, var(--p-sky-500) 16%, transparent);
 
-    --tm-table-header-bg: color-mix(in srgb, var(--p-primary-400) 14%, transparent);
-    --tm-table-header-text: var(--p-primary-100);
-    --tm-table-header-border: color-mix(in srgb, var(--p-primary-400) 28%, transparent);
-    --tm-table-header-hover-bg: color-mix(in srgb, var(--p-primary-400) 22%, transparent);
-    --tm-table-header-icon: var(--p-primary-300);
+    --tm-table-header-bg: var(--p-surface-800);
+    --tm-table-header-text: var(--p-surface-300);
+    --tm-table-header-border: var(--p-surface-700);
+    --tm-table-header-hover-bg: var(--p-surface-700);
+    --tm-table-header-icon: var(--p-surface-400);
 }

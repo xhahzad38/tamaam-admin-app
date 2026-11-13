@@ -4,13 +4,11 @@
     </app-page-header>
 
     <div class="card">
-        <div class="mb-4 flex flex-wrap gap-2">
-            @for (option of owners; track option.label) {
-                <p-button [label]="option.label" size="small" [outlined]="owner() !== option.value" (onClick)="setOwner(option.value)" />
-            }
-        </div>
-        <div class="mb-4">
-            <app-search-control (searchChange)="onSearch($event)" />
+        <div class="table-toolbar">
+            <div class="table-toolbar__search"><app-search-control (searchChange)="onSearch($event)" /></div>
+            <div class="table-toolbar__filters">
+                <app-table-filter inputId="warehouse-owner" label="Owner" [options]="owners" [value]="owner()" (valueChange)="setOwner($event)" />
+            </div>
         </div>
 
         @if (error(); as message) {

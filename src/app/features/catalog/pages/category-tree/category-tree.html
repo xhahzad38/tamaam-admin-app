@@ -4,8 +4,8 @@
     </app-page-header>
 
     <div class="card">
-        <div class="mb-4">
-            <app-search-control (searchChange)="onSearch($event)" />
+        <div class="table-toolbar">
+            <div class="table-toolbar__search"><app-search-control (searchChange)="onSearch($event)" /></div>
         </div>
 
         @if (error(); as message) {

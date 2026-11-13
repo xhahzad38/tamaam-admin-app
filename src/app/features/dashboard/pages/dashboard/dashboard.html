@@ -8,11 +8,11 @@
 }
 
 <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-    <a routerLink="/seller-reviews" [queryParams]="{ queue: 'pending' }" class="card no-underline">
+    <a routerLink="/sellers/applications" [queryParams]="{ queue: 'pending' }" class="card no-underline">
         <div class="text-sm text-muted-color">Pending review</div>
         <div class="mt-1 text-3xl font-semibold">{{ stats()?.pendingReview ?? '—' }}</div>
     </a>
-    <a routerLink="/seller-reviews" [queryParams]="{ queue: 'actionRequired' }" class="card no-underline">
+    <a routerLink="/sellers/applications" [queryParams]="{ queue: 'actionRequired' }" class="card no-underline">
         <div class="text-sm text-muted-color">Action required</div>
         <div class="mt-1 text-3xl font-semibold">{{ stats()?.actionRequired ?? '—' }}</div>
     </a>

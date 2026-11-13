@@ -1,0 +1,39 @@
+:host {
+    display: block;
+}
+
+.queue-row {
+    cursor: pointer;
+}
+
+.product-cell {
+    display: flex;
+    align-items: center;
+    gap: var(--tm-space-3);
+    min-width: 14rem;
+}
+
+.product-cell__icon {
+    flex: none;
+    display: inline-grid;
+    place-items: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: var(--tm-radius-md);
+    color: var(--tm-primary);
+    background: var(--tm-primary-soft);
+}
+
+.product-cell__name {
+    font-weight: 600;
+}
+
+.sub {
+    font-size: var(--tm-text-xs);
+    color: var(--tm-text-muted);
+}
+
+.sub--late {
+    font-weight: 600;
+    color: var(--tm-warning);
+}

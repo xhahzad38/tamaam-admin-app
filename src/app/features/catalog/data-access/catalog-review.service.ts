@@ -20,6 +20,21 @@ export class CatalogReviewService {
         });
     }
 
+    /** Products per review tab (`pending`, `live`, `rejected`, `archived`, `all`), after the same search as the list. */
+    productCounts(search: string): Observable<Record<string, number>> {
+        return this.counts(`${this.baseUrl}/counts`, search);
+    }
+
+    /** Change requests per tab (`pending`, `approved`, `rejected`, `all`), after the same search as the list. */
+    changeCounts(search: string): Observable<Record<string, number>> {
+        return this.counts(`${this.baseUrl}/change-requests/counts`, search);
+    }
+
+    private counts(url: string, search: string): Observable<Record<string, number>> {
+        const params = search.trim() ? new HttpParams().set('searchText', search.trim()) : new HttpParams();
+        return this.http.get<ApiResponse<Record<string, number>>>(url, { params, context: inlineErrors }).pipe(map((response) => response.data ?? {}));
+    }
+
     product(id: string): Observable<CatalogProductDetail> {
         return this.http.get<ApiResponse<CatalogProductDetail>>(`${this.baseUrl}/${id}`, { context: inlineErrors }).pipe(map((response) => response.data));
     }

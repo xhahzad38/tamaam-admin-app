@@ -4,7 +4,7 @@ import { Observable, map } from 'rxjs';
 import { environment } from '@/environments/environment';
 import { ApiResponse, PageResult } from '@/app/core/api/api.types';
 
-import { Brand, BrandAuthorization, BrandAuthorizationQueueItem, BrandAuthorizationWrite, BrandChangeRequest, BrandDocument, BrandWrite, EnforcementOption } from './brand.models';
+import { Brand, BrandAuthorization, BrandAuthorizationQueueCounts, BrandAuthorizationQueueItem, BrandAuthorizationWrite, BrandChangeRequest, BrandDocument, BrandWrite, EnforcementOption } from './brand.models';
 
 import { inlineErrors } from '@/app/core/http/api-error';
 @Injectable({ providedIn: 'root' })
@@ -108,6 +108,16 @@ export class BrandService {
             params = params.set('searchText', search.trim());
         }
         return this.http.get<PageResult<BrandAuthorizationQueueItem>>(`${this.baseUrl}/authorization-queue`, { params, context: inlineErrors });
+    }
+
+    authorizationQueueCounts(search: string): Observable<BrandAuthorizationQueueCounts> {
+        let params = new HttpParams();
+        if (search.trim()) {
+            params = params.set('searchText', search.trim());
+        }
+        return this.http
+            .get<ApiResponse<BrandAuthorizationQueueCounts>>(`${this.baseUrl}/authorization-queue/counts`, { params, context: inlineErrors })
+            .pipe(map((response) => response.data));
     }
 
     reviewAuthorization(brandId: string, id: string, body: { approve: boolean; note: string | null; validFrom: string | null; validTo: string | null }): Observable<BrandAuthorization> {

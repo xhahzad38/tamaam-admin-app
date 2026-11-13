@@ -2,21 +2,16 @@
     <app-page-header title="Offers" subtitle="Every seller's price and stock on catalog variations. Search by FNSKU, seller SKU, PSKU, SKU, barcode, product, or store." [crumbs]="crumbs" />
 
     <div class="card">
-        <div class="mb-4 flex flex-wrap items-center gap-2">
-            @for (option of statuses; track option.label) {
-                <p-button [label]="option.label" size="small" [outlined]="status() !== option.value" (onClick)="setStatus(option.value)" />
-            }
-            <span class="mx-2 h-6 w-px bg-surface-200" aria-hidden="true"></span>
-            @for (option of types; track option.label) {
-                <p-button [label]="option.label" size="small" severity="secondary" [outlined]="type() !== option.value" (onClick)="setType(option.value)" />
-            }
+        <div class="table-toolbar">
+            <div class="table-toolbar__search"><app-search-control (searchChange)="onSearch($event)" /></div>
+            <div class="table-toolbar__filters">
+                <app-table-filter inputId="offer-status" label="Status" [options]="statuses" [value]="status()" (valueChange)="setStatus($event)" />
+                <app-table-filter inputId="offer-fulfillment" label="Fulfillment" [options]="types" [value]="type()" (valueChange)="setType($event)" placeholder="FBT and FBM" />
+            </div>
         </div>
         @if (productId()) {
             <p class="mb-4 text-sm">Showing offers on one product. <button type="button" class="text-primary underline" (click)="clearProduct()">Show all offers</button></p>
         }
-        <div class="mb-4">
-            <app-search-control (searchChange)="onSearch($event)" />
-        </div>
 
         @if (error(); as message) {
             <app-error-state [message]="message" [retryable]="false" />

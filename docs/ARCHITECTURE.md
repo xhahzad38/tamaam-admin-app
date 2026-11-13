@@ -50,6 +50,7 @@ The workflow: make the change in one app, then run `npm run shared:sync` in the 
 |---|---|
 | Screen header | `<app-page-header title subtitle [crumbs]>` with actions projected inside. Wrap the screen in `<div class="page">`. |
 | Server-paged list | `readonly list = createPagedList((req) => service.list(req.search, req.pageNo, req.pageSize))`, plus `<app-table-paginator>` and `list.search()`. See `brand-list` (admin) and `activity-log` for reference. |
+| List toolbar | The main status / queue of a list goes in `<app-status-tabs [tabs] [active] (activeChange)>` (tabs with counts) above the toolbar. Then `<div class="table-toolbar">`: `<div class="table-toolbar__search">` (search, left) and `<div class="table-toolbar__filters">` (right) holding `<app-table-filter>` dropdowns for any other filters. No rows of toggle buttons, select buttons or radio buttons as filters, and no filters on a row above search. |
 | Loading / empty / error | `<app-loading-state>`, `<app-empty-state>`, `<app-error-state (retry)>`, `<app-notice>` |
 | Confirmation | `await inject(ConfirmService).ask({ message, danger: true })`. Never `window.confirm`. |
 | Row actions | `<div class="row-actions"><button class="link-button">…` (add `link-button--danger` for destructive actions) |

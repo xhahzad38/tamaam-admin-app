@@ -2,9 +2,10 @@
     <app-page-header title="KYC change requests" subtitle="Sellers asking to change verified business, tax or bank details. Bank changes were confirmed by the seller with an OTP; approving one pauses their payouts for 48 hours." [crumbs]="crumbs" />
 
     <div class="card">
+        <app-status-tabs [tabs]="tabs()" [active]="activeTab()" (activeChange)="selectTab($event)" ariaLabel="Request status" />
+
         <div class="table-toolbar">
-            <app-search-control placeholder="Search seller name or email" (searchChange)="list.search($event)" />
-            <p-selectbutton [options]="statuses" [ngModel]="status()" (ngModelChange)="setStatus($event)" optionLabel="label" optionValue="value" [allowEmpty]="false" />
+            <div class="table-toolbar__search"><app-search-control placeholder="Search seller name or email" (searchChange)="onSearch($event)" /></div>
         </div>
 
         @if (list.error(); as message) {
@@ -26,7 +27,7 @@
             <ng-template #body let-row>
                 <tr>
                     <td>
-                        <a [routerLink]="['/seller-reviews', row.organizationId]" class="font-medium">{{ row.sellerName || 'Seller' }}</a>
+                        <a [routerLink]="['/sellers/applications', row.organizationId]" class="font-medium">{{ row.sellerName || 'Seller' }}</a>
                         @if (row.storeName) {
                             <div class="text-sm text-muted-color">{{ row.storeName }}</div>
                         }
