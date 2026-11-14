@@ -45,7 +45,8 @@ export enum InboundStatus {
     Receiving = 3,
     Received = 4,
     PartiallyReceived = 5,
-    Cancelled = 6
+    Cancelled = 6,
+    Arrived = 7
 }
 
 export const FULFILLMENT_LABEL: Record<number, string> = {
@@ -71,9 +72,10 @@ export const INBOUND_STATUS_LABEL: Record<number, string> = {
     [InboundStatus.Draft]: 'Draft',
     [InboundStatus.Sealed]: 'Ready to ship',
     [InboundStatus.InTransit]: 'On its way',
+    [InboundStatus.Arrived]: 'Arrived',
     [InboundStatus.Receiving]: 'Being received',
     [InboundStatus.Received]: 'Received',
-    [InboundStatus.PartiallyReceived]: 'Received with shortfall',
+    [InboundStatus.PartiallyReceived]: 'Closed with discrepancy',
     [InboundStatus.Cancelled]: 'Cancelled'
 };
 
@@ -103,6 +105,8 @@ export function inboundSeverity(status: InboundStatus): Severity {
     switch (status) {
         case InboundStatus.Received:
             return 'success';
+        case InboundStatus.Arrived:
+            return 'warn';
         case InboundStatus.Sealed:
         case InboundStatus.InTransit:
         case InboundStatus.Receiving:
@@ -268,8 +272,35 @@ export interface InboundShipmentListItem {
     trackingNumber: string | null;
     expectedAt: string | null;
     shippedAt: string | null;
+    arrivedAt: string | null;
     receivedAt: string | null;
     createdAt: string;
+    checkedInCartons: number;
+    missingCartons: number;
+}
+
+export interface InboundSummary {
+    all: number;
+    readyToShip: number;
+    inTransit: number;
+    arrived: number;
+    receiving: number;
+    received: number;
+    discrepancy: number;
+    cancelled: number;
+    unitsInTransit: number;
+    unitsAwaitingCount: number;
+    expectedToday: number;
+    receivedToday: number;
+}
+
+/** Same values as the API's CartonStatus. */
+export enum CartonStatus {
+    Open = 1,
+    Sealed = 2,
+    InTransit = 3,
+    Received = 4,
+    Missing = 5
 }
 
 export interface InboundAddress {
@@ -350,6 +381,7 @@ export interface InboundShipmentDetail extends InboundShipmentListItem {
     canShip: boolean;
     canCancel: boolean;
     canPrintLabels: boolean;
+    canCheckIn: boolean;
     canReceive: boolean;
 }
 

@@ -1,148 +1,413 @@
-<app-bread-crumb [items]="crumbs" />
-
-<div class="card">
-    @if (shipment(); as item) {
-        <div class="mb-5 flex flex-wrap items-start justify-between gap-3">
-            <div>
-                <h1 class="m-0 font-mono text-2xl font-semibold">{{ item.asnNumber }}</h1>
-                <p class="m-0 mt-1 text-sm text-muted-color">
-                    {{ item.storeName }} → {{ item.warehouseName }} ({{ item.warehouseCode }}) · {{ item.unitCount }} units in {{ item.cartonCount }} carton(s)
-                </p>
-                <p class="m-0 mt-1 text-sm text-muted-color">
-                    @if (item.shippedAt) {
-                        Shipped {{ item.shippedAt | date: 'medium' }} with {{ item.courierName }}@if (item.trackingNumber) { · <span class="font-mono">{{ item.trackingNumber }}</span>}
-                    } @else {
-                        Not shipped yet
-                    }
-                    @if (item.expectedAt) {
-                        · expected {{ item.expectedAt | date: 'mediumDate' }}
-                    }
-                </p>
-                @if (item.notes) {
-                    <p class="m-0 mt-2 text-sm">Seller note: {{ item.notes }}</p>
-                }
-            </div>
-            <div class="flex flex-wrap items-center gap-2">
-                <p-tag [value]="statusLabel(item.status)" [severity]="severity(item.status)" />
-                @if (item.canPrintLabels) {
-                    <p-button label="Reprint carton labels" icon="pi pi-print" size="small" [outlined]="true" [routerLink]="['/fulfillment/labels/inbound', item.id]" />
-                }
-            </div>
-        </div>
-
-        @if (item.canReceive) {
-            <section class="mb-6 rounded-border border border-surface p-4">
-                <h2 class="m-0 text-lg font-semibold">Scan units</h2>
-                <p class="m-0 mt-1 text-sm text-muted-color">Scan each unit's FNSKU label. Each scan counts one unit. Switch to damaged for units that cannot be sold.</p>
-                <form class="mt-3 flex flex-wrap items-center gap-3" (ngSubmit)="onScan()">
-                    <label for="scan" class="sr-only">Scan FNSKU</label>
-                    <input #scanInput pInputText id="scan" class="w-72 font-mono" autocomplete="off" [formControl]="scan" placeholder="Scan FNSKU or carton number" />
-                    <p-button type="submit" label="Count" size="small" />
-                    <label class="flex items-center gap-2 text-sm">
-                        <input type="checkbox" [checked]="scanDamaged()" (change)="scanDamaged.set(!scanDamaged())" />
-                        Count scans as damaged
-                    </label>
-                </form>
-                @if (lastScan(); as scanResult) {
-                    <p class="m-0 mt-2 text-sm" [class.text-green-700]="scanResult.ok" [class.text-red-700]="!scanResult.ok" role="status">{{ scanResult.text }}</p>
-                }
-            </section>
-        }
-
-        <div class="overflow-x-auto">
-            <table class="app-table text-sm">
-                <thead>
-                    <tr class="border-b border-surface text-left">
-                        <th scope="col" class="py-2">Product</th>
-                        <th scope="col" class="py-2">FNSKU</th>
-                        <th scope="col" class="py-2">Seller SKU / PSKU</th>
-                        <th scope="col" class="py-2">Expected</th>
-                        <th scope="col" class="py-2">Received so far</th>
-                        @if (item.canReceive) {
-                            <th scope="col" class="py-2">Count now: sellable</th>
-                            <th scope="col" class="py-2">Count now: damaged</th>
-                        }
-                    </tr>
-                </thead>
-                <tbody>
-                    @for (row of item.items; track row.id) {
-                        <tr class="border-b border-surface">
-                            <td class="py-2">
-                                <span class="flex items-center gap-3">
-                                    @if (mediaUrl(row.imageUrl); as photo) {
-                                        <img [src]="photo" alt="" class="h-10 w-10 rounded object-cover" />
-                                    }
-                                    <span>
-                                        {{ row.productName }}
-                                        <span class="block text-xs text-muted-color">{{ row.attributeCombination || 'Single version' }} · {{ conditionLabel(row.condition) }}</span>
-                                    </span>
-                                </span>
-                            </td>
-                            <td class="py-2 font-mono font-semibold">{{ row.fnsku }}</td>
-                            <td class="py-2 font-mono text-xs">{{ row.sellerSku }}<span class="block text-muted-color">{{ row.psku }}</span></td>
-                            <td class="py-2">{{ row.expectedQty }}</td>
-                            <td class="py-2">
-                                {{ row.receivedGoodQty }} sellable
-                                @if (row.receivedUnsellableQty) {
-                                    · <span class="text-amber-700">{{ row.receivedUnsellableQty }} damaged</span>
-                                }
-                                @if (row.remainingQty) {
-                                    <span class="block text-xs text-muted-color">{{ row.remainingQty }} still expected</span>
-                                }
-                            </td>
-                            @if (item.canReceive) {
-                                <td class="py-2"><input pInputText type="number" min="0" class="w-20" [attr.aria-label]="'Sellable units of ' + row.fnsku" [value]="count(row.id).good" (input)="setCount(row, 'good', $any($event.target).value)" /></td>
-                                <td class="py-2"><input pInputText type="number" min="0" class="w-20" [attr.aria-label]="'Damaged units of ' + row.fnsku" [value]="count(row.id).damaged" (input)="setCount(row, 'damaged', $any($event.target).value)" /></td>
-                            }
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-
-        @if (item.canReceive) {
-            <div class="mt-5 flex flex-col gap-3">
-                <div class="flex max-w-xl flex-col gap-2">
-                    <label for="receipt-notes" class="text-sm font-medium">Notes</label>
-                    <input pInputText id="receipt-notes" maxlength="1000" [formControl]="notes" placeholder="Damaged carton, extra units, missing labels…" />
-                </div>
-                <p class="m-0 text-sm">{{ counted() }} unit(s) counted now · {{ remaining() }} still expected.</p>
-                <div class="flex flex-wrap gap-2">
-                    <p-button label="Save receipt" [outlined]="true" [loading]="saving()" (onClick)="save(false)" />
-                    <p-button label="Save and close shipment" icon="pi pi-check" [loading]="saving()" (onClick)="save(true)" />
-                </div>
-            </div>
-        } @else if (item.status === 1) {
-            <p class="mt-4 text-sm text-muted-color">The seller has sealed this shipment but not shipped it yet.</p>
-        }
-
-        <h2 class="mb-2 mt-6 text-lg font-semibold">Cartons</h2>
-        <ul class="m-0 pl-5 text-sm">
-            @for (carton of item.cartons; track carton.id) {
-                <li><span class="font-mono">{{ carton.cartonNumber }}</span> · {{ carton.unitCount }} units · {{ carton.weightKg }} kg · {{ carton.lengthCm }} × {{ carton.widthCm }} × {{ carton.heightCm }} cm</li>
+<div class="page">
+    @if (shipment(); as s) {
+        <app-page-header [title]="s.asnNumber" [crumbs]="crumbs()">
+            <p pageSubtitle class="subtitle">
+                <p-tag [value]="statusLabel(s.status)" [severity]="severity(s.status)" />
+                <span>{{ s.storeName }}</span>
+                <i class="pi pi-arrow-right" aria-hidden="true"></i>
+                <span>{{ s.warehouseName }} <span class="code">{{ s.warehouseCode }}</span></span>
+            </p>
+            @if (s.canPrintLabels) {
+                <p-button label="Reprint labels" icon="pi pi-print" severity="secondary" [outlined]="true" [routerLink]="['/fulfillment/labels/inbound', s.id]" />
             }
-        </ul>
+        </app-page-header>
 
-        @if (item.receivings.length) {
-            <h2 class="mb-2 mt-6 text-lg font-semibold">Receipts</h2>
-            <ul class="m-0 pl-5 text-sm">
-                @for (receipt of item.receivings; track receipt.id) {
-                    <li>
-                        <span class="font-mono">{{ receipt.receivingNumber }}</span> · {{ receipt.completedAt | date: 'medium' }} · {{ receipt.goodQty }} sellable, {{ receipt.unsellableQty }} damaged
-                        @if (receipt.status === 4) {
-                            · <span class="text-amber-700">closed with a shortfall</span>
+        <!-- Progress through the receiving flow -->
+        <ol class="card stepper" aria-label="Receiving progress">
+            @for (step of steps(); track step.label; let i = $index) {
+                <li class="stepper__step" [attr.data-state]="step.state" [attr.aria-current]="step.state === 'current' ? 'step' : null">
+                    <span class="stepper__dot">
+                        @switch (step.state) {
+                            @case ('done') {
+                                <i class="pi pi-check" aria-hidden="true"></i>
+                            }
+                            @case ('problem') {
+                                <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
+                            }
+                            @default {
+                                {{ i + 1 }}
+                            }
                         }
-                        @if (receipt.notes) {
-                            · {{ receipt.notes }}
+                    </span>
+                    <span class="stepper__text">
+                        <span class="stepper__label">{{ step.label }}</span>
+                        <span class="stepper__detail">{{ step.detail }}</span>
+                        @if (step.when) {
+                            <span class="stepper__when">{{ step.when | date: 'd MMM, HH:mm' }}</span>
                         }
-                    </li>
-                }
-            </ul>
+                    </span>
+                </li>
+            }
+        </ol>
+
+        <!-- Key facts -->
+        <dl class="card facts">
+            <div>
+                <dt>Seller</dt>
+                <dd>{{ s.storeName }}</dd>
+            </div>
+            <div>
+                <dt>Courier</dt>
+                <dd>
+                    {{ s.courierName || '—' }}
+                    @if (s.trackingNumber) {
+                        <span class="code">{{ s.trackingNumber }}</span>
+                    }
+                </dd>
+            </div>
+            <div>
+                <dt>Expected</dt>
+                <dd>{{ s.expectedAt ? (s.expectedAt | date: 'EEE d MMM y') : 'Not given' }}</dd>
+            </div>
+            <div>
+                <dt>Shipped</dt>
+                <dd>{{ s.shippedAt ? (s.shippedAt | date: 'd MMM, HH:mm') : 'Not yet' }}</dd>
+            </div>
+            <div>
+                <dt>Cartons</dt>
+                <dd>{{ s.cartonCount }}</dd>
+            </div>
+            <div>
+                <dt>Units</dt>
+                <dd>{{ s.unitCount | number }} <span class="muted">· {{ s.lineCount }} SKU(s)</span></dd>
+            </div>
+        </dl>
+
+        @if (s.notes) {
+            <div class="note">
+                <i class="pi pi-comment" aria-hidden="true"></i>
+                <div><strong>Notes</strong><span class="note__text">{{ s.notes }}</span></div>
+            </div>
         }
-    }
 
-    @if (error(); as message) {
+        @if (error(); as message) {
+            <app-error-state [message]="message" [retryable]="false" />
+        }
+
+        @switch (phase()) {
+            <!-- STEP 1: dock check-in -->
+            @case ('check-in') {
+                <section class="card panel" aria-labelledby="checkin-title">
+                    <header class="panel__head">
+                        <span class="panel__step">Step 1 of 3</span>
+                        <h2 id="checkin-title" class="panel__title">Check in cartons at the dock</h2>
+                        <p class="panel__hint">Scan the <b>carton label</b> on each box as it comes off the truck. Damaged label? Tick the carton by hand.</p>
+                    </header>
+
+                    <form class="scanbar" (ngSubmit)="onScan()">
+                        <span class="scanbar__icon"><i class="pi pi-qrcode" aria-hidden="true"></i></span>
+                        <label for="scan" class="sr-only">Scan carton label</label>
+                        <input #scanInput pInputText id="scan" class="scanbar__input" autocomplete="off" [formControl]="scan" [placeholder]="'Scan carton label, e.g. ' + s.asnNumber + '-C01'" />
+                        <p-button type="submit" label="Check in" icon="pi pi-check" />
+                    </form>
+
+                    @if (lastScan(); as r) {
+                        <div class="feedback" [attr.data-tone]="r.tone" role="status" aria-live="polite">
+                            <i [class]="r.tone === 'ok' ? 'pi pi-check-circle' : r.tone === 'warn' ? 'pi pi-exclamation-circle' : 'pi pi-times-circle'" aria-hidden="true"></i>
+                            <div><strong>{{ r.title }}</strong><span>{{ r.detail }}</span></div>
+                        </div>
+                    }
+
+                    <div class="tally">
+                        <div class="tally__text"><strong>{{ arrivedCount() }}</strong> of {{ s.cartonCount }} cartons on the dock</div>
+                        <div class="bar"><span [style.width.%]="s.cartonCount ? (arrivedCount() / s.cartonCount) * 100 : 0"></span></div>
+                        <button type="button" class="link-button" (click)="markAllArrived()">Mark all as arrived</button>
+                    </div>
+
+                    <div class="cartons">
+                        @for (carton of s.cartons; track carton.id) {
+                            <label class="carton" [class.is-in]="isArrived(carton)">
+                                <input type="checkbox" class="sr-only" [checked]="isArrived(carton)" (change)="toggleCarton(carton)" />
+                                <span class="carton__check"><i class="pi pi-check" aria-hidden="true"></i></span>
+                                <span class="carton__body">
+                                    <span class="carton__no">{{ carton.cartonNumber }}</span>
+                                    <span class="carton__meta">{{ carton.unitCount }} units · {{ carton.weightKg }} kg · {{ carton.lengthCm }}×{{ carton.widthCm }}×{{ carton.heightCm }} cm</span>
+                                </span>
+                                @let st = cartonStatus(carton);
+                                <p-tag [value]="st.label" [severity]="st.severity" />
+                            </label>
+                        }
+                    </div>
+
+                    <div class="panel__foot">
+                        <div class="field">
+                            <label for="dock-notes">Dock note <span class="muted">(optional)</span></label>
+                            <input pInputText id="dock-notes" maxlength="500" [formControl]="notes" placeholder="Crushed carton, wet box, seal broken…" />
+                        </div>
+                        <p-button
+                            [label]="arrivedCount() === s.cartonCount ? 'Confirm arrival' : 'Confirm arrival (' + arrivedCount() + ' of ' + s.cartonCount + ')'"
+                            icon="pi pi-sign-in"
+                            [disabled]="!arrivedCount()"
+                            [loading]="saving()"
+                            (onClick)="confirmArrival()"
+                        />
+                    </div>
+                </section>
+            }
+
+            <!-- STEP 2: unit count -->
+            @case ('count') {
+                <section class="card panel" aria-labelledby="count-title">
+                    <header class="panel__head">
+                        <span class="panel__step">Step 2 of 3</span>
+                        <h2 id="count-title" class="panel__title">Count the units</h2>
+                        <p class="panel__hint">Open each carton and scan every unit's <b>FNSKU label</b>. Each scan counts one unit. You can also type counts in the table.</p>
+                    </header>
+
+                    @if (missingCartons().length) {
+                        <div class="feedback" data-tone="warn">
+                            <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
+                            <div>
+                                <strong>{{ missingCartons().length }} carton(s) did not arrive</strong>
+                                <span>If {{ missingCartons().length === 1 ? 'it turns' : 'one turns' }} up, scan its label here to check it in: {{ missingCartons()[0].cartonNumber }}@if (missingCartons().length > 1) {, …}</span>
+                            </div>
+                        </div>
+                    }
+
+                    <form class="scanbar" [class.scanbar--damaged]="damagedMode()" (ngSubmit)="onScan()">
+                        <span class="scanbar__icon"><i class="pi pi-barcode" aria-hidden="true"></i></span>
+                        <label for="scan" class="sr-only">Scan FNSKU</label>
+                        <input #scanInput pInputText id="scan" class="scanbar__input" autocomplete="off" [formControl]="scan" placeholder="Scan FNSKU (or carton label)" />
+                        <div class="mode" role="radiogroup" aria-label="Count scans as">
+                            <button type="button" role="radio" class="mode__opt" [class.is-on]="!damagedMode()" [attr.aria-checked]="!damagedMode()" (click)="damagedMode.set(false)">
+                                <i class="pi pi-check-circle" aria-hidden="true"></i> Sellable
+                            </button>
+                            <button type="button" role="radio" class="mode__opt mode__opt--bad" [class.is-on]="damagedMode()" [attr.aria-checked]="damagedMode()" (click)="damagedMode.set(true)">
+                                <i class="pi pi-ban" aria-hidden="true"></i> Damaged
+                            </button>
+                        </div>
+                    </form>
+
+                    @if (lastScan(); as r) {
+                        <div class="feedback" [attr.data-tone]="r.tone" role="status" aria-live="polite">
+                            <i [class]="r.tone === 'ok' ? 'pi pi-check-circle' : r.tone === 'warn' ? 'pi pi-exclamation-circle' : 'pi pi-times-circle'" aria-hidden="true"></i>
+                            <div><strong>{{ r.title }}</strong><span>{{ r.detail }}</span></div>
+                        </div>
+                    }
+
+                    <div class="table-wrap">
+                        <table class="qty-table">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Product</th>
+                                    <th scope="col">FNSKU</th>
+                                    <th scope="col" class="num">Expected</th>
+                                    <th scope="col" class="num">Saved</th>
+                                    <th scope="col" class="center">Sellable now</th>
+                                    <th scope="col" class="center">Damaged now</th>
+                                    <th scope="col">Progress</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @for (row of s.items; track row.id) {
+                                    <tr [class.is-last]="row.id === lastItemId()" [class.is-done]="left(row) === 0">
+                                        <td>
+                                            <div class="product">
+                                                @if (mediaUrl(row.imageUrl); as photo) {
+                                                    <img [src]="photo" alt="" class="product__img" />
+                                                } @else {
+                                                    <span class="product__img product__img--empty"><i class="pi pi-image" aria-hidden="true"></i></span>
+                                                }
+                                                <div class="min-w-0">
+                                                    <div class="product__name">{{ row.productName }}</div>
+                                                    <div class="sub">{{ row.attributeCombination || 'Single version' }} · {{ conditionLabel(row.condition) }}</div>
+                                                    <div class="sub mono">{{ row.sellerSku }}</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td><span class="code code--strong">{{ row.fnsku }}</span></td>
+                                        <td class="num">{{ row.expectedQty }}</td>
+                                        <td class="num">
+                                            {{ row.receivedGoodQty + row.receivedUnsellableQty }}
+                                            @if (row.receivedUnsellableQty) {
+                                                <div class="sub warn-text">{{ row.receivedUnsellableQty }} damaged</div>
+                                            }
+                                        </td>
+                                        <td class="center">
+                                            <div class="stepper-input">
+                                                <button type="button" aria-label="One less sellable" (click)="step(row, 'good', -1)" [disabled]="!count(row.id).good"><i class="pi pi-minus"></i></button>
+                                                <input type="number" min="0" [attr.aria-label]="'Sellable units of ' + row.fnsku" [value]="count(row.id).good" (change)="setCount(row, 'good', $any($event.target).value)" />
+                                                <button type="button" aria-label="One more sellable" (click)="step(row, 'good', 1)" [disabled]="!left(row)"><i class="pi pi-plus"></i></button>
+                                            </div>
+                                        </td>
+                                        <td class="center">
+                                            <div class="stepper-input stepper-input--bad">
+                                                <button type="button" aria-label="One less damaged" (click)="step(row, 'damaged', -1)" [disabled]="!count(row.id).damaged"><i class="pi pi-minus"></i></button>
+                                                <input type="number" min="0" [attr.aria-label]="'Damaged units of ' + row.fnsku" [value]="count(row.id).damaged" (change)="setCount(row, 'damaged', $any($event.target).value)" />
+                                                <button type="button" aria-label="One more damaged" (click)="step(row, 'damaged', 1)" [disabled]="!left(row)"><i class="pi pi-plus"></i></button>
+                                            </div>
+                                        </td>
+                                        <td class="progress-cell">
+                                            <div class="bar"><span [style.width.%]="progress(row)"></span></div>
+                                            <div class="sub">
+                                                @if (left(row) === 0) {
+                                                    <span class="ok-text"><i class="pi pi-check" aria-hidden="true"></i> Complete</span>
+                                                } @else {
+                                                    {{ left(row) }} left
+                                                }
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="actionbar">
+                        <div class="actionbar__summary">
+                            <span><strong>{{ sessionCounted() }}</strong> counted now @if (sessionDamaged()) {<span class="warn-text">({{ sessionDamaged() }} damaged)</span>}</span>
+                            <span class="dot" aria-hidden="true"></span>
+                            <span><strong>{{ stillExpected() }}</strong> still expected</span>
+                            @if (sessionCounted()) {
+                                <span class="unsaved"><i class="pi pi-circle-fill" aria-hidden="true"></i> Not saved</span>
+                            }
+                        </div>
+                        <div class="actionbar__notes">
+                            <label for="receipt-notes" class="sr-only">Receipt note</label>
+                            <input pInputText id="receipt-notes" maxlength="1000" [formControl]="notes" placeholder="Note: extra units, missing labels, damage…" />
+                        </div>
+                        <div class="actionbar__buttons">
+                            @if (sessionCounted()) {
+                                <p-button label="Clear" severity="secondary" [text]="true" (onClick)="clearSession()" />
+                            }
+                            <p-button label="Save progress" severity="secondary" [outlined]="true" icon="pi pi-save" [disabled]="!sessionCounted()" [loading]="saving()" (onClick)="save(false)" />
+                            <p-button label="Finish and close" icon="pi pi-check" [loading]="saving()" (onClick)="save(true)" />
+                        </div>
+                    </div>
+                </section>
+            }
+
+            <!-- STEP 3: result -->
+            @case ('closed') {
+                <section class="card panel" aria-labelledby="result-title">
+                    <div class="result" [attr.data-tone]="s.status === Status.Received ? 'ok' : 'warn'">
+                        <i [class]="s.status === Status.Received ? 'pi pi-check-circle' : 'pi pi-exclamation-triangle'" aria-hidden="true"></i>
+                        <div>
+                            <h2 id="result-title" class="panel__title">{{ s.status === Status.Received ? 'Shipment received in full' : 'Closed with discrepancy' }}</h2>
+                            <p class="panel__hint">
+                                Closed {{ s.receivedAt | date: 'medium' }}.
+                                {{ s.status === Status.Received ? 'Every unit was counted and sellable units are live.' : 'The seller was notified about the missing or damaged units below.' }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="figures">
+                        <div><span>Expected</span><strong>{{ totals().expected | number }}</strong></div>
+                        <div data-tone="ok"><span>Sellable</span><strong>{{ totals().good | number }}</strong></div>
+                        <div [attr.data-tone]="totals().damaged ? 'warn' : null"><span>Damaged</span><strong>{{ totals().damaged | number }}</strong></div>
+                        <div [attr.data-tone]="totals().missing ? 'bad' : null"><span>Missing</span><strong>{{ totals().missing | number }}</strong></div>
+                    </div>
+
+                    <div class="table-wrap">
+                        <table class="qty-table">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Product</th>
+                                    <th scope="col">FNSKU</th>
+                                    <th scope="col" class="num">Expected</th>
+                                    <th scope="col" class="num">Sellable</th>
+                                    <th scope="col" class="num">Damaged</th>
+                                    <th scope="col" class="num">Missing</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @for (row of s.items; track row.id) {
+                                    @let missing = row.expectedQty - row.receivedGoodQty - row.receivedUnsellableQty;
+                                    <tr>
+                                        <td>
+                                            <div class="product__name">{{ row.productName }}</div>
+                                            <div class="sub">{{ row.attributeCombination || 'Single version' }} · {{ row.sellerSku }}</div>
+                                        </td>
+                                        <td><span class="code">{{ row.fnsku }}</span></td>
+                                        <td class="num">{{ row.expectedQty }}</td>
+                                        <td class="num ok-text">{{ row.receivedGoodQty }}</td>
+                                        <td class="num" [class.warn-text]="row.receivedUnsellableQty">{{ row.receivedUnsellableQty }}</td>
+                                        <td class="num" [class.bad-text]="missing > 0">{{ missing > 0 ? missing : 0 }}</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            }
+
+            @case ('cancelled') {
+                <div class="feedback" data-tone="error"><i class="pi pi-ban" aria-hidden="true"></i><div><strong>Cancelled by the seller</strong><span>Nothing to receive. If boxes arrive anyway, refuse them or contact the seller.</span></div></div>
+            }
+
+            @default {
+                <div class="feedback" data-tone="ok"><i class="pi pi-clock" aria-hidden="true"></i><div><strong>Not shipped yet</strong><span>The seller sealed this shipment but has not handed it to a courier. Check-in opens once it is on its way.</span></div></div>
+            }
+        }
+
+        <!-- Reference: cartons and history -->
+        <div class="lower">
+            <section class="card" aria-labelledby="cartons-title">
+                <h2 id="cartons-title" class="section-title">Cartons <span class="muted">({{ s.cartonCount }})</span></h2>
+                <div class="table-wrap">
+                    <table class="qty-table qty-table--compact">
+                        <thead>
+                            <tr>
+                                <th scope="col">Carton</th>
+                                <th scope="col">Contents</th>
+                                <th scope="col" class="num">Units</th>
+                                <th scope="col">Weight · size</th>
+                                <th scope="col">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (carton of s.cartons; track carton.id) {
+                                @let st = cartonStatus(carton);
+                                <tr>
+                                    <td><span class="code">{{ carton.cartonNumber }}</span></td>
+                                    <td class="sub">
+                                        @for (line of carton.lines; track line.itemId) {
+                                            <div>{{ line.qty }} × {{ line.fnsku }}</div>
+                                        }
+                                    </td>
+                                    <td class="num">{{ carton.unitCount }}</td>
+                                    <td class="sub">{{ carton.weightKg }} kg · {{ carton.lengthCm }}×{{ carton.widthCm }}×{{ carton.heightCm }} cm</td>
+                                    <td><p-tag [value]="st.label" [severity]="st.severity" /></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="card" aria-labelledby="history-title">
+                <h2 id="history-title" class="section-title">History</h2>
+                <ol class="timeline">
+                    @if (s.receivedAt) {
+                        <li data-tone="ok"><strong>Closed</strong><span>{{ s.receivedAt | date: 'medium' }}</span></li>
+                    }
+                    @for (receipt of s.receivings.slice().reverse(); track receipt.id) {
+                        <li>
+                            <strong>Count saved · {{ receipt.goodQty }} sellable@if (receipt.unsellableQty) {, {{ receipt.unsellableQty }} damaged}</strong>
+                            <span><span class="code">{{ receipt.receivingNumber }}</span> · {{ receipt.completedAt | date: 'medium' }}</span>
+                            @if (receipt.notes) {
+                                <em>“{{ receipt.notes }}”</em>
+                            }
+                        </li>
+                    }
+                    @if (s.arrivedAt) {
+                        <li [attr.data-tone]="s.missingCartons ? 'warn' : null">
+                            <strong>Checked in at dock · {{ s.checkedInCartons }} of {{ s.cartonCount }} cartons</strong>
+                            <span>{{ s.arrivedAt | date: 'medium' }}</span>
+                        </li>
+                    }
+                    @if (s.shippedAt) {
+                        <li><strong>Shipped by seller</strong><span>{{ s.shippedAt | date: 'medium' }} · {{ s.courierName }}</span></li>
+                    }
+                    @if (s.sealedAt) {
+                        <li><strong>Sealed and labelled</strong><span>{{ s.sealedAt | date: 'medium' }}</span></li>
+                    }
+                </ol>
+            </section>
+        </div>
+    } @else if (loading()) {
+        <div class="card"><app-loading-state [rows]="6" /></div>
+    } @else if (error(); as message) {
         <app-error-state [message]="message" [retryable]="false" />
     }
-    <a class="mt-4 inline-block text-sm" routerLink="/fulfillment/inbound">Back to inbound receiving</a>
 </div>

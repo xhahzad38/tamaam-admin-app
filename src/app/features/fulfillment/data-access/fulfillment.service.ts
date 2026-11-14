@@ -10,6 +10,7 @@ import {
     InboundLabels,
     InboundShipmentDetail,
     InboundShipmentListItem,
+    InboundSummary,
     InboundStatus,
     Offer,
     OfferStatus,
@@ -108,6 +109,21 @@ export class AdminFulfillmentService {
 
     inbound(id: string): Observable<InboundShipmentDetail> {
         return this.http.get<ApiResponse<InboundShipmentDetail>>(`${this.inboundUrl}/${id}`, this.options).pipe(map((r) => r.data));
+    }
+
+    inboundSummary(search: string): Observable<InboundSummary> {
+        let params = new HttpParams();
+        if (search.trim()) {
+            params = params.set('searchText', search.trim());
+        }
+        return this.http.get<ApiResponse<InboundSummary>>(`${this.inboundUrl}/summary`, { ...this.options, params }).pipe(map((r) => r.data));
+    }
+
+    /** Dock check-in: the carton labels scanned as the truck is unloaded. */
+    checkIn(id: string, cartonNumbers: string[], notes: string | null): Observable<{ data: InboundShipmentDetail; message: string }> {
+        return this.http
+            .post<ApiResponse<InboundShipmentDetail>>(`${this.inboundUrl}/${id}/check-in`, { cartonNumbers, notes, confirmArrival: true }, this.options)
+            .pipe(map((r) => ({ data: r.data, message: r.message ?? 'Checked in' })));
     }
 
     receive(id: string, lines: ReceiveLine[], notes: string | null, complete: boolean): Observable<InboundShipmentDetail> {
