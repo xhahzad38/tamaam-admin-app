@@ -1,96 +1,409 @@
-<app-bread-crumb [items]="crumbs()" />
+<div class="page">
+    <app-page-header [title]="title()" [crumbs]="crumbs()" backLink="/catalog/change-requests" backLabel="Back to change requests">
+        <!-- projected elements must sit at the top level (not inside @if) to reach their slot -->
+        <p pageSubtitle>
+            @if (request(); as item) {
+                {{ item.current.storeName || 'Store' }} · {{ item.current.brandName }} · {{ item.current.categoryName || 'No category' }}
+                @if (item.current.psku) {
+                    · <span class="font-mono">{{ item.current.psku }}</span>
+                }
+                · Submitted {{ item.createdAt | date: 'd MMM y, HH:mm' }}
+            }
+        </p>
+        @if (request(); as item) {
+            <p-tag [value]="item.statusName" [severity]="statusSeverity()" class="self-center" />
+        }
+    </app-page-header>
 
-<div class="card">
     @if (loading()) {
-        <app-loading-state />
+        <div class="card"><app-loading-state [rows]="8" /></div>
+    } @else if (loadError(); as message) {
+        <app-error-state [message]="message" (retry)="load()" />
     } @else if (request(); as item) {
-        <h1 class="m-0 text-2xl font-semibold">{{ contentName(item.current) || 'Product change request' }}</h1>
-        <p class="m-0 mt-1 text-sm text-muted-color">{{ item.current.storeName || 'Store' }} · {{ item.statusName }}</p>
-        @if (item.current.psku) {
-            <p class="m-0 mt-1 text-sm text-muted-color">PSKU {{ item.current.psku }}</p>
-        }
-        @if (item.reviewNote) {
-            <p class="mt-3 text-sm">Review note: {{ item.reviewNote }}</p>
-        }
+        <div class="cr-layout">
+            <!-- main column: what changed -->
+            <div class="cr-main">
+                <section class="card cr-summary" aria-labelledby="summary-title">
+                    <div class="cr-summary__head">
+                        <div>
+                            <h2 id="summary-title" class="cr-summary__title">
+                                @if (changedSections().length) {
+                                    {{ changedSections().length }} {{ changedSections().length === 1 ? 'section' : 'sections' }} changed
+                                } @else {
+                                    No visible differences
+                                }
+                            </h2>
+                            <p class="cr-summary__hint">Compared with what shoppers see on the live product page now.</p>
+                        </div>
+                        <label class="cr-switch">
+                            <input type="checkbox" [checked]="onlyChanges()" (change)="onlyChanges.set(!onlyChanges())" />
+                            <span class="cr-switch__track" aria-hidden="true"><span></span></span>
+                            Show only changes
+                        </label>
+                    </div>
+                    <div class="cr-chips">
+                        @for (section of sections(); track section.id) {
+                            <button type="button" class="cr-chip" [class.is-changed]="section.changes" (click)="scrollTo(section.id)">
+                                <i [class]="section.icon" aria-hidden="true"></i>
+                                {{ section.label }}
+                                @if (section.changes) {
+                                    <span class="cr-chip__count">{{ section.changes }}</span>
+                                } @else {
+                                    <i class="pi pi-check cr-chip__same" aria-label="No change"></i>
+                                }
+                            </button>
+                        }
+                    </div>
+                    <div class="cr-legend" aria-hidden="true">
+                        <span><mark class="d-add">added text</mark></span>
+                        <span><del class="d-del">removed text</del></span>
+                    </div>
+                </section>
 
-        <div class="mt-6 grid gap-6 lg:grid-cols-2">
-            <section>
-                <h2 class="m-0 text-lg font-semibold">Live now</h2>
-                <p class="mt-3 text-sm font-medium">{{ contentName(item.current) || '—' }}</p>
-                <p class="whitespace-pre-wrap text-sm">{{ contentDescription(item.current) || 'No description.' }}</p>
-                @if (contentBullets(item.current).length) {
-                    <ul class="mt-3 pl-5 text-sm">
-                        @for (bullet of contentBullets(item.current); track bullet) {
-                            <li>{{ bullet }}</li>
+                <!-- Title -->
+                @if (visible('title')) {
+                    <section class="card cr-section" id="section-title" [class.is-changed]="changes('title')">
+                        <header class="cr-section__head">
+                            <h2 class="section-title">Title</h2>
+                            <ng-container *ngTemplateOutlet="badge; context: { $implicit: changes('title') }" />
+                        </header>
+                        @if (titleChanged()) {
+                            <div class="cr-compare">
+                                <div class="cr-pane cr-pane--live">
+                                    <span class="cr-pane__label">Live now</span>
+                                    <p class="cr-title">{{ item.current.content.name || '—' }}</p>
+                                </div>
+                                <div class="cr-pane cr-pane--new">
+                                    <span class="cr-pane__label">Proposed</span>
+                                    <p class="cr-title">
+                                        @if (titleDiff(); as parts) {
+                                            @for (part of parts; track $index) {
+                                                @if (part.kind === 'added') {
+                                                    <mark class="d-add">{{ part.text }}</mark>
+                                                } @else if (part.kind === 'removed') {
+                                                    <del class="d-del">{{ part.text }}</del>
+                                                } @else {
+                                                    {{ part.text }}
+                                                }
+                                            }
+                                        } @else {
+                                            {{ item.proposed.content.name }}
+                                        }
+                                    </p>
+                                </div>
+                            </div>
+                        } @else {
+                            <p class="cr-title">{{ item.current.content.name }}</p>
                         }
-                    </ul>
+                    </section>
                 }
-                <ul class="mt-3 pl-5 text-sm">
-                    @for (variant of item.current.variants; track variant.id) {
-                        <li>{{ variant.attributeCombination || 'Default' }} · {{ variant.sku }} {{ variant.barcode ? '· ' + variant.barcode : '' }}</li>
-                    }
-                </ul>
-            </section>
-            <section>
-                <h2 class="m-0 text-lg font-semibold">Proposed</h2>
-                <p class="mt-3 text-sm font-medium">{{ contentName(item.proposed) || '—' }}</p>
-                <p class="whitespace-pre-wrap text-sm">{{ contentDescription(item.proposed) || 'No description.' }}</p>
-                @if (contentBullets(item.proposed).length) {
-                    <ul class="mt-3 pl-5 text-sm">
-                        @for (bullet of contentBullets(item.proposed); track bullet) {
-                            <li>{{ bullet }}</li>
-                        }
-                    </ul>
-                }
-                <ul class="mt-3 pl-5 text-sm">
-                    @for (variant of item.proposed.variants; track variant.id) {
-                        <li>{{ variant.attributeCombination || 'Default' }} · {{ variant.sku }} {{ variant.barcode ? '· ' + variant.barcode : '' }}</li>
-                    }
-                </ul>
-                @if (item.proposed.bundleItems.length) {
-                    <p class="mt-3 text-sm font-medium">Bundle</p>
-                    <ul class="pl-5 text-sm">
-                        @for (line of item.proposed.bundleItems; track line.componentVariantId) {
-                            <li>{{ line.quantity }} × {{ line.productName }} ({{ line.sku }})</li>
-                        }
-                    </ul>
-                }
-                <div class="mt-3 grid grid-cols-2 gap-2">
-                    @for (media of item.proposed.media; track media.id) {
-                        @if (media.mediaType === 1) {
-                            <img [src]="mediaUrl(media.url)" [alt]="media.fileName" class="h-24 w-full rounded object-cover" />
-                        }
-                    }
-                </div>
-                <ul class="mt-3 pl-5 text-sm">
-                    @for (value of item.proposed.attributeValues; track value.attributeValueId) {
-                        <li>{{ value.attributeName }}: {{ value.valueName }}</li>
-                    }
-                    @for (text of item.proposed.attributeTexts; track text.attributeId) {
-                        <li>{{ text.attributeName }}: {{ text.value === 'true' ? 'Yes' : text.value === 'false' ? 'No' : text.value }}</li>
-                    }
-                </ul>
-            </section>
-        </div>
 
-        @if (item.statusCode === 'PENDING') {
-            <div class="mt-6 max-w-xl">
-                <label class="mb-2 block text-sm font-semibold" for="change-note">Review note</label>
-                <p class="m-0 mb-2 text-xs text-muted-color">Required when you reject. Optional when you approve.</p>
-                <app-input-control inputId="change-note" label="Review note" type="textarea" [control]="note" [flowError]="true" [showCount]="false" placeholder="Tell the seller what to change." />
-                <div class="mt-3 flex gap-2">
-                    <p-button label="Approve and apply" [loading]="saving()" (onClick)="decide(true)" />
-                    <p-button label="Reject" severity="danger" [outlined]="true" [loading]="saving()" (onClick)="decide(false)" />
-                </div>
+                <!-- Photos -->
+                @if (visible('photos')) {
+                    <section class="card cr-section" id="section-photos" [class.is-changed]="changes('photos')">
+                        <header class="cr-section__head">
+                            <h2 class="section-title">Photos <span class="section-count">{{ item.proposed.media.length }}</span></h2>
+                            <ng-container *ngTemplateOutlet="badge; context: { $implicit: changes('photos') }" />
+                        </header>
+                        @if (photos().length) {
+                            <div class="cr-photos">
+                                @for (row of photos(); track row.media.url + row.change) {
+                                    <figure class="cr-photo" [attr.data-change]="row.change">
+                                        <div class="cr-photo__frame">
+                                            @if (row.media.mediaType === 1) {
+                                                <img [src]="mediaUrl(row.media.url)" [alt]="row.media.altText || row.media.fileName" loading="lazy" />
+                                            } @else {
+                                                <span class="cr-photo__video"><i class="pi pi-video" aria-hidden="true"></i></span>
+                                            }
+                                            @if (row.change !== 'same') {
+                                                <span class="cr-flag" [attr.data-change]="row.change">{{ changeLabel(row.change) }}</span>
+                                            }
+                                            @if (row.media.isPrimary && row.change !== 'removed') {
+                                                <span class="cr-photo__main">Main</span>
+                                            }
+                                        </div>
+                                        <figcaption>{{ row.media.fileName }}</figcaption>
+                                    </figure>
+                                }
+                            </div>
+                        } @else {
+                            <p class="cr-empty">No photos.</p>
+                        }
+                    </section>
+                }
+
+                <!-- Description -->
+                @if (visible('description')) {
+                    <section class="card cr-section" id="section-description" [class.is-changed]="changes('description')">
+                        <header class="cr-section__head">
+                            <h2 class="section-title">Description</h2>
+                            <ng-container *ngTemplateOutlet="badge; context: { $implicit: changes('description') }" />
+                        </header>
+                        @if (descriptionChanged()) {
+                            @if (descriptionDiff(); as parts) {
+                                <p class="cr-text">
+                                    @for (part of parts; track $index) {
+                                        @if (part.kind === 'added') {
+                                            <mark class="d-add">{{ part.text }}</mark>
+                                        } @else if (part.kind === 'removed') {
+                                            <del class="d-del">{{ part.text }}</del>
+                                        } @else {
+                                            {{ part.text }}
+                                        }
+                                    }
+                                </p>
+                            } @else {
+                                <div class="cr-compare">
+                                    <div class="cr-pane cr-pane--live"><span class="cr-pane__label">Live now</span><p class="cr-text">{{ item.current.content.description || '—' }}</p></div>
+                                    <div class="cr-pane cr-pane--new"><span class="cr-pane__label">Proposed</span><p class="cr-text">{{ item.proposed.content.description || '—' }}</p></div>
+                                </div>
+                            }
+                        } @else {
+                            <p class="cr-text">{{ item.current.content.description || 'No description.' }}</p>
+                        }
+                    </section>
+                }
+
+                <!-- Key features -->
+                @if (visible('features')) {
+                    <section class="card cr-section" id="section-features" [class.is-changed]="changes('features')">
+                        <header class="cr-section__head">
+                            <h2 class="section-title">Key features</h2>
+                            <ng-container *ngTemplateOutlet="badge; context: { $implicit: changes('features') }" />
+                        </header>
+                        @if (bullets().length) {
+                            <ul class="cr-bullets">
+                                @for (row of bullets(); track row.text + row.change) {
+                                    <li [attr.data-change]="row.change">
+                                        <i [class]="row.change === 'added' ? 'pi pi-plus' : row.change === 'removed' ? 'pi pi-minus' : 'pi pi-circle-fill'" aria-hidden="true"></i>
+                                        <span>{{ row.text }}</span>
+                                        @if (row.change !== 'same') {
+                                            <span class="cr-flag" [attr.data-change]="row.change">{{ changeLabel(row.change) }}</span>
+                                        }
+                                    </li>
+                                }
+                            </ul>
+                        } @else {
+                            <p class="cr-empty">No key features.</p>
+                        }
+                    </section>
+                }
+
+                <!-- Specifications -->
+                @if (visible('specs')) {
+                    <section class="card cr-section" id="section-specs" [class.is-changed]="changes('specs')">
+                        <header class="cr-section__head">
+                            <h2 class="section-title">Specifications</h2>
+                            <ng-container *ngTemplateOutlet="badge; context: { $implicit: changes('specs') }" />
+                        </header>
+                        @if (specs().length) {
+                            <div class="overflow-x-auto">
+                                <table class="cr-table">
+                                    <thead>
+                                        <tr>
+                                            <th scope="col">Attribute</th>
+                                            <th scope="col">Live now</th>
+                                            <th scope="col">Proposed</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @for (row of specs(); track row.name) {
+                                            @if (!onlyChanges() || row.change !== 'same') {
+                                                <tr [attr.data-change]="row.change">
+                                                    <th scope="row">{{ row.name }}</th>
+                                                    <td [class.cr-old]="row.change === 'changed' || row.change === 'removed'">{{ row.live || '—' }}</td>
+                                                    <td>
+                                                        <span [class.cr-new]="row.change === 'changed' || row.change === 'added'">{{ row.proposed || '—' }}</span>
+                                                        @if (row.change !== 'same') {
+                                                            <span class="cr-flag" [attr.data-change]="row.change">{{ changeLabel(row.change) }}</span>
+                                                        }
+                                                    </td>
+                                                </tr>
+                                            }
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        } @else {
+                            <p class="cr-empty">No specifications.</p>
+                        }
+                    </section>
+                }
+
+                <!-- Variants -->
+                @if (visible('variants')) {
+                    <section class="card cr-section" id="section-variants" [class.is-changed]="changes('variants')">
+                        <header class="cr-section__head">
+                            <h2 class="section-title">Variants <span class="section-count">{{ item.proposed.variants.length }}</span></h2>
+                            <ng-container *ngTemplateOutlet="badge; context: { $implicit: changes('variants') }" />
+                        </header>
+                        <div class="overflow-x-auto">
+                            <table class="cr-table">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Variant</th>
+                                        <th scope="col">SKU</th>
+                                        <th scope="col">Barcode</th>
+                                        <th scope="col">GTIN</th>
+                                        <th scope="col"><span class="sr-only">Change</span></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @for (row of variants(); track $index) {
+                                        @let v = row.proposed ?? row.live!;
+                                        <tr [attr.data-change]="row.change">
+                                            <td>
+                                                <span [class.cr-new]="row.fields.has('attributeCombination')">{{ v.attributeCombination || 'Default' }}</span>
+                                                @if (row.fields.has('attributeCombination')) {
+                                                    <div class="cr-was">was {{ row.live?.attributeCombination || 'Default' }}</div>
+                                                }
+                                            </td>
+                                            <td class="font-mono">
+                                                <span [class.cr-new]="row.fields.has('sku')">{{ v.sku }}</span>
+                                                @if (row.fields.has('sku')) {
+                                                    <div class="cr-was">was {{ row.live?.sku }}</div>
+                                                }
+                                            </td>
+                                            <td class="font-mono">
+                                                <span [class.cr-new]="row.fields.has('barcode')">{{ v.barcode || '—' }}</span>
+                                                @if (row.fields.has('barcode')) {
+                                                    <div class="cr-was">was {{ row.live?.barcode || '—' }}</div>
+                                                }
+                                            </td>
+                                            <td class="font-mono">
+                                                <span [class.cr-new]="row.fields.has('gtin')">{{ v.gtin || '—' }}</span>
+                                                @if (row.fields.has('gtin')) {
+                                                    <div class="cr-was">was {{ row.live?.gtin || '—' }}</div>
+                                                }
+                                            </td>
+                                            <td class="text-right">
+                                                @if (row.change !== 'same') {
+                                                    <span class="cr-flag" [attr.data-change]="row.change">{{ changeLabel(row.change) }}</span>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+                }
+
+                <!-- Bundle -->
+                @if (bundle().length && visible('bundle')) {
+                    <section class="card cr-section" id="section-bundle" [class.is-changed]="changes('bundle')">
+                        <header class="cr-section__head">
+                            <h2 class="section-title">Bundle contents</h2>
+                            <ng-container *ngTemplateOutlet="badge; context: { $implicit: changes('bundle') }" />
+                        </header>
+                        <table class="cr-table">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Product</th>
+                                    <th scope="col">SKU</th>
+                                    <th scope="col" class="text-right">Qty</th>
+                                    <th scope="col"><span class="sr-only">Change</span></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @for (row of bundle(); track row.item.componentVariantId) {
+                                    <tr [attr.data-change]="row.change">
+                                        <td>{{ row.item.productName }} <span class="cr-was">{{ row.item.attributeCombination }}</span></td>
+                                        <td class="font-mono">{{ row.item.sku }}</td>
+                                        <td class="text-right">
+                                            {{ row.item.quantity }}
+                                            @if (row.change === 'changed') {
+                                                <div class="cr-was">was {{ row.liveQty }}</div>
+                                            }
+                                        </td>
+                                        <td class="text-right">
+                                            @if (row.change !== 'same') {
+                                                <span class="cr-flag" [attr.data-change]="row.change">{{ changeLabel(row.change) }}</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </section>
+                }
+
+                @if (onlyChanges() && changedSections().length < sections().length) {
+                    <button type="button" class="cr-more" (click)="onlyChanges.set(false)">
+                        <i class="pi pi-eye" aria-hidden="true"></i> Show the {{ sections().length - changedSections().length }} unchanged section(s)
+                    </button>
+                }
             </div>
-        }
-    }
 
-    @if (error(); as message) {
-        <app-error-state [message]="message" [retryable]="false" />
+            <!-- side column: decision + context -->
+            <aside class="cr-side">
+                @if (isPending()) {
+                    <section class="card">
+                        <h2 class="section-title">Decision</h2>
+                        <label for="change-note" class="text-sm font-medium">Note to the seller</label>
+                        <textarea id="change-note" pTextarea [formControl]="note" rows="5" class="mt-1 w-full" placeholder="Required to reject. Optional when you approve." maxlength="1000"></textarea>
+                        <p class="mb-1 mt-2 text-xs font-semibold uppercase text-muted-color">Common reasons</p>
+                        <div class="reasons">
+                            @for (reason of reasons; track reason) {
+                                <button type="button" class="reason" (click)="addReason(reason)" [title]="reason">{{ reason }}</button>
+                            }
+                        </div>
+                        @if (error(); as message) {
+                            <div class="mt-3"><app-error-state [message]="message" [retryable]="false" /></div>
+                        }
+                        <div class="decision-actions">
+                            <p-button label="Reject" icon="pi pi-times" severity="danger" [outlined]="true" [loading]="saving() === 'reject'" [disabled]="!!saving()" (onClick)="reject()" />
+                            <p-button label="Approve" icon="pi pi-check" [loading]="saving() === 'approve'" [disabled]="!!saving()" (onClick)="approve()" />
+                        </div>
+                        <p class="cr-side__hint"><i class="pi pi-info-circle" aria-hidden="true"></i> Approving replaces the live content. Rejecting keeps the live page as it is.</p>
+                    </section>
+                } @else {
+                    <section class="card cr-outcome" [attr.data-status]="item.statusCode.toUpperCase()">
+                        <i [class]="item.statusCode.toUpperCase() === 'APPROVED' ? 'pi pi-check-circle' : 'pi pi-times-circle'" aria-hidden="true"></i>
+                        <div>
+                            <h2 class="cr-outcome__title">{{ item.statusCode.toUpperCase() === 'APPROVED' ? 'Change applied' : 'Change ' + item.statusName.toLowerCase() }}</h2>
+                            @if (item.reviewNote) {
+                                <p class="cr-outcome__note">“{{ item.reviewNote }}”</p>
+                            }
+                        </div>
+                    </section>
+                    <p-button label="Back to change requests" icon="pi pi-arrow-left" severity="secondary" [outlined]="true" styleClass="w-full" routerLink="/catalog/change-requests" />
+                }
+
+                <section class="card">
+                    <h2 class="section-title">Product</h2>
+                    <div class="cr-product">
+                        @if (item.current.media[0]; as cover) {
+                            <img [src]="mediaUrl(cover.url)" alt="" class="cr-product__img" />
+                        } @else {
+                            <span class="cr-product__img cr-product__img--empty"><i class="pi pi-image" aria-hidden="true"></i></span>
+                        }
+                        <div class="min-w-0">
+                            <div class="cr-product__name">{{ item.current.content.name || '—' }}</div>
+                            <div class="cr-was">{{ productStatus(item.current.status) }} · {{ item.current.offerCount }} offer(s)</div>
+                        </div>
+                    </div>
+                    <dl class="detail-list detail-list--stacked">
+                        <div><dt>Store</dt><dd>{{ item.current.storeName || '—' }}</dd></div>
+                        <div><dt>Brand</dt><dd>{{ item.current.brandName }}</dd></div>
+                        <div><dt>Category</dt><dd>{{ item.current.categoryName || '—' }}</dd></div>
+                        <div><dt>Type</dt><dd>{{ structureLabel(item.current.structure) }}</dd></div>
+                        <div><dt>PSKU</dt><dd class="font-mono">{{ item.current.psku || '—' }}</dd></div>
+                        <div><dt>Submitted</dt><dd>{{ item.createdAt | date: 'medium' }}</dd></div>
+                    </dl>
+                    @if (item.current.categoryRequiresExtraApproval) {
+                        <p class="cr-side__warn"><i class="pi pi-exclamation-triangle" aria-hidden="true"></i> Restricted category: check authenticity before approving.</p>
+                    }
+                </section>
+            </aside>
+        </div>
     }
-    @if (notice()) {
-        <p class="mt-4 text-sm text-green-700">{{ notice() }}</p>
-    }
-    <a class="mt-4 inline-block text-sm" routerLink="/catalog/change-requests">Back to the queue</a>
 </div>
+
+<ng-template #badge let-count>
+    @if (count) {
+        <span class="cr-badge cr-badge--changed"><i class="pi pi-pencil" aria-hidden="true"></i> {{ count === 1 ? 'Changed' : count + ' changes' }}</span>
+    } @else {
+        <span class="cr-badge"><i class="pi pi-check" aria-hidden="true"></i> No change</span>
+    }
+</ng-template>

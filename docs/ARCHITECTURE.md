@@ -6,14 +6,14 @@
 
 ```
 src/
-  app.shell.ts        app-specific: product name, allowed roles, home page, sidebar navigation
+  app.shell.ts        app-specific: product name, allowed roles, home page, menu app (sidebar comes from api/Menu)
   app.routes.ts       app-specific routes (role guards mirror the API)
   app.config.ts       providers: theme preset, interceptors, confirm/toast services
   app/
     core/             mirrored. Singletons, no UI.
       api/            ApiResponse / PageResult types
       auth/           AuthenticationService, authGuard, Role + RoleGroups, JWT helpers
-      config/         APP_SHELL_CONFIG token + navigation model
+      config/         APP_SHELL_CONFIG token + API menu → sidebar mapping
       http/           interceptors (error -> jwt/refresh -> loading), ApiError, inlineErrors
       services/       loading bar, lookup dropdowns
     shared/           mirrored. Reusable, domain-agnostic.

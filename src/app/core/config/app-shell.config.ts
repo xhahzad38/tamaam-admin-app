@@ -1,5 +1,4 @@
 import { InjectionToken } from '@angular/core';
-import { NavSection } from '@/app/core/config/navigation.models';
 
 /**
  * Everything that differs between the admin and seller apps lives in one object,
@@ -18,8 +17,11 @@ export interface AppShellConfig {
     loginHighlights: readonly string[];
     /** Where a freshly signed-in user lands. */
     homeUrl: (roles: readonly string[]) => string;
-    /** Sidebar navigation; items are hidden when the user lacks their roles. */
-    navigation: readonly NavSection[];
+    /**
+     * Which sidebar `GET api/Menu?app=` returns for this app (`Menus.App` in the database,
+     * seeded by tamaam-api `Persistence/Seeds/DefaultMenus.cs`).
+     */
+    menuApp: 'Admin' | 'Seller';
 }
 
 export const APP_SHELL_CONFIG = new InjectionToken<AppShellConfig>('APP_SHELL_CONFIG');

@@ -1,11 +1,10 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { MenuItem } from 'primeng/api';
-import { AuthenticationService } from '@/app/core/auth/authentication.service';
-import { APP_SHELL_CONFIG } from '@/app/core/config/app-shell.config';
-import { NavItem, filterNavigation } from '@/app/core/config/navigation.models';
+import { NavItem } from '@/app/core/config/navigation.models';
+import { MenuService } from '@/app/core/services/menu.service';
 import { AppMenuitem } from './app.menuitem';
 
-/** Sidebar menu built from the app's navigation config, showing only what the user's roles allow. */
+/** Sidebar menu loaded from the database (`api/Menu`), showing only what the user's roles allow. */
 @Component({
     selector: 'app-menu',
     standalone: true,
@@ -18,11 +17,10 @@ import { AppMenuitem } from './app.menuitem';
     </ul>`
 })
 export class AppMenu {
-    private readonly auth = inject(AuthenticationService);
-    private readonly navigation = inject(APP_SHELL_CONFIG).navigation;
+    private readonly menus = inject(MenuService);
 
     readonly model = computed<MenuItem[]>(() =>
-        filterNavigation(this.navigation, this.auth.roles()).map((section) => ({
+        this.menus.sections().map((section) => ({
             label: section.label,
             items: section.items.map(toMenuItem)
         }))
@@ -41,6 +39,8 @@ function toMenuItem(item: NavItem): MenuItem {
         label: item.label,
         icon: `pi pi-fw ${item.icon}`,
         routerLink: item.routerLink,
+        url: item.url,
+        target: item.target,
         items: children,
         ...(children?.length ? { path: item.path ?? `/${slug(item.label)}/` } : {})
     };

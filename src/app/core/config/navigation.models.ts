@@ -2,31 +2,50 @@ export interface NavItem {
     label: string;
     icon: string;
     routerLink?: string[];
-    /** Hide the item unless the user has one of these roles. Omit to show to every signed-in user. */
-    roles?: readonly string[];
     items?: readonly NavItem[];
     /** Key that opens/closes this group in the sidebar. Derived from the label when omitted. */
     path?: string;
+    /** External link, used instead of `routerLink`. */
+    url?: string;
+    target?: string;
 }
 
 export interface NavSection {
     label: string;
-    roles?: readonly string[];
     items: readonly NavItem[];
 }
 
-/** Removes items (and empty sections/groups) the user is not allowed to see. */
-export function filterNavigation(sections: readonly NavSection[], roles: readonly string[]): NavSection[] {
-    const allowed = (required?: readonly string[]) => !required || required.some((role) => roles.includes(role));
+/** A node of `GET api/Menu` (Application/Features/Menus/MenuDto). Level 0 = section, 1 = item, 2 = sub-item. */
+export interface MenuDto {
+    id: string;
+    code: string;
+    title: string;
+    icon: string | null;
+    routerLink: string | null;
+    path: string | null;
+    externalUrl: string | null;
+    target: string | null;
+    level: number;
+    isGroup: boolean;
+    children: MenuDto[];
+}
 
-    const filterItems = (items: readonly NavItem[]): NavItem[] =>
-        items
-            .filter((item) => allowed(item.roles))
-            .map((item) => (item.items ? { ...item, items: filterItems(item.items) } : item))
-            .filter((item) => !item.items || item.items.length > 0);
+/**
+ * Converts the API menu tree (already filtered by the user's roles on the server) to sidebar sections.
+ * Groups get a `/code/` path so each one opens and closes on its own.
+ */
+export function toNavSections(menus: readonly MenuDto[]): NavSection[] {
+    const toItem = (menu: MenuDto): NavItem => ({
+        label: menu.title,
+        icon: menu.icon ?? '',
+        routerLink: menu.routerLink ? [menu.routerLink] : undefined,
+        url: menu.externalUrl ?? undefined,
+        target: menu.target ?? undefined,
+        path: menu.children.length ? `/${menu.path || menu.code}/` : undefined,
+        items: menu.children.length ? menu.children.map(toItem) : undefined
+    });
 
-    return sections
-        .filter((section) => allowed(section.roles))
-        .map((section) => ({ ...section, items: filterItems(section.items) }))
+    return menus
+        .map((section) => ({ label: section.title, items: section.children.map(toItem) }))
         .filter((section) => section.items.length > 0);
 }
